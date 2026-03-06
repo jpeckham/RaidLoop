@@ -1,0 +1,1 @@
+dotnet run --project src/RaidLoop.Client/RaidLoop.Client.csproj

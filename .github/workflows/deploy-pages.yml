@@ -42,7 +42,8 @@ jobs:
           $repo = '${{ github.event.repository.name }}'
           $index = Join-Path $site 'index.html'
           $content = Get-Content $index -Raw
-          $content = $content -replace '<base href="/" />', "<base href=\"/$repo/\" />"
+          $baseHref = '<base href="/{0}/" />' -f $repo
+          $content = $content -replace '<base href="/" />', $baseHref
           Set-Content $index $content
           Copy-Item $index (Join-Path $site '404.html') -Force
 

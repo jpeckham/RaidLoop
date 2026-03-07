@@ -458,7 +458,8 @@ else
 
         _activeProfile = RaidProfile.Main;
         _activeRaiderName = "Main Character";
-        _raidLoadout = _onPersonItems.Where(x => x.IsEquipped).Select(x => x.Item).ToList();
+        // Main raids bring everything currently on person.
+        _raidLoadout = _onPersonItems.Select(x => x.Item).ToList();
         _activeGame = new GameState([.. _raidLoadout]);
         _currentMainRaidBroughtItems = [.. _raidLoadout];
 
@@ -948,7 +949,7 @@ else
             {
                 foreach (var lost in _currentMainRaidBroughtItems)
                 {
-                    var idx = _onPersonItems.FindIndex(x => x.IsEquipped && x.Item == lost);
+                    var idx = _onPersonItems.FindIndex(x => x.Item == lost);
                     if (idx >= 0)
                     {
                         _onPersonItems.RemoveAt(idx);

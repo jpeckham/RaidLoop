@@ -91,6 +91,35 @@ public class RaidEngineTests
     }
 
     [Fact]
+    public void EncounterLoot_StartLootEncounter_ClearsAndAddsNewItems()
+    {
+        var discovered = new List<Item>
+        {
+            new("Old Loot", ItemType.Sellable, 1)
+        };
+
+        EncounterLoot.StartLootEncounter(discovered, [new Item("New Loot", ItemType.Material, 1)]);
+
+        Assert.Single(discovered);
+        Assert.Equal("New Loot", discovered[0].Name);
+    }
+
+    [Fact]
+    public void EncounterLoot_AppendDiscoveredLoot_AddsWithoutClearing()
+    {
+        var discovered = new List<Item>
+        {
+            new("First", ItemType.Material, 1)
+        };
+
+        EncounterLoot.AppendDiscoveredLoot(discovered, [new Item("Second", ItemType.Weapon, 1)]);
+
+        Assert.Equal(2, discovered.Count);
+        Assert.Equal("First", discovered[0].Name);
+        Assert.Equal("Second", discovered[1].Name);
+    }
+
+    [Fact]
     public void ApplyCombatDamage_ReducesHealth_AndMarksDeathAtZero()
     {
         var state = new RaidState(
@@ -135,6 +164,72 @@ public class RaidEngineTests
 
         Assert.True(added);
         Assert.Single(state.RaidLoot);
+    }
+
+    [Fact]
+    public void RaidInventory_LootingMedkit_FromDiscovered_IncrementsResourceOnly()
+    {
+        var state = new RaidState(
+            health: 30,
+            backpackCapacity: 2,
+            broughtItems: [],
+            raidLoot: []);
+
+        RaidEngine.StartDiscoveredLootEncounter(state, [new Item("Medkit", ItemType.Consumable, 1)]);
+
+        var looted = RaidEngine.TryLootFromDiscovered(state, state.Inventory.DiscoveredLoot[0]);
+
+        Assert.True(looted);
+        Assert.Equal(1, state.Inventory.MedkitCount);
+        Assert.Empty(state.Inventory.CarriedItems);
+        Assert.Empty(state.Inventory.DiscoveredLoot);
+    }
+
+    [Fact]
+    public void RaidInventory_EquipFromDiscovered_SwapsOldEquippedToDiscovered()
+    {
+        var state = new RaidState(
+            health: 30,
+            backpackCapacity: 2,
+            broughtItems: [new Item("Makarov", ItemType.Weapon, 1)],
+            raidLoot: []);
+
+        RaidEngine.StartDiscoveredLootEncounter(state, [new Item("AK74", ItemType.Weapon, 1)]);
+
+        var equipped = RaidEngine.TryEquipFromDiscovered(state, state.Inventory.DiscoveredLoot[0]);
+
+        Assert.True(equipped);
+        Assert.Equal("AK74", state.Inventory.EquippedWeapon?.Name);
+        Assert.Single(state.Inventory.DiscoveredLoot);
+        Assert.Equal("Makarov", state.Inventory.DiscoveredLoot[0].Name);
+    }
+
+    [Fact]
+    public void RaidInventory_DroppingEquippedBackpack_SpillsCarriedItemsToDiscovered()
+    {
+        var state = new RaidState(
+            health: 30,
+            backpackCapacity: 6,
+            broughtItems:
+            [
+                new Item("Makarov", ItemType.Weapon, 1),
+                new Item("Tactical Backpack", ItemType.Backpack, 1)
+            ],
+            raidLoot:
+            [
+                new Item("Scrap Metal", ItemType.Material, 1),
+                new Item("Rare Scope", ItemType.Material, 1)
+            ]);
+
+        var dropped = RaidEngine.TryDropEquippedToDiscovered(state, ItemType.Backpack);
+
+        Assert.True(dropped);
+        Assert.Null(state.Inventory.EquippedBackpack);
+        Assert.Empty(state.Inventory.CarriedItems);
+        Assert.Equal(3, state.Inventory.DiscoveredLoot.Count);
+        Assert.Contains(state.Inventory.DiscoveredLoot, x => x.Name == "Tactical Backpack");
+        Assert.Contains(state.Inventory.DiscoveredLoot, x => x.Name == "Scrap Metal");
+        Assert.Contains(state.Inventory.DiscoveredLoot, x => x.Name == "Rare Scope");
     }
 
     [Fact]

@@ -12,27 +12,14 @@
 else if (!_inRaid)
 {
     <section class="panel">
-        <h2>Main Character</h2>
+        <h2>Preparing for Raid</h2>
         <p>If your stash is wiped, you still get a knife run.</p>
-        <p><strong>Money:</strong> $@_money | <strong>Stash:</strong> @_mainGame.Stash.Count/@MainStashCap</p>
+        <p><strong>Money:</strong> $@_money | <strong>Storage:</strong> @_mainGame.Stash.Count/@MainStashCap</p>
 
         <div class="grid-two">
             <div>
-                <h3>Main Stash</h3>
-                @for (var i = 0; i < _mainGame.Stash.Count; i++)
-                {
-                    var stashIndex = i;
-                    var item = _mainGame.Stash[stashIndex];
-                    <div class="row-item">
-                        <span>@item.Name</span>
-                        <small>@item.Type</small>
-                        <button class="action" @onclick="() => MoveStashToOnPersonAsync(stashIndex, ShouldEquipFromStash(item))">@GetStashPrimaryActionLabel(item)</button>
-                        <button class="action" disabled="@(!CanSellItem(item))" @onclick="() => SellStashItemAsync(stashIndex)">Sell ($@GetSellPrice(item.Name))</button>
-                    </div>
-                }
-            </div>
-            <div>
-                <h3>On Person</h3>
+                <h3>For Raid</h3>
+                <p>You are taking these into raid with you and they will be lost if you die.</p>
                 @if (_onPersonItems.Count == 0)
                 {
                     <p>Nothing selected.</p>
@@ -57,7 +44,7 @@ else if (!_inRaid)
                                     <button class="action" @onclick="() => EquipOnPersonItemAsync(onPersonIndex)">Equip</button>
                                 }
                             }
-                            <button class="action" disabled="@(!CanStashOnPersonItem)" @onclick="() => StashOnPersonItemAsync(onPersonIndex)">Stash</button>
+                            <button class="action" disabled="@(!CanStashOnPersonItem)" @onclick="() => StashOnPersonItemAsync(onPersonIndex)">Store</button>
                             <button class="action" disabled="@(!CanSellItem(entry.Item))" @onclick="() => SellOnPersonItemAsync(onPersonIndex)">Sell ($@GetSellPrice(entry.Item.Name))</button>
                         </div>
                     }
@@ -67,10 +54,25 @@ else if (!_inRaid)
                     }
                 }
 
-                <button class="action top-gap" disabled="@(!CanStartMainRaid)" @onclick="StartMainRaidAsync">Enter Raid (Main)</button>
+                <button class="action top-gap" disabled="@(!CanStartMainRaid)" @onclick="StartMainRaidAsync">Enter Raid</button>
                 @if (!CanStartMainRaid && !string.IsNullOrWhiteSpace(RaidBlockReason))
                 {
                     <p>@RaidBlockReason</p>
+                }
+            </div>
+            <div>
+                <h3>Storage</h3>
+                <p>Your secured items. They cannot be lost when you raid.</p>
+                @for (var i = 0; i < _mainGame.Stash.Count; i++)
+                {
+                    var stashIndex = i;
+                    var item = _mainGame.Stash[stashIndex];
+                    <div class="row-item">
+                        <span>@item.Name</span>
+                        <small>@item.Type</small>
+                        <button class="action" @onclick="() => MoveStashToOnPersonAsync(stashIndex, ShouldEquipFromStash(item))">@GetStashPrimaryActionLabel(item)</button>
+                        <button class="action" disabled="@(!CanSellItem(item))" @onclick="() => SellStashItemAsync(stashIndex)">Sell ($@GetSellPrice(item.Name))</button>
+                    </div>
                 }
             </div>
         </div>
@@ -90,8 +92,8 @@ else if (!_inRaid)
     </section>
 
     <section class="panel top-gap">
-        <h2>Random Character (Luck Run)</h2>
-        <p>Available once every 5 minutes. Raids "as is" and keeps extracted loot on that character.</p>
+        <h2>Luck Run</h2>
+        <p>Available once every 5 minutes. Generates a random kit to raid with. Keep what you extract.</p>
 
         @if (_randomCharacter is null)
         {
@@ -113,7 +115,7 @@ else if (!_inRaid)
                     <li>@item.Name (@item.Type)</li>
                 }
             </ul>
-            <button class="action" @onclick="StartRandomRaidAsync">Enter Raid (Random Character)</button>
+            <button class="action" @onclick="StartRandomRaidAsync">Enter Raid (Luck Run)</button>
         }
     </section>
 
@@ -125,13 +127,13 @@ else if (!_inRaid)
 else
 {
     <section class="panel">
-        <h2>In Raid - @_activeRaiderName</h2>
+        <h2>In Raid</h2>
 
         <div class="hud">
             <span>Health: @_raid!.Health / @MaxHealth</span>
             <span>@GetAmmoHudText()</span>
             <span>Weapon: @(_weaponMalfunction ? "Malfunctioned" : "Operational")</span>
-            <span>Medkits: @_medkits</span>
+            <span>Medkits: @CurrentMedkits</span>
             <span>Loot Slots: @GetLootSlotCount() / @_raid.BackpackCapacity</span>
             <span>Extract Progress: @_extractProgress / @ExtractRequired</span>
         </div>
@@ -146,56 +148,102 @@ else
                 <div class="actions">
                     <button class="action" disabled="@(!CanAttack)" @onclick="AttackAsync">Attack</button>
                     <button class="action" disabled="@(!CanBurstFire)" @onclick="BurstFireAsync">Use Skill: Burst Fire</button>
-                    <button class="action" disabled="@(!CanUseMedkit)" @onclick="UseMedkitAsync">Use Medkit</button>
-                    <button class="action" @onclick="ReloadAsync">Reload</button>
+                    <button class="action" @onclick="ReloadAsync">@(_weaponMalfunction ? "Fix Malfunction" : "Reload")</button>
                     <button class="action" @onclick="FleeAsync">Flee</button>
                 </div>
             }
             else if (_encounterType == EncounterType.Loot)
             {
                 <p>Container discovered: @_lootContainer</p>
-                @if (_lootOptions.Count == 0)
-                {
-                    <p>Nothing useful left.</p>
-                }
-                else
-                {
-                    <ul>
-                        @foreach (var lootItem in _lootOptions)
+                <div class="grid-two">
+                    <div>
+                        @if (CurrentDiscoveredLoot.Count == 0)
                         {
-                            <li>
-                                @lootItem.Name
-                                <button class="action" disabled="@(!CanLootItem(lootItem))" @onclick="() => TakeLootAsync(lootItem)">Loot</button>
-                            </li>
+                            <p>Nothing useful left.</p>
                         }
-                    </ul>
-                    @if (_raid is not null && _lootOptions.Any(i => !CanLootItem(i)))
-                    {
-                        <p>Backpack full for some items.</p>
-                    }
-                }
-            }
-            else if (_encounterType == EncounterType.Neutral)
-            {
-                <div class="actions">
-                    <button class="action" @onclick="ResolveNeutralAsync">Resolve Event</button>
+                        else
+                        {
+                            <h4>Discovered Loot</h4>
+                            <ul>
+                                @foreach (var lootItem in CurrentDiscoveredLoot)
+                                {
+                                    <li>
+                                        @lootItem.Name
+                                        <button class="action" disabled="@(!CanLootItem(lootItem))" @onclick="() => TakeLootAsync(lootItem)">Loot</button>
+                                        @if (CanEquipItem(lootItem))
+                                        {
+                                            <button class="action" @onclick="() => EquipFromDiscoveredAsync(lootItem)">Equip</button>
+                                        }
+                                    </li>
+                                }
+                            </ul>
+                        }
+                        @if (_raid is not null && CurrentDiscoveredLoot.Any(i => !CanLootItem(i)))
+                        {
+                            <p>Backpack full for some items.</p>
+                        }
+                    </div>
+                    <div>
+                        <h4>Character Inventory</h4>
+                        <h4>Equipped</h4>
+                        @foreach (var equipped in GetEquippedItems())
+                        {
+                            <div class="row-item">
+                                <span>@equipped.Name</span>
+                                <small>@equipped.Type</small>
+                                <button class="action" @onclick="() => DropEquippedAsync(equipped.Type)">Drop</button>
+                            </div>
+                        }
+
+                        <h4>Carried</h4>
+                        @if (CurrentCarriedLoot.Count == 0)
+                        {
+                            <p>No carried loot.</p>
+                        }
+                        else
+                        {
+                            @foreach (var carried in CurrentCarriedLoot)
+                            {
+                                <div class="row-item">
+                                    <span>@carried.Name</span>
+                                    <small>@carried.Type</small>
+                                    <button class="action" @onclick="() => DropCarriedAsync(carried)">Drop</button>
+                                    @if (CanEquipItem(carried))
+                                    {
+                                        <button class="action" @onclick="() => EquipFromCarriedAsync(carried)">Equip</button>
+                                    }
+                                </div>
+                            }
+                        }
+                    </div>
                 </div>
             }
             else if (_encounterType == EncounterType.Extraction)
             {
                 <div class="actions">
                     <button class="action" @onclick="AttemptExtractAsync">Attempt Extraction</button>
+                    <button class="action" @onclick="ContinueSearching">Continue Searching</button>
+                </div>
+            }
+            else if (_encounterType == EncounterType.Neutral)
+            {
+                <div class="actions">
                     <button class="action" @onclick="ContinueSearching">Keep Searching</button>
+                    <button class="action" @onclick="MoveTowardExtract">Move to Extract</button>
                 </div>
             }
 
             @if (_awaitingDecision || _encounterType == EncounterType.Loot)
             {
                 <div class="actions top-gap">
-                    <button class="action" @onclick="ContinueSearching">@(_encounterType == EncounterType.Loot ? "Move On" : "Continue Searching")</button>
+                    <button class="action" @onclick="ContinueSearching">Continue Searching</button>
                     <button class="action" @onclick="MoveTowardExtract">@(_encounterType == EncounterType.Loot ? "Move To Extract" : "Move Toward Extract")</button>
                 </div>
             }
+
+            <div class="actions top-gap">
+                <button class="action" disabled="@(!CanUseMedkit)" @onclick="UseMedkitAsync">Use Medkit</button>
+            </div>
         </div>
 
         <h3>Raid Log</h3>
@@ -219,7 +267,8 @@ else
     private readonly List<ShopStock> _shopStock =
     [
         new("Medkit", ItemType.Consumable),
-        new("Makarov", ItemType.Weapon)
+        new("Makarov", ItemType.Weapon),
+        new("Small Backpack", ItemType.Backpack)
     ];
 
     private GameState _mainGame = new([]);
@@ -246,12 +295,11 @@ else
     private int _enemyHealth;
     private bool _extractionCombat;
 
-    private readonly List<Item> _lootOptions = [];
     private string _lootContainer = string.Empty;
+    private static readonly List<Item> EmptyItems = [];
 
     private int _ammo;
     private bool _weaponMalfunction;
-    private int _medkits;
     private int _extractProgress;
     private string _resultMessage = string.Empty;
     private string _activeRaiderName = "Main Character";
@@ -289,7 +337,10 @@ else
     private int CurrentMagazineCapacity => CombatBalance.GetMagazineCapacity(GetEquippedWeaponName());
     private bool CanAttack => (!EquippedWeaponUsesAmmo || _ammo > 0) && !_weaponMalfunction;
     private bool CanBurstFire => EquippedWeaponUsesAmmo && _ammo >= 2 && !_weaponMalfunction;
-    private bool CanUseMedkit => _medkits > 0;
+    private bool CanUseMedkit => CurrentMedkits > 0;
+    private int CurrentMedkits => _raid?.Inventory.MedkitCount ?? 0;
+    private List<Item> CurrentDiscoveredLoot => _raid?.Inventory.DiscoveredLoot ?? EmptyItems;
+    private List<Item> CurrentCarriedLoot => _raid?.Inventory.CarriedItems ?? EmptyItems;
 
     private static bool IsSlotType(ItemType type)
     {
@@ -309,7 +360,7 @@ else
 
     private string GetStashPrimaryActionLabel(Item item)
     {
-        return ShouldEquipFromStash(item) ? "Equip" : "On Person";
+        return ShouldEquipFromStash(item) ? "Equip" : "For Raid";
     }
 
     private async Task SellStashItemAsync(int stashIndex)
@@ -511,7 +562,6 @@ else
         _extractProgress = 0;
         _ammo = CurrentMagazineCapacity;
         _weaponMalfunction = false;
-        _medkits = _raidLoadout.Count(i => i.Name == "Medkit");
         _log.Clear();
         _log.Add($"Raid started as {_activeRaiderName}.");
 
@@ -567,13 +617,13 @@ else
 
     private int GetArmorReduction()
     {
-        var armor = _raidLoadout.FirstOrDefault(i => i.Type == ItemType.Armor);
+        var armor = _raid?.Inventory.EquippedArmor;
         return armor is null ? 0 : CombatBalance.GetArmorReduction(armor.Name);
     }
 
     private string GetEquippedWeaponName()
     {
-        var weapon = _raidLoadout.FirstOrDefault(i => i.Type == ItemType.Weapon);
+        var weapon = _raid?.Inventory.EquippedWeapon;
         return weapon?.Name ?? FallbackKnifeName;
     }
 
@@ -593,7 +643,7 @@ else
         {
             EncounterType.Combat => "Combat Encounter",
             EncounterType.Loot => "Loot Encounter",
-            EncounterType.Neutral => "Random Event",
+            EncounterType.Neutral => "Area Clear",
             EncounterType.Extraction => "Extraction Opportunity",
             _ => "Encounter"
         };
@@ -602,7 +652,10 @@ else
     private void GenerateEncounter(bool movingToExtract)
     {
         _awaitingDecision = false;
-        _lootOptions.Clear();
+        if (_raid is not null)
+        {
+            RaidEngine.ClearDiscoveredLoot(_raid);
+        }
         _extractionCombat = false;
 
         if (movingToExtract)
@@ -631,17 +684,15 @@ else
 
         if (roll < 80)
         {
-            _encounterType = EncounterType.Loot;
-            _lootContainer = GetRandomLootContainer();
-            _lootOptions.AddRange(GenerateLootItems(_rng.Next(2, 5)));
-            _encounterDescription = "A searchable container appears.";
-            _log.Add($"Found {_lootContainer} with {_lootOptions.Count} lootable items.");
+            var container = GetRandomLootContainer();
+            var discovered = GenerateLootItems(_rng.Next(2, 5));
+            ShowDiscoveredLoot(container, discovered, "A searchable container appears.");
             return;
         }
 
         _encounterType = EncounterType.Neutral;
-        _encounterDescription = "Unexpected event triggered.";
-        _log.Add("A random event occurred.");
+        _encounterDescription = "Area looks quiet. Nothing useful here.";
+        _log.Add("No enemies or loot found.");
     }
 
     private string GetRandomLootContainer()
@@ -783,20 +834,23 @@ else
 
     private async Task UseMedkitAsync()
     {
-        if (_raid is null || _encounterType != EncounterType.Combat)
+        if (_raid is null)
         {
             return;
         }
 
-        if (_medkits <= 0)
+        if (_raid.Inventory.MedkitCount <= 0)
         {
             return;
         }
 
-        _medkits--;
+        _raid.Inventory.MedkitCount--;
         _raid.Health = Math.Min(MaxHealth, _raid.Health + 10);
         _log.Add("Medkit used (+10 HP).");
-        await EnemyTurnAsync();
+        if (_encounterType == EncounterType.Combat)
+        {
+            await EnemyTurnAsync();
+        }
     }
 
     private async Task ReloadAsync()
@@ -869,13 +923,7 @@ else
         }
 
         var drop = GenerateLootItem();
-        _encounterType = EncounterType.Loot;
-        _lootContainer = "Dead Body";
-        _lootOptions.Clear();
-        _lootOptions.Add(drop);
-        _encounterDescription = "Enemy down. Check the body for loot.";
-        _awaitingDecision = false;
-        _log.Add($"Enemy dropped {drop.Name}. Loot it or move on.");
+        ShowDiscoveredLoot("Dead Body", [drop], "Enemy down. Check the body for loot.");
     }
 
     private Task TakeLootAsync(Item lootItem)
@@ -885,14 +933,9 @@ else
             return Task.CompletedTask;
         }
 
-        if (RaidEngine.TryAddLoot(_raid, lootItem))
+        if (RaidEngine.TryLootFromDiscovered(_raid, lootItem))
         {
             _log.Add($"Looted {lootItem.Name}.");
-            if (string.Equals(lootItem.Name, "Medkit", StringComparison.OrdinalIgnoreCase))
-            {
-                _medkits++;
-            }
-            _lootOptions.Remove(lootItem);
         }
         else
         {
@@ -902,49 +945,127 @@ else
         return Task.CompletedTask;
     }
 
-    private async Task ResolveNeutralAsync()
+    private Task DropCarriedAsync(Item item)
+    {
+        if (_raid is null)
+        {
+            return Task.CompletedTask;
+        }
+
+        if (RaidEngine.TryDropCarriedToDiscovered(_raid, item))
+        {
+            _log.Add($"Dropped {item.Name}.");
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private Task DropEquippedAsync(ItemType slotType)
+    {
+        if (_raid is null)
+        {
+            return Task.CompletedTask;
+        }
+
+        if (RaidEngine.TryDropEquippedToDiscovered(_raid, slotType))
+        {
+            _log.Add($"Dropped equipped {slotType}.");
+            if (slotType == ItemType.Weapon)
+            {
+                _weaponMalfunction = false;
+            }
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private Task EquipFromDiscoveredAsync(Item item)
+    {
+        if (_raid is null)
+        {
+            return Task.CompletedTask;
+        }
+
+        if (RaidEngine.TryEquipFromDiscovered(_raid, item))
+        {
+            _log.Add($"Equipped {item.Name} from discovered loot.");
+            if (item.Type == ItemType.Weapon)
+            {
+                _ammo = Math.Min(_ammo, CurrentMagazineCapacity);
+                _weaponMalfunction = false;
+            }
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private Task EquipFromCarriedAsync(Item item)
+    {
+        if (_raid is null)
+        {
+            return Task.CompletedTask;
+        }
+
+        if (RaidEngine.TryEquipFromCarried(_raid, item))
+        {
+            _log.Add($"Equipped {item.Name} from carried loot.");
+            if (item.Type == ItemType.Weapon)
+            {
+                _ammo = Math.Min(_ammo, CurrentMagazineCapacity);
+                _weaponMalfunction = false;
+            }
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private static bool CanEquipItem(Item item)
+    {
+        return item.Type is ItemType.Weapon or ItemType.Armor or ItemType.Backpack;
+    }
+
+    private IEnumerable<Item> GetEquippedItems()
+    {
+        if (_raid?.Inventory.EquippedWeapon is not null)
+        {
+            yield return _raid.Inventory.EquippedWeapon;
+        }
+
+        if (_raid?.Inventory.EquippedArmor is not null)
+        {
+            yield return _raid.Inventory.EquippedArmor;
+        }
+
+        if (_raid?.Inventory.EquippedBackpack is not null)
+        {
+            yield return _raid.Inventory.EquippedBackpack;
+        }
+    }
+
+    private void ShowDiscoveredLoot(string container, IEnumerable<Item> discoveredItems, string description)
     {
         if (_raid is null)
         {
             return;
         }
 
-        var roll = _rng.Next(4);
-        switch (roll)
+        var items = discoveredItems.ToList();
+        var shouldAppend = _encounterType == EncounterType.Loot && CurrentDiscoveredLoot.Count > 0;
+        if (shouldAppend)
         {
-            case 0:
-                RaidEngine.ApplyCombatDamage(_raid, 4);
-                _log.Add("Trap triggered: -4 HP.");
-                break;
-            case 1:
-                if (EquippedWeaponUsesAmmo)
-                {
-                    _ammo = Math.Min(CurrentMagazineCapacity, _ammo + 2);
-                    _log.Add("Found loose rounds: +2 ammo.");
-                }
-                else
-                {
-                    _log.Add("Found loose rounds, but your knife does not use ammo.");
-                }
-                break;
-            case 2:
-                _medkits++;
-                _log.Add("Found a medkit.");
-                break;
-            default:
-                var hiddenLoot = GenerateLootItem();
-                _ = RaidEngine.TryAddLoot(_raid, hiddenLoot);
-                _log.Add($"Hidden stash discovered: {hiddenLoot.Name}.");
-                break;
+            RaidEngine.AppendDiscoveredLoot(_raid, items);
+            _log.Add($"More loot discovered in {container}: {string.Join(", ", items.Select(x => x.Name))}.");
+        }
+        else
+        {
+            RaidEngine.StartDiscoveredLootEncounter(_raid, items);
+            _log.Add($"Found {container} with {CurrentDiscoveredLoot.Count} lootable items.");
         }
 
-        if (_raid.IsDead)
-        {
-            await EndRaidAsync(false, "You died from an environmental event.");
-            return;
-        }
-
-        EnterDecisionState();
+        _encounterType = EncounterType.Loot;
+        _lootContainer = container;
+        _encounterDescription = description;
+        _awaitingDecision = false;
     }
 
     private async Task AttemptExtractAsync()
@@ -989,25 +1110,27 @@ else
 
         if (_activeProfile == RaidProfile.Main)
         {
-            if (extracted)
+            foreach (var prior in _currentMainRaidBroughtItems)
             {
-                foreach (var loot in _raid.RaidLoot)
+                var idx = _onPersonItems.FindIndex(x => x.Item == prior);
+                if (idx >= 0)
                 {
-                    _onPersonItems.Add(new OnPersonEntry(loot, false));
-                }
-            }
-            else
-            {
-                foreach (var lost in _currentMainRaidBroughtItems)
-                {
-                    var idx = _onPersonItems.FindIndex(x => x.Item == lost);
-                    if (idx >= 0)
-                    {
-                        _onPersonItems.RemoveAt(idx);
-                    }
+                    _onPersonItems.RemoveAt(idx);
                 }
             }
 
+            if (extracted)
+            {
+                foreach (var extractedItem in _raid.Inventory.GetExtractableItems())
+                {
+                    var shouldBeEquipped = extractedItem == _raid.Inventory.EquippedWeapon
+                        || extractedItem == _raid.Inventory.EquippedArmor
+                        || extractedItem == _raid.Inventory.EquippedBackpack;
+                    _onPersonItems.Add(new OnPersonEntry(extractedItem, shouldBeEquipped));
+                }
+            }
+
+            NormalizeEquippedSlots();
             EnsureMainCharacterHasWeaponFallback();
             _currentMainRaidBroughtItems.Clear();
         }
@@ -1041,7 +1164,7 @@ else
 
     private int GetLootSlotCount()
     {
-        return _raid?.RaidLoot.Sum(x => x.Slots) ?? 0;
+        return _raid?.Inventory.CarriedItems.Sum(x => x.Slots) ?? 0;
     }
 
     private int GetBuyPrice(string itemName)
@@ -1071,15 +1194,24 @@ else
             return false;
         }
 
-        var currentSlots = _raid.RaidLoot.Sum(x => x.Slots);
+        if (string.Equals(item.Name, "Medkit", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        var currentSlots = _raid.Inventory.CarriedItems.Sum(x => x.Slots);
         return currentSlots + item.Slots <= _raid.BackpackCapacity;
     }
 
     private void AbandonRemainingLootIfAny()
     {
-        if (_encounterType == EncounterType.Loot && _lootOptions.Count > 0)
+        if (_encounterType == EncounterType.Loot && CurrentDiscoveredLoot.Count > 0)
         {
-            _log.Add($"Moved on and left {_lootOptions.Count} items behind.");
+            _log.Add($"Moved on and left {CurrentDiscoveredLoot.Count} items behind.");
+            if (_raid is not null)
+            {
+                RaidEngine.ClearDiscoveredLoot(_raid);
+            }
         }
     }
 

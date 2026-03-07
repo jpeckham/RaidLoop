@@ -25,9 +25,10 @@ public sealed class GameState
 public sealed class RaidState
 {
     public int Health { get; set; }
-    public int BackpackCapacity { get; }
+    public int BackpackCapacity { get; set; }
     public List<Item> BroughtItems { get; } = [];
-    public List<Item> RaidLoot { get; } = [];
+    public RaidInventory Inventory { get; }
+    public List<Item> RaidLoot => Inventory.CarriedItems;
     public bool IsDead => Health <= 0;
 
     public RaidState(int health, int backpackCapacity, List<Item> broughtItems, List<Item> raidLoot)
@@ -35,6 +36,88 @@ public sealed class RaidState
         Health = health;
         BackpackCapacity = backpackCapacity;
         BroughtItems = broughtItems;
-        RaidLoot = raidLoot;
+        Inventory = RaidInventory.FromItems(broughtItems, raidLoot, backpackCapacity);
+    }
+
+    public RaidState(int health, RaidInventory inventory)
+    {
+        Health = health;
+        Inventory = inventory;
+        BackpackCapacity = inventory.BackpackCapacity;
+        BroughtItems = inventory.GetExtractableItems().ToList();
+    }
+}
+
+public sealed class RaidInventory
+{
+    public Item? EquippedWeapon { get; set; }
+    public Item? EquippedArmor { get; set; }
+    public Item? EquippedBackpack { get; set; }
+    public List<Item> CarriedItems { get; } = [];
+    public List<Item> DiscoveredLoot { get; } = [];
+    public int MedkitCount { get; set; }
+    public int BackpackCapacity { get; set; }
+
+    public IEnumerable<Item> GetExtractableItems()
+    {
+        if (EquippedWeapon is not null)
+        {
+            yield return EquippedWeapon;
+        }
+
+        if (EquippedArmor is not null)
+        {
+            yield return EquippedArmor;
+        }
+
+        if (EquippedBackpack is not null)
+        {
+            yield return EquippedBackpack;
+        }
+
+        foreach (var item in CarriedItems)
+        {
+            yield return item;
+        }
+
+        for (var i = 0; i < MedkitCount; i++)
+        {
+            yield return new Item("Medkit", ItemType.Consumable, 1);
+        }
+    }
+
+    public static RaidInventory FromItems(List<Item> broughtItems, List<Item> carriedItems, int backpackCapacity)
+    {
+        var inventory = new RaidInventory
+        {
+            EquippedWeapon = broughtItems.FirstOrDefault(x => x.Type == ItemType.Weapon),
+            EquippedArmor = broughtItems.FirstOrDefault(x => x.Type == ItemType.Armor),
+            EquippedBackpack = broughtItems.FirstOrDefault(x => x.Type == ItemType.Backpack),
+            BackpackCapacity = backpackCapacity
+        };
+
+        foreach (var item in broughtItems.Where(x => x.Type is not (ItemType.Weapon or ItemType.Armor or ItemType.Backpack)))
+        {
+            if (string.Equals(item.Name, "Medkit", StringComparison.OrdinalIgnoreCase))
+            {
+                inventory.MedkitCount++;
+                continue;
+            }
+
+            inventory.CarriedItems.Add(item);
+        }
+
+        foreach (var item in carriedItems)
+        {
+            if (string.Equals(item.Name, "Medkit", StringComparison.OrdinalIgnoreCase))
+            {
+                inventory.MedkitCount++;
+                continue;
+            }
+
+            inventory.CarriedItems.Add(item);
+        }
+
+        return inventory;
     }
 }

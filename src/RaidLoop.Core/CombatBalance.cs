@@ -104,6 +104,16 @@ public static class CombatBalance
         return GetMagazineCapacity(weaponName) > 0;
     }
 
+    public static int GetBackpackCapacity(string? backpackName)
+    {
+        return backpackName switch
+        {
+            "Tactical Backpack" => 6,
+            "Small Backpack" => 3,
+            _ => 2
+        };
+    }
+
     public static string NormalizeItemName(string itemName)
     {
         var normalized = NormalizeWeaponName(itemName);

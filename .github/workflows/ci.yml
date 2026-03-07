@@ -1,0 +1,75 @@
+name: CI
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  test-and-coverage:
+    if: github.event_name != 'push' || !contains(github.event.head_commit.message, '[skip ci]')
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore
+        run: dotnet restore RaidLoop.sln
+
+      - name: Build
+        run: dotnet build RaidLoop.sln --configuration Release --no-restore
+
+      - name: Test with coverage
+        run: |
+          dotnet test tests/RaidLoop.Core.Tests/RaidLoop.Core.Tests.csproj \
+            --configuration Release \
+            --no-build \
+            --collect:"XPlat Code Coverage" \
+            --results-directory TestResults
+
+      - name: Install report generator
+        run: dotnet tool install -g dotnet-reportgenerator-globaltool
+
+      - name: Generate coverage report and badge
+        run: |
+          reportgenerator \
+            "-reports:TestResults/**/coverage.cobertura.xml" \
+            "-targetdir:coveragereport" \
+            "-reporttypes:Html;MarkdownSummaryGithub;Badges"
+
+      - name: Publish coverage summary
+        run: cat coveragereport/Summary.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Update coverage badge file
+        run: |
+          mkdir -p .github/badges
+          cp coveragereport/badge_linecoverage.svg .github/badges/coverage.svg
+
+      - name: Commit coverage badge (main only)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          if git diff --quiet -- .github/badges/coverage.svg; then
+            echo "No badge changes."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .github/badges/coverage.svg
+          git commit -m "chore: update coverage badge [skip ci]"
+          git push
+
+      - name: Upload coverage report artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coveragereport

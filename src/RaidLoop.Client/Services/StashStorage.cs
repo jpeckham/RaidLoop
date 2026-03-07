@@ -16,7 +16,16 @@ public sealed class StashStorage
 
     public async Task<GameSave> LoadAsync()
     {
-        var raw = await _js.InvokeAsync<string?>("raidLoopStorage.load", SaveKey);
+        string? raw;
+        try
+        {
+            raw = await _js.InvokeAsync<string?>("raidLoopStorage.load", SaveKey);
+        }
+        catch
+        {
+            return CreateDefaultSave();
+        }
+
         if (string.IsNullOrWhiteSpace(raw))
         {
             return CreateDefaultSave();
@@ -25,22 +34,44 @@ public sealed class StashStorage
         try
         {
             var save = JsonSerializer.Deserialize<GameSave>(raw);
-            return save is null
-                ? CreateDefaultSave()
-                : NormalizeSave(save);
+            if (save is null)
+            {
+                return CreateDefaultSave();
+            }
+
+            var onPerson = save.OnPersonItems ?? [];
+            // Migration from v3 shape where inventory was List<Item> CharacterInventory.
+            if (onPerson.Count == 0)
+            {
+                var legacyItems = ExtractLegacyCharacterInventory(raw);
+                if (legacyItems.Count > 0)
+                {
+                    onPerson = legacyItems.Select(i => new OnPersonEntry(i, false)).ToList();
+                }
+            }
+
+            save = save with { OnPersonItems = onPerson };
+            return NormalizeSave(save);
         }
         catch
         {
             // Migration path from v1 (stash-only payload)
-            var legacyStash = JsonSerializer.Deserialize<List<Item>>(raw);
-            if (legacyStash is not null)
+            try
             {
-                return NormalizeSave(new GameSave(
-                    MainStash: legacyStash,
-                    RandomCharacterAvailableAt: DateTimeOffset.MinValue,
-                    RandomCharacter: null,
-                    Money: 500,
-                    CharacterInventory: []));
+                var legacyStash = JsonSerializer.Deserialize<List<Item>>(raw);
+                if (legacyStash is not null)
+                {
+                    return NormalizeSave(new GameSave(
+                        MainStash: legacyStash,
+                        RandomCharacterAvailableAt: DateTimeOffset.MinValue,
+                        RandomCharacter: null,
+                        Money: 500,
+                        OnPersonItems: []));
+                }
+            }
+            catch
+            {
+                // fall through to default
             }
 
             return CreateDefaultSave();
@@ -71,20 +102,41 @@ public sealed class StashStorage
             RandomCharacterAvailableAt: DateTimeOffset.MinValue,
             RandomCharacter: null,
             Money: 500,
-            CharacterInventory: []));
+            OnPersonItems: []));
     }
 
     private static GameSave NormalizeSave(GameSave save)
     {
         var money = Math.Max(0, save.Money);
-        var inventory = save.CharacterInventory ?? [];
-        EnsureKnifeFallback(save.MainStash);
-        return save with { Money = money, CharacterInventory = inventory };
+        var inventory = save.OnPersonItems ?? [];
+        EnsureKnifeFallback(save.MainStash, inventory);
+        return save with { Money = money, OnPersonItems = inventory };
     }
 
-    private static void EnsureKnifeFallback(List<Item> stash)
+    private static List<Item> ExtractLegacyCharacterInventory(string raw)
     {
-        if (!stash.Any(item => item.Type == ItemType.Weapon))
+        try
+        {
+            using var doc = JsonDocument.Parse(raw);
+            if (!doc.RootElement.TryGetProperty("CharacterInventory", out var invNode) || invNode.ValueKind != JsonValueKind.Array)
+            {
+                return [];
+            }
+
+            var legacy = JsonSerializer.Deserialize<List<Item>>(invNode.GetRawText());
+            return legacy ?? [];
+        }
+        catch
+        {
+            return [];
+        }
+    }
+
+    private static void EnsureKnifeFallback(List<Item> stash, List<OnPersonEntry> onPerson)
+    {
+        var stashHasWeapon = stash.Any(item => item.Type == ItemType.Weapon);
+        var onPersonHasWeapon = onPerson.Any(entry => entry.Item.Type == ItemType.Weapon);
+        if (!stashHasWeapon && !onPersonHasWeapon)
         {
             stash.Add(new Item("Rusty Knife", ItemType.Weapon, 1));
         }
@@ -98,4 +150,6 @@ public sealed record GameSave(
     DateTimeOffset RandomCharacterAvailableAt,
     RandomCharacterState? RandomCharacter,
     int Money,
-    List<Item> CharacterInventory);
+    List<OnPersonEntry> OnPersonItems);
+
+public sealed record OnPersonEntry(Item Item, bool IsEquipped);

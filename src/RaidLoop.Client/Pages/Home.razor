@@ -14,41 +14,92 @@ else if (!_inRaid)
     <section class="panel">
         <h2>Main Character</h2>
         <p>If your stash is wiped, you still get a knife run.</p>
+        <p><strong>Money:</strong> $@_money | <strong>Stash:</strong> @_mainGame.Stash.Count/@MainStashCap</p>
 
         <div class="grid-two">
             <div>
                 <h3>Main Stash</h3>
-                @foreach (var item in _mainGame.Stash)
+                @for (var i = 0; i < _mainGame.Stash.Count; i++)
                 {
-                    <label class="row-item">
-                        <input type="checkbox"
-                               checked="@_mainLoadout.Contains(item)"
-                               disabled="@IsLoadoutDisabled(item)"
-                               @onchange="e => ToggleLoadout(item, (bool)(e.Value ?? false))" />
-                        <span>@item.Name</span>
-                        <small>@item.Type</small>
-                    </label>
+                    var stashIndex = i;
+                    var item = _mainGame.Stash[stashIndex];
+                    <div class="row-item">
+                        <label>
+                            <input type="checkbox"
+                                   checked="@_mainLoadoutIndices.Contains(stashIndex)"
+                                   disabled="@IsLoadoutDisabled(stashIndex)"
+                                   @onchange="e => ToggleLoadout(stashIndex, (bool)(e.Value ?? false))" />
+                            <span>@item.Name</span>
+                            <small>@item.Type</small>
+                        </label>
+                        <button class="action" @onclick="() => SellStashItemAsync(stashIndex)">Sell ($@GetSellPrice(item.Name))</button>
+                    </div>
                 }
             </div>
             <div>
                 <h3>Selected Loadout</h3>
-                @if (_mainLoadout.Count == 0)
+                @if (_mainLoadoutIndices.Count == 0)
                 {
                     <p>Nothing selected.</p>
                 }
                 else
                 {
                     <ul>
-                        @foreach (var item in _mainLoadout)
+                        @foreach (var item in GetSelectedMainItems())
                         {
                             <li>@item.Name (@item.Type)</li>
                         }
                     </ul>
                 }
-                <p>Backpack Capacity: @GetBackpackCapacity(_mainLoadout) slots</p>
+                <p>Backpack Capacity: @GetBackpackCapacity(GetSelectedMainItems()) slots</p>
                 <button class="action" disabled="@(!CanStartMainRaid)" @onclick="StartMainRaidAsync">Enter Raid (Main)</button>
+                @if (MustSelectRealWeapon && !HasSelectedNonKnifeWeapon)
+                {
+                    <p>Select a non-knife weapon to enter raid.</p>
+                }
+                else if (!MustSelectRealWeapon && !HasSelectedMainWeapon)
+                {
+                    <p>No weapon selected. Rusty Knife will be equipped automatically.</p>
+                }
+
+                <h3 class="top-gap">Character Inventory</h3>
+                @if (_characterInventory.Count == 0)
+                {
+                    <p>Empty.</p>
+                }
+                else
+                {
+                    @for (var i = 0; i < _characterInventory.Count; i++)
+                    {
+                        var characterIndex = i;
+                        var item = _characterInventory[characterIndex];
+                        <div class="row-item">
+                            <span>@item.Name</span>
+                            <small>@item.Type</small>
+                            <button class="action" disabled="@(!CanStashCharacterItem)" @onclick="() => StashCharacterItemAsync(characterIndex)">Stash</button>
+                            <button class="action" @onclick="() => SellCharacterItemAsync(characterIndex)">Sell ($@GetSellPrice(item.Name))</button>
+                        </div>
+                    }
+                    @if (!CanStashCharacterItem)
+                    {
+                        <p>Stash full. Sell or use items first.</p>
+                    }
+                }
             </div>
         </div>
+    </section>
+
+    <section class="panel top-gap">
+        <h2>Shopkeeper</h2>
+        <p>Basic supplies and a light weapon.</p>
+        @foreach (var stock in _shopStock)
+        {
+            <div class="row-item">
+                <span>@stock.Name</span>
+                <small>$@GetBuyPrice(stock.Name)</small>
+                <button class="action" disabled="@(_money < GetBuyPrice(stock.Name))" @onclick="() => BuyFromShopAsync(stock.Name, stock.Type)">Buy</button>
+            </div>
+        }
     </section>
 
     <section class="panel top-gap">
@@ -116,11 +167,26 @@ else
             else if (_encounterType == EncounterType.Loot)
             {
                 <p>Container discovered: @_lootContainer</p>
-                <p>Found item: @_pendingLoot?.Name</p>
-                <div class="actions">
-                    <button class="action" @onclick="TakeLootAsync">Take Item</button>
-                    <button class="action" @onclick="SkipLoot">Leave Item</button>
-                </div>
+                @if (_lootOptions.Count == 0)
+                {
+                    <p>Nothing useful left.</p>
+                }
+                else
+                {
+                    <ul>
+                        @foreach (var lootItem in _lootOptions)
+                        {
+                            <li>
+                                @lootItem.Name
+                                <button class="action" disabled="@(!CanLootItem(lootItem))" @onclick="() => TakeLootAsync(lootItem)">Loot</button>
+                            </li>
+                        }
+                    </ul>
+                    @if (_raid is not null && _lootOptions.Any(i => !CanLootItem(i)))
+                    {
+                        <p>Backpack full for some items.</p>
+                    }
+                }
             }
             else if (_encounterType == EncounterType.Neutral)
             {
@@ -136,11 +202,11 @@ else
                 </div>
             }
 
-            @if (_awaitingDecision)
+            @if (_awaitingDecision || _encounterType == EncounterType.Loot)
             {
                 <div class="actions top-gap">
-                    <button class="action" @onclick="ContinueSearching">Continue Searching</button>
-                    <button class="action" @onclick="MoveTowardExtract">Move Toward Extract</button>
+                    <button class="action" @onclick="ContinueSearching">@(_encounterType == EncounterType.Loot ? "Move On" : "Continue Searching")</button>
+                    <button class="action" @onclick="MoveTowardExtract">@(_encounterType == EncounterType.Loot ? "Move To Extract" : "Move Toward Extract")</button>
                 </div>
             }
         </div>
@@ -159,13 +225,23 @@ else
     private const int MaxHealth = 30;
     private const int MaxAmmo = 6;
     private const int ExtractRequired = 3;
+    private const int MainStashCap = 30;
 
     private readonly Random _rng = new();
-    private readonly HashSet<Item> _mainLoadout = [];
+    private readonly HashSet<int> _mainLoadoutIndices = [];
+    private readonly List<ShopStock> _shopStock =
+    [
+        new("Bandage", ItemType.Consumable),
+        new("Medkit", ItemType.Consumable),
+        new("Ammo Box", ItemType.Material),
+        new("Makarov", ItemType.Weapon)
+    ];
 
     private GameState _mainGame = new([]);
     private GameState? _activeGame;
     private List<Item> _raidLoadout = [];
+    private List<Item> _characterInventory = [];
+    private int _money;
 
     private RandomCharacterState? _randomCharacter;
     private DateTimeOffset _randomCharacterAvailableAt = DateTimeOffset.MinValue;
@@ -184,7 +260,7 @@ else
     private int _enemyHealth;
     private bool _extractionCombat;
 
-    private Item? _pendingLoot;
+    private readonly List<Item> _lootOptions = [];
     private string _lootContainer = string.Empty;
 
     private int _ammo;
@@ -202,6 +278,8 @@ else
         EnsureKnifeFallback(_mainGame.Stash);
         _randomCharacter = save.RandomCharacter;
         _randomCharacterAvailableAt = save.RandomCharacterAvailableAt;
+        _money = save.Money;
+        _characterInventory = save.CharacterInventory;
 
         _clockTimer = new System.Threading.Timer(async _ =>
         {
@@ -213,26 +291,31 @@ else
 
     private bool IsRandomCharacterReady => DateTimeOffset.UtcNow >= _randomCharacterAvailableAt;
 
-    private Item? MainWeapon => _mainLoadout.FirstOrDefault(i => i.Type == ItemType.Weapon);
-    private Item? MainBackpack => _mainLoadout.FirstOrDefault(i => i.Type == ItemType.Backpack);
-    private Item? MainArmor => _mainLoadout.FirstOrDefault(i => i.Type == ItemType.Armor);
+    private Item? MainWeapon => GetSelectedMainItems().FirstOrDefault(i => i.Type == ItemType.Weapon);
+    private Item? MainBackpack => GetSelectedMainItems().FirstOrDefault(i => i.Type == ItemType.Backpack);
+    private Item? MainArmor => GetSelectedMainItems().FirstOrDefault(i => i.Type == ItemType.Armor);
 
-    private bool CanStartMainRaid => MainWeapon is not null;
+    private bool MustSelectRealWeapon => _mainGame.Stash.Any(i => i.Type == ItemType.Weapon && i.Name != "Rusty Knife");
+    private bool HasSelectedMainWeapon => MainWeapon is not null;
+    private bool HasSelectedNonKnifeWeapon => GetSelectedMainItems().Any(i => i.Type == ItemType.Weapon && i.Name != "Rusty Knife");
+    private bool CanStartMainRaid => MustSelectRealWeapon ? HasSelectedNonKnifeWeapon : true;
+    private bool CanStashCharacterItem => _mainGame.Stash.Count < MainStashCap;
     private bool CanAttack => _ammo > 0 && !_weaponMalfunction;
     private bool CanBurstFire => _ammo >= 2 && !_weaponMalfunction;
 
-    private bool IsLoadoutDisabled(Item item)
+    private bool IsLoadoutDisabled(int stashIndex)
     {
-        if (_mainLoadout.Contains(item))
+        if (_mainLoadoutIndices.Contains(stashIndex))
         {
             return false;
         }
 
-        if (_mainLoadout.Count >= 6)
+        if (_mainLoadoutIndices.Count >= 6)
         {
             return true;
         }
 
+        var item = _mainGame.Stash[stashIndex];
         return item.Type switch
         {
             ItemType.Weapon => MainWeapon is not null,
@@ -242,29 +325,84 @@ else
         };
     }
 
-    private void ToggleLoadout(Item item, bool selected)
+    private void ToggleLoadout(int stashIndex, bool selected)
     {
         if (selected)
         {
-            _mainLoadout.Add(item);
+            _mainLoadoutIndices.Add(stashIndex);
         }
         else
         {
-            _mainLoadout.Remove(item);
+            _mainLoadoutIndices.Remove(stashIndex);
         }
     }
 
-    private async Task StartMainRaidAsync()
+    private async Task SellStashItemAsync(int stashIndex)
     {
-        if (!CanStartMainRaid)
+        if (stashIndex < 0 || stashIndex >= _mainGame.Stash.Count)
         {
             return;
         }
 
+        var item = _mainGame.Stash[stashIndex];
+        _money += GetSellPrice(item.Name);
+        _mainGame.Stash.RemoveAt(stashIndex);
+        AdjustSelectedIndicesAfterStashRemoval(stashIndex);
+        EnsureKnifeFallback(_mainGame.Stash);
+        await SaveAllAsync();
+    }
+
+    private async Task SellCharacterItemAsync(int characterIndex)
+    {
+        if (characterIndex < 0 || characterIndex >= _characterInventory.Count)
+        {
+            return;
+        }
+
+        var item = _characterInventory[characterIndex];
+        _money += GetSellPrice(item.Name);
+        _characterInventory.RemoveAt(characterIndex);
+        await SaveAllAsync();
+    }
+
+    private async Task StashCharacterItemAsync(int characterIndex)
+    {
+        if (!CanStashCharacterItem || characterIndex < 0 || characterIndex >= _characterInventory.Count)
+        {
+            return;
+        }
+
+        var item = _characterInventory[characterIndex];
+        _characterInventory.RemoveAt(characterIndex);
+        _mainGame.Stash.Add(item);
+        await SaveAllAsync();
+    }
+
+    private async Task BuyFromShopAsync(string itemName, ItemType itemType)
+    {
+        var price = GetBuyPrice(itemName);
+        if (_money < price)
+        {
+            return;
+        }
+
+        _money -= price;
+        _characterInventory.Add(new Item(itemName, itemType, 1));
+        await SaveAllAsync();
+    }
+
+    private async Task StartMainRaidAsync()
+    {
         _activeProfile = RaidProfile.Main;
         _activeRaiderName = "Main Character";
         _activeGame = _mainGame;
-        _raidLoadout = [.. _mainLoadout];
+        _raidLoadout = GetSelectedMainItems();
+        EnsureKnifeFallback(_mainGame.Stash);
+        if (!MustSelectRealWeapon && !_raidLoadout.Any(i => i.Type == ItemType.Weapon))
+        {
+            var fallbackKnife = _mainGame.Stash.First(i => i.Type == ItemType.Weapon);
+            _raidLoadout.Add(fallbackKnife);
+        }
 
         await StartRaidAsync(GetBackpackCapacity(_raidLoadout));
     }
@@ -405,7 +543,7 @@ else
     private void GenerateEncounter(bool movingToExtract)
     {
         _awaitingDecision = false;
-        _pendingLoot = null;
+        _lootOptions.Clear();
         _extractionCombat = false;
 
         if (movingToExtract)
@@ -436,9 +574,9 @@ else
         {
             _encounterType = EncounterType.Loot;
             _lootContainer = GetRandomLootContainer();
-            _pendingLoot = GenerateLootItem();
+            _lootOptions.AddRange(GenerateLootItems(_rng.Next(2, 5)));
             _encounterDescription = "A searchable container appears.";
-            _log.Add($"Found {_lootContainer}.");
+            _log.Add($"Found {_lootContainer} with {_lootOptions.Count} lootable items.");
             return;
         }
 
@@ -466,6 +604,17 @@ else
         };
 
         return lootTable[_rng.Next(lootTable.Count)];
+    }
+
+    private List<Item> GenerateLootItems(int count)
+    {
+        var items = new List<Item>();
+        for (var i = 0; i < count; i++)
+        {
+            items.Add(GenerateLootItem());
+        }
+
+        return items;
     }
 
     private async Task AttackAsync()
@@ -619,44 +768,33 @@ else
         }
 
         var drop = GenerateLootItem();
-        if (RaidEngine.TryAddLoot(_raid, drop))
-        {
-            _log.Add($"Enemy dropped {drop.Name}.");
-        }
-        else
-        {
-            _log.Add($"Enemy drop {drop.Name} discarded (no backpack space).");
-        }
-
-        EnterDecisionState();
+        _encounterType = EncounterType.Loot;
+        _lootContainer = "Dead Body";
+        _lootOptions.Clear();
+        _lootOptions.Add(drop);
+        _encounterDescription = "Enemy down. Check the body for loot.";
+        _awaitingDecision = false;
+        _log.Add($"Enemy dropped {drop.Name}. Loot it or move on.");
     }
 
-    private Task TakeLootAsync()
+    private Task TakeLootAsync(Item lootItem)
     {
-        if (_raid is null || _pendingLoot is null)
+        if (_raid is null)
         {
             return Task.CompletedTask;
         }
 
-        if (RaidEngine.TryAddLoot(_raid, _pendingLoot))
+        if (RaidEngine.TryAddLoot(_raid, lootItem))
         {
-            _log.Add($"Looted {_pendingLoot.Name}.");
+            _log.Add($"Looted {lootItem.Name}.");
+            _lootOptions.Remove(lootItem);
         }
         else
         {
-            _log.Add($"Could not loot {_pendingLoot.Name}: backpack full.");
+            _log.Add($"Could not loot {lootItem.Name}: backpack full.");
         }
 
-        _pendingLoot = null;
-        EnterDecisionState();
         return Task.CompletedTask;
-    }
-
-    private void SkipLoot()
-    {
-        _pendingLoot = null;
-        _log.Add("Loot skipped.");
-        EnterDecisionState();
     }
 
     private async Task ResolveNeutralAsync()
@@ -720,11 +858,13 @@ else
 
     private void ContinueSearching()
     {
+        AbandonRemainingLootIfAny();
         GenerateEncounter(movingToExtract: false);
     }
 
     private void MoveTowardExtract()
     {
+        AbandonRemainingLootIfAny();
         GenerateEncounter(movingToExtract: true);
     }
 
@@ -735,15 +875,20 @@ else
             return;
         }
 
-        RaidEngine.FinalizeRaid(_activeGame, _raid, extracted);
-
         if (_activeProfile == RaidProfile.Main)
         {
+            if (extracted)
+            {
+                _characterInventory.AddRange(_raid.BroughtItems);
+                _characterInventory.AddRange(_raid.RaidLoot);
+            }
+
             EnsureKnifeFallback(_mainGame.Stash);
-            _mainLoadout.Clear();
+            _mainLoadoutIndices.Clear();
         }
         else
         {
+            RaidEngine.FinalizeRaid(_activeGame, _raid, extracted);
             if (extracted && _randomCharacter is not null)
             {
                 _randomCharacter = _randomCharacter with { Inventory = [.. _activeGame.Stash] };
@@ -774,6 +919,50 @@ else
         return _raid?.RaidLoot.Sum(x => x.Slots) ?? 0;
     }
 
+    private int GetBuyPrice(string itemName)
+    {
+        return itemName switch
+        {
+            "Bandage" => 60,
+            "Medkit" => 120,
+            "Ammo Box" => 80,
+            "Makarov" => 240,
+            _ => 100
+        };
+    }
+
+    private int GetSellPrice(string itemName)
+    {
+        return (int)Math.Floor(GetBuyPrice(itemName) * 0.6);
+    }
+
+    private List<Item> GetSelectedMainItems()
+    {
+        return _mainLoadoutIndices
+            .Where(i => i >= 0 && i < _mainGame.Stash.Count)
+            .Select(i => _mainGame.Stash[i])
+            .ToList();
+    }
+
+    private bool CanLootItem(Item item)
+    {
+        if (_raid is null)
+        {
+            return false;
+        }
+
+        var currentSlots = _raid.RaidLoot.Sum(x => x.Slots);
+        return currentSlots + item.Slots <= _raid.BackpackCapacity;
+    }
+
+    private void AbandonRemainingLootIfAny()
+    {
+        if (_encounterType == EncounterType.Loot && _lootOptions.Count > 0)
+        {
+            _log.Add($"Moved on and left {_lootOptions.Count} items behind.");
+        }
+    }
+
     private bool TryTriggerMalfunction()
     {
         if (_weaponMalfunction)
@@ -792,9 +981,24 @@ else
 
     private void EnsureKnifeFallback(List<Item> stash)
     {
-        if (stash.Count == 0)
+        if (!stash.Any(item => item.Type == ItemType.Weapon))
         {
             stash.Add(new Item("Rusty Knife", ItemType.Weapon, 1));
+        }
+    }
+
+    private void AdjustSelectedIndicesAfterStashRemoval(int removedIndex)
+    {
+        var current = _mainLoadoutIndices.ToList();
+        _mainLoadoutIndices.Clear();
+        foreach (var index in current)
+        {
+            if (index == removedIndex)
+            {
+                continue;
+            }
+
+            _mainLoadoutIndices.Add(index > removedIndex ? index - 1 : index);
         }
     }
 
@@ -805,7 +1009,9 @@ else
             RandomCharacterAvailableAt: _randomCharacterAvailableAt,
             RandomCharacter: _randomCharacter is null
                 ? null
-                : new RandomCharacterState(_randomCharacter.Name, [.. _randomCharacter.Inventory])));
+                : new RandomCharacterState(_randomCharacter.Name, [.. _randomCharacter.Inventory]),
+            Money: _money,
+            CharacterInventory: [.. _characterInventory]));
     }
 
     public void Dispose()
@@ -826,4 +1032,6 @@ else
         Main,
         Random
     }
+
+    private sealed record ShopStock(string Name, ItemType Type);
 }

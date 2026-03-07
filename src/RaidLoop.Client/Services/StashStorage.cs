@@ -6,7 +6,7 @@ namespace RaidLoop.Client.Services;
 
 public sealed class StashStorage
 {
-    private const string SaveKey = "raidloop.save.v2";
+    private const string SaveKey = "raidloop.save.v3";
     private readonly IJSRuntime _js;
 
     public StashStorage(IJSRuntime js)
@@ -35,7 +35,12 @@ public sealed class StashStorage
             var legacyStash = JsonSerializer.Deserialize<List<Item>>(raw);
             if (legacyStash is not null)
             {
-                return NormalizeSave(new GameSave(legacyStash, DateTimeOffset.MinValue, null));
+                return NormalizeSave(new GameSave(
+                    MainStash: legacyStash,
+                    RandomCharacterAvailableAt: DateTimeOffset.MinValue,
+                    RandomCharacter: null,
+                    Money: 500,
+                    CharacterInventory: []));
             }
 
             return CreateDefaultSave();
@@ -64,18 +69,22 @@ public sealed class StashStorage
                 new Item("Ammo Box", ItemType.Material, 1)
             ],
             RandomCharacterAvailableAt: DateTimeOffset.MinValue,
-            RandomCharacter: null));
+            RandomCharacter: null,
+            Money: 500,
+            CharacterInventory: []));
     }
 
     private static GameSave NormalizeSave(GameSave save)
     {
+        var money = Math.Max(0, save.Money);
+        var inventory = save.CharacterInventory ?? [];
         EnsureKnifeFallback(save.MainStash);
-        return save;
+        return save with { Money = money, CharacterInventory = inventory };
     }
 
     private static void EnsureKnifeFallback(List<Item> stash)
     {
-        if (stash.Count == 0)
+        if (!stash.Any(item => item.Type == ItemType.Weapon))
         {
             stash.Add(new Item("Rusty Knife", ItemType.Weapon, 1));
         }
@@ -87,4 +96,6 @@ public sealed record RandomCharacterState(string Name, List<Item> Inventory);
 public sealed record GameSave(
     List<Item> MainStash,
     DateTimeOffset RandomCharacterAvailableAt,
-    RandomCharacterState? RandomCharacter);
+    RandomCharacterState? RandomCharacter,
+    int Money,
+    List<Item> CharacterInventory);

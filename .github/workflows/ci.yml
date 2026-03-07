@@ -26,14 +26,10 @@ jobs:
       - name: Restore
         run: dotnet restore RaidLoop.sln
 
-      - name: Build
-        run: dotnet build RaidLoop.sln --configuration Release --no-restore
-
       - name: Test with coverage
         run: |
           dotnet test tests/RaidLoop.Core.Tests/RaidLoop.Core.Tests.csproj \
             --configuration Release \
-            --no-build \
             --collect:"XPlat Code Coverage" \
             --results-directory TestResults
 

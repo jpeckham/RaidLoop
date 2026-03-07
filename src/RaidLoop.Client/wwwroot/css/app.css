@@ -59,6 +59,11 @@ h2, h3 {
     cursor: pointer;
 }
 
+.row-item .action {
+    min-width: 6.5rem;
+    text-align: center;
+}
+
 .action:disabled {
     opacity: 0.45;
     cursor: not-allowed;

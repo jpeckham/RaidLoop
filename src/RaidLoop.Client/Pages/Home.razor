@@ -99,23 +99,40 @@ else if (!_inRaid)
         {
             @if (IsRandomCharacterReady)
             {
-                <button class="action" @onclick="GenerateRandomCharacterAsync">Generate Random Character</button>
+                <button class="action" disabled="@(!CanStartLuckRunRaid)" @onclick="StartRandomRaidAsync">Enter Raid (Luck Run)</button>
+                @if (!CanStartLuckRunRaid && !string.IsNullOrWhiteSpace(LuckRunBlockReason))
+                {
+                    <p>@LuckRunBlockReason</p>
+                }
             }
             else
             {
-                <p>Next random character in: @GetRandomCooldownText()</p>
+                <p>Next Luck Run in: @GetRandomCooldownText()</p>
             }
         }
         else
         {
-            <p><strong>@_randomCharacter.Name</strong> is ready.</p>
-            <ul>
-                @foreach (var item in _randomCharacter.Inventory)
+            var hasUnprocessedLoot = _randomCharacter.Inventory.Count > 0;
+            if (hasUnprocessedLoot)
+            {
+                <p><strong>@_randomCharacter.Name</strong> brought back loot. Process it before the next raid.</p>
+                @for (var i = 0; i < _randomCharacter.Inventory.Count; i++)
                 {
-                    <li>@item.Name (@item.Type)</li>
+                    var luckIndex = i;
+                    var item = _randomCharacter.Inventory[luckIndex];
+                    <div class="row-item">
+                        <span>@item.Name</span>
+                        <small>@item.Type</small>
+                        <button class="action" disabled="@(_mainGame.Stash.Count >= MainStashCap)" @onclick="() => StoreLuckRunItemAsync(luckIndex)">Store</button>
+                        <button class="action" @onclick="() => MoveLuckRunItemToForRaidAsync(luckIndex)">For Raid</button>
+                        <button class="action" disabled="@(!CanSellItem(item))" @onclick="() => SellLuckRunItemAsync(luckIndex)">Sell ($@GetSellPrice(item.Name))</button>
+                    </div>
                 }
-            </ul>
-            <button class="action" @onclick="StartRandomRaidAsync">Enter Raid (Luck Run)</button>
+                @if (_mainGame.Stash.Count >= MainStashCap)
+                {
+                    <p>Storage full. Sell or move items to For Raid.</p>
+                }
+            }
         }
     </section>
 
@@ -261,6 +278,11 @@ else
     private const int MaxHealth = 30;
     private const int ExtractRequired = 3;
     private const int MainStashCap = 30;
+#if DEBUG
+    private static readonly TimeSpan LuckRunCooldown = TimeSpan.FromSeconds(5);
+#else
+    private static readonly TimeSpan LuckRunCooldown = TimeSpan.FromMinutes(5);
+#endif
 
     private readonly Random _rng = new();
     private IRng CombatRng => new RandomRng(_rng);
@@ -325,13 +347,20 @@ else
     }
 
     private bool IsRandomCharacterReady => DateTimeOffset.UtcNow >= _randomCharacterAvailableAt;
+    private bool HasUnprocessedLuckRunLoot => _randomCharacter is not null && _randomCharacter.Inventory.Count > 0;
 
     private bool HasUnequippedOnPersonItems => _onPersonItems.Any(x => IsSlotType(x.Item.Type) && !x.IsEquipped);
     private bool HasEquippedWeapon => _onPersonItems.Any(x => x.IsEquipped && x.Item.Type == ItemType.Weapon);
-    private bool CanStartMainRaid => !HasUnequippedOnPersonItems && HasEquippedWeapon;
-    private string? RaidBlockReason => HasUnequippedOnPersonItems
+    private bool CanStartMainRaid => !HasUnprocessedLuckRunLoot && !HasUnequippedOnPersonItems && HasEquippedWeapon;
+    private bool CanStartLuckRunRaid => !HasUnprocessedLuckRunLoot && IsRandomCharacterReady;
+    private string? RaidBlockReason => HasUnprocessedLuckRunLoot
+        ? "Luck Run loot must be sold, stored, or moved to For Raid before entering a raid."
+        : (HasUnequippedOnPersonItems
         ? "You need to move your unequipped items to stash or sell them."
-        : (!HasEquippedWeapon ? "You don't have a weapon equipped." : null);
+        : (!HasEquippedWeapon ? "You don't have a weapon equipped." : null));
+    private string? LuckRunBlockReason => HasUnprocessedLuckRunLoot
+        ? "Luck Run loot must be sold, stored, or moved to For Raid before entering a raid."
+        : null;
     private bool CanStashOnPersonItem => _mainGame.Stash.Count < MainStashCap;
     private bool EquippedWeaponUsesAmmo => CombatBalance.WeaponUsesAmmo(GetEquippedWeaponName());
     private int CurrentMagazineCapacity => CombatBalance.GetMagazineCapacity(GetEquippedWeaponName());
@@ -517,9 +546,9 @@ else
         await StartRaidAsync(GetBackpackCapacity(_raidLoadout));
     }
 
-    private async Task GenerateRandomCharacterAsync()
+    private async Task StartRandomRaidAsync()
     {
-        if (!IsRandomCharacterReady)
+        if (!CanStartLuckRunRaid)
         {
             return;
         }
@@ -528,24 +557,76 @@ else
             Name: GenerateRandomName(),
             Inventory: GenerateRandomLoadout());
 
-        _resultMessage = "Random character generated.";
-        await SaveAllAsync();
-    }
-
-    private async Task StartRandomRaidAsync()
-    {
-        if (_randomCharacter is null)
-        {
-            return;
-        }
-
         _activeProfile = RaidProfile.Random;
         _activeRaiderName = _randomCharacter.Name;
         _activeGame = new GameState(_randomCharacter.Inventory);
         _raidLoadout = [.. _activeGame.Stash];
-        _randomCharacterAvailableAt = DateTimeOffset.UtcNow.AddMinutes(5);
 
         await StartRaidAsync(GetBackpackCapacity(_raidLoadout));
+    }
+
+    private async Task StoreLuckRunItemAsync(int luckIndex)
+    {
+        if (_randomCharacter is null || luckIndex < 0 || luckIndex >= _randomCharacter.Inventory.Count)
+        {
+            return;
+        }
+
+        if (_mainGame.Stash.Count >= MainStashCap)
+        {
+            return;
+        }
+
+        var item = _randomCharacter.Inventory[luckIndex];
+        _mainGame.Stash.Add(item);
+        _randomCharacter.Inventory.RemoveAt(luckIndex);
+        EnsureMainCharacterHasWeaponFallback();
+        await CompleteLuckRunSettlementIfDoneAsync();
+    }
+
+    private async Task MoveLuckRunItemToForRaidAsync(int luckIndex)
+    {
+        if (_randomCharacter is null || luckIndex < 0 || luckIndex >= _randomCharacter.Inventory.Count)
+        {
+            return;
+        }
+
+        var item = _randomCharacter.Inventory[luckIndex];
+        _randomCharacter.Inventory.RemoveAt(luckIndex);
+        _onPersonItems.Add(new OnPersonEntry(item, ShouldEquipFromStash(item)));
+        EnsureMainCharacterHasWeaponFallback();
+        NormalizeEquippedSlots();
+        await CompleteLuckRunSettlementIfDoneAsync();
+    }
+
+    private async Task SellLuckRunItemAsync(int luckIndex)
+    {
+        if (_randomCharacter is null || luckIndex < 0 || luckIndex >= _randomCharacter.Inventory.Count)
+        {
+            return;
+        }
+
+        var item = _randomCharacter.Inventory[luckIndex];
+        var sellPrice = GetSellPrice(item.Name);
+        if (sellPrice <= 0)
+        {
+            return;
+        }
+
+        _money += sellPrice;
+        _randomCharacter.Inventory.RemoveAt(luckIndex);
+        await CompleteLuckRunSettlementIfDoneAsync();
+    }
+
+    private async Task CompleteLuckRunSettlementIfDoneAsync()
+    {
+        if (_randomCharacter is not null && _randomCharacter.Inventory.Count == 0)
+        {
+            _randomCharacter = null;
+            _randomCharacterAvailableAt = DateTimeOffset.UtcNow.Add(LuckRunCooldown);
+        }
+
+        await SaveAllAsync();
     }
 
     private async Task StartRaidAsync(int backpackCapacity)
@@ -1144,6 +1225,7 @@ else
             else
             {
                 _randomCharacter = null;
+                _randomCharacterAvailableAt = DateTimeOffset.UtcNow.Add(LuckRunCooldown);
             }
         }
 

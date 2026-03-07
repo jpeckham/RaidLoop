@@ -42,13 +42,27 @@ jobs:
 
       - name: Generate coverage report and badge
         run: |
+          ls -R TestResults
           reportgenerator \
             "-reports:TestResults/**/coverage.cobertura.xml" \
             "-targetdir:coveragereport" \
             "-reporttypes:Html;MarkdownSummaryGithub;Badges"
 
       - name: Publish coverage summary
-        run: cat coveragereport/Summary.md >> "$GITHUB_STEP_SUMMARY"
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -f coveragereport/SummaryGithub.md ]; then
+            cat coveragereport/SummaryGithub.md >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          if [ -f coveragereport/Summary.md ]; then
+            cat coveragereport/Summary.md >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          echo "Coverage summary file not found. Generated files:" >&2
+          find coveragereport -maxdepth 2 -type f | sort >&2
+          exit 1
 
       - name: Update coverage badge file
         run: |

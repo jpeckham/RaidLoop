@@ -129,7 +129,7 @@ else
 
         <div class="hud">
             <span>Health: @_raid!.Health / @MaxHealth</span>
-            <span>Ammo: @_ammo / @MaxAmmo</span>
+            <span>@GetAmmoHudText()</span>
             <span>Weapon: @(_weaponMalfunction ? "Malfunctioned" : "Operational")</span>
             <span>Medkits: @_medkits</span>
             <span>Loot Slots: @GetLootSlotCount() / @_raid.BackpackCapacity</span>
@@ -211,16 +211,14 @@ else
 @code {
     private const string FallbackKnifeName = "Rusty Knife";
     private const int MaxHealth = 30;
-    private const int MaxAmmo = 6;
     private const int ExtractRequired = 3;
     private const int MainStashCap = 30;
 
     private readonly Random _rng = new();
+    private IRng CombatRng => new RandomRng(_rng);
     private readonly List<ShopStock> _shopStock =
     [
-        new("Bandage", ItemType.Consumable),
         new("Medkit", ItemType.Consumable),
-        new("Ammo Box", ItemType.Material),
         new("Makarov", ItemType.Weapon)
     ];
 
@@ -287,8 +285,10 @@ else
         ? "You need to move your unequipped items to stash or sell them."
         : (!HasEquippedWeapon ? "You don't have a weapon equipped." : null);
     private bool CanStashOnPersonItem => _mainGame.Stash.Count < MainStashCap;
-    private bool CanAttack => _ammo > 0 && !_weaponMalfunction;
-    private bool CanBurstFire => _ammo >= 2 && !_weaponMalfunction;
+    private bool EquippedWeaponUsesAmmo => CombatBalance.WeaponUsesAmmo(GetEquippedWeaponName());
+    private int CurrentMagazineCapacity => CombatBalance.GetMagazineCapacity(GetEquippedWeaponName());
+    private bool CanAttack => (!EquippedWeaponUsesAmmo || _ammo > 0) && !_weaponMalfunction;
+    private bool CanBurstFire => EquippedWeaponUsesAmmo && _ammo >= 2 && !_weaponMalfunction;
     private bool CanUseMedkit => _medkits > 0;
 
     private static bool IsSlotType(ItemType type)
@@ -509,7 +509,7 @@ else
         _inRaid = true;
         _awaitingDecision = false;
         _extractProgress = 0;
-        _ammo = MaxAmmo;
+        _ammo = CurrentMagazineCapacity;
         _weaponMalfunction = false;
         _medkits = _raidLoadout.Count(i => i.Name == "Medkit");
         _log.Clear();
@@ -538,17 +538,6 @@ else
 
     private List<Item> GenerateRandomLoadout()
     {
-        var weapons = new[]
-        {
-            new Item("Rusty SMG", ItemType.Weapon, 1),
-            new Item("Sawed Shotgun", ItemType.Weapon, 1),
-            new Item("Compact Carbine", ItemType.Weapon, 1)
-        };
-        var armors = new[]
-        {
-            new Item("Soft Vest", ItemType.Armor, 1),
-            new Item("Plate Carrier", ItemType.Armor, 1)
-        };
         var backpacks = new[]
         {
             new Item("Small Backpack", ItemType.Backpack, 1),
@@ -557,11 +546,11 @@ else
 
         return
         [
-            weapons[_rng.Next(weapons.Length)],
-            armors[_rng.Next(armors.Length)],
+            new Item("Makarov", ItemType.Weapon, 1),
             backpacks[_rng.Next(backpacks.Length)],
             new Item("Medkit", ItemType.Consumable, 1),
-            new Item("Ammo Box", ItemType.Material, 1)
+            new Item("Bandage", ItemType.Sellable, 1),
+            new Item("Ammo Box", ItemType.Sellable, 1)
         ];
     }
 
@@ -579,12 +568,23 @@ else
     private int GetArmorReduction()
     {
         var armor = _raidLoadout.FirstOrDefault(i => i.Type == ItemType.Armor);
-        return armor?.Name switch
+        return armor is null ? 0 : CombatBalance.GetArmorReduction(armor.Name);
+    }
+
+    private string GetEquippedWeaponName()
+    {
+        var weapon = _raidLoadout.FirstOrDefault(i => i.Type == ItemType.Weapon);
+        return weapon?.Name ?? FallbackKnifeName;
+    }
+
+    private string GetAmmoHudText()
+    {
+        if (!EquippedWeaponUsesAmmo)
         {
-            "Plate Carrier" => 3,
-            "Soft Vest" => 1,
-            _ => 0
-        };
+            return "Ammo: ∞";
+        }
+
+        return $"Ammo: {_ammo} / {CurrentMagazineCapacity}";
     }
 
     private string GetEncounterTitle()
@@ -652,17 +652,51 @@ else
 
     private Item GenerateLootItem()
     {
-        var lootTable = new List<Item>
+        var roll = _rng.Next(100);
+        if (roll < 50)
         {
-            new("Bandage", ItemType.Consumable, 1),
-            new("Medkit", ItemType.Consumable, 1),
-            new("Ammo Box", ItemType.Material, 1),
-            new("Scrap Metal", ItemType.Material, 1),
-            new("Rare Scope", ItemType.Material, 1),
-            new("Legendary Trigger Group", ItemType.Material, 1)
+            var commonLoot = new List<Item>
+            {
+                new("Bandage", ItemType.Sellable, 1),
+                new("Ammo Box", ItemType.Sellable, 1),
+                new("Scrap Metal", ItemType.Material, 1),
+                new("Rare Scope", ItemType.Material, 1)
+            };
+
+            return commonLoot[_rng.Next(commonLoot.Count)];
+        }
+
+        if (roll < 80)
+        {
+            var uncommonLoot = new List<Item>
+            {
+                new("Medkit", ItemType.Consumable, 1),
+                new("PPSH", ItemType.Weapon, 1),
+                new("6B2 body armor", ItemType.Armor, 1),
+                new("Legendary Trigger Group", ItemType.Material, 1)
+            };
+
+            return uncommonLoot[_rng.Next(uncommonLoot.Count)];
+        }
+
+        if (roll < 95)
+        {
+            var rareLoot = new List<Item>
+            {
+                new("AK74", ItemType.Weapon, 1),
+                new("6B13 assault armor", ItemType.Armor, 1)
+            };
+
+            return rareLoot[_rng.Next(rareLoot.Count)];
+        }
+
+        var veryRareLoot = new List<Item>
+        {
+            new("AK47", ItemType.Weapon, 1),
+            new("6B43 Zabralo-Sh body armor", ItemType.Armor, 1)
         };
 
-        return lootTable[_rng.Next(lootTable.Count)];
+        return veryRareLoot[_rng.Next(veryRareLoot.Count)];
     }
 
     private List<Item> GenerateLootItems(int count)
@@ -685,7 +719,7 @@ else
 
         if (!CanAttack)
         {
-            _log.Add(_weaponMalfunction ? "Weapon is malfunctioned. Reload to clear it." : "No ammo. Reload.");
+            _log.Add(_weaponMalfunction ? "Weapon is malfunctioned. Reload to clear it." : "No ammo.");
             return;
         }
 
@@ -696,8 +730,11 @@ else
             return;
         }
 
-        _ammo--;
-        var damage = _rng.Next(5, 10);
+        if (EquippedWeaponUsesAmmo)
+        {
+            _ammo--;
+        }
+        var damage = CombatBalance.RollDamage(GetEquippedWeaponName(), AttackMode.Standard, CombatRng);
         _enemyHealth -= damage;
         _log.Add($"You hit {_enemyName} for {damage}.");
 
@@ -731,7 +768,7 @@ else
         }
 
         _ammo -= 2;
-        var damage = _rng.Next(9, 15);
+        var damage = CombatBalance.RollDamage(GetEquippedWeaponName(), AttackMode.Burst, CombatRng);
         _enemyHealth -= damage;
         _log.Add($"Burst Fire deals {damage}.");
 
@@ -769,7 +806,14 @@ else
             return;
         }
 
-        _ammo = MaxAmmo;
+        if (!EquippedWeaponUsesAmmo)
+        {
+            _log.Add("Knife doesn't need reloading.");
+            await EnemyTurnAsync();
+            return;
+        }
+
+        _ammo = CurrentMagazineCapacity;
         _weaponMalfunction = false;
         _log.Add("Weapon reloaded and cleared.");
         await EnemyTurnAsync();
@@ -801,7 +845,7 @@ else
         }
 
         var incoming = _rng.Next(3, 9);
-        var reduced = Math.Max(1, incoming - GetArmorReduction());
+        var reduced = CombatBalance.ApplyArmorReduction(incoming, GetArmorReduction());
         RaidEngine.ApplyCombatDamage(_raid, reduced);
         _log.Add($"{_enemyName} hits you for {reduced}.");
 
@@ -873,8 +917,15 @@ else
                 _log.Add("Trap triggered: -4 HP.");
                 break;
             case 1:
-                _ammo = Math.Min(MaxAmmo, _ammo + 2);
-                _log.Add("Found loose rounds: +2 ammo.");
+                if (EquippedWeaponUsesAmmo)
+                {
+                    _ammo = Math.Min(CurrentMagazineCapacity, _ammo + 2);
+                    _log.Add("Found loose rounds: +2 ammo.");
+                }
+                else
+                {
+                    _log.Add("Found loose rounds, but your knife does not use ammo.");
+                }
                 break;
             case 2:
                 _medkits++;
@@ -995,14 +1046,7 @@ else
 
     private int GetBuyPrice(string itemName)
     {
-        return itemName switch
-        {
-            "Bandage" => 60,
-            "Medkit" => 120,
-            "Ammo Box" => 80,
-            "Makarov" => 240,
-            _ => 100
-        };
+        return CombatBalance.GetBuyPrice(itemName);
     }
 
     private int GetSellPrice(string itemName)

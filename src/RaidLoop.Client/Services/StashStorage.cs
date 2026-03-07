@@ -90,14 +90,15 @@ public sealed class StashStorage
             MainStash:
             [
                 new Item("Makarov", ItemType.Weapon, 1),
-                new Item("Hunting Rifle", ItemType.Weapon, 1),
-                new Item("Soft Vest", ItemType.Armor, 1),
-                new Item("Plate Carrier", ItemType.Armor, 1),
+                new Item("PPSH", ItemType.Weapon, 1),
+                new Item("AK74", ItemType.Weapon, 1),
+                new Item("6B2 body armor", ItemType.Armor, 1),
+                new Item("6B13 assault armor", ItemType.Armor, 1),
                 new Item("Small Backpack", ItemType.Backpack, 1),
                 new Item("Tactical Backpack", ItemType.Backpack, 1),
                 new Item("Medkit", ItemType.Consumable, 1),
-                new Item("Bandage", ItemType.Consumable, 1),
-                new Item("Ammo Box", ItemType.Material, 1)
+                new Item("Bandage", ItemType.Sellable, 1),
+                new Item("Ammo Box", ItemType.Sellable, 1)
             ],
             RandomCharacterAvailableAt: DateTimeOffset.MinValue,
             RandomCharacter: null,
@@ -108,9 +109,10 @@ public sealed class StashStorage
     private static GameSave NormalizeSave(GameSave save)
     {
         var money = Math.Max(0, save.Money);
-        var inventory = save.OnPersonItems ?? [];
-        EnsureKnifeFallback(save.MainStash, inventory);
-        return save with { Money = money, OnPersonItems = inventory };
+        var stash = NormalizeItems(save.MainStash);
+        var inventory = NormalizeOnPersonItems(save.OnPersonItems ?? []);
+        EnsureKnifeFallback(stash, inventory);
+        return save with { Money = money, MainStash = stash, OnPersonItems = inventory };
     }
 
     private static List<Item> ExtractLegacyCharacterInventory(string raw)
@@ -140,6 +142,34 @@ public sealed class StashStorage
         {
             stash.Add(new Item("Rusty Knife", ItemType.Weapon, 1));
         }
+    }
+
+    private static List<Item> NormalizeItems(List<Item> items)
+    {
+        return items
+            .Select(NormalizeItem)
+            .ToList();
+    }
+
+    private static List<OnPersonEntry> NormalizeOnPersonItems(List<OnPersonEntry> items)
+    {
+        return items
+            .Select(i => i with { Item = NormalizeItem(i.Item) })
+            .ToList();
+    }
+
+    private static Item NormalizeItem(Item item)
+    {
+        var normalizedName = CombatBalance.NormalizeItemName(item.Name);
+        var normalizedType = normalizedName switch
+        {
+            "Bandage" => ItemType.Sellable,
+            "Ammo Box" => ItemType.Sellable,
+            "Medkit" => ItemType.Consumable,
+            _ => item.Type
+        };
+
+        return item with { Name = normalizedName, Type = normalizedType };
     }
 }
 

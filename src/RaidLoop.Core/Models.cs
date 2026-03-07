@@ -6,6 +6,7 @@ public enum ItemType
     Armor,
     Backpack,
     Consumable,
+    Sellable,
     Material
 }
 

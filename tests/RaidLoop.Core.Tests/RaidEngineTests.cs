@@ -4,6 +4,92 @@ namespace RaidLoop.Core.Tests;
 
 public class RaidEngineTests
 {
+    [Theory]
+    [InlineData("Makarov", AttackMode.Standard, 5, 8)]
+    [InlineData("PPSH", AttackMode.Standard, 6, 10)]
+    [InlineData("AK74", AttackMode.Standard, 8, 12)]
+    [InlineData("AK47", AttackMode.Standard, 9, 14)]
+    [InlineData("Makarov", AttackMode.Burst, 8, 12)]
+    [InlineData("PPSH", AttackMode.Burst, 10, 15)]
+    [InlineData("AK74", AttackMode.Burst, 12, 17)]
+    [InlineData("AK47", AttackMode.Burst, 13, 19)]
+    public void CombatBalance_WeaponDamageProfiles_AreConfigured(string weapon, AttackMode mode, int min, int max)
+    {
+        var range = CombatBalance.GetDamageRange(weapon, mode);
+
+        Assert.Equal(min, range.Min);
+        Assert.Equal(max, range.Max);
+    }
+
+    [Theory]
+    [InlineData("6B2 body armor", 1)]
+    [InlineData("6B13 assault armor", 3)]
+    [InlineData("6B43 Zabralo-Sh body armor", 5)]
+    [InlineData("Unknown armor", 0)]
+    public void CombatBalance_ArmorReduction_ByQuality(string armorName, int reduction)
+    {
+        Assert.Equal(reduction, CombatBalance.GetArmorReduction(armorName));
+    }
+
+    [Fact]
+    public void CombatBalance_RollDamage_UsesInjectableRng()
+    {
+        var rng = new SequenceRng([0, 3]);
+
+        var makarov = CombatBalance.RollDamage("Makarov", AttackMode.Standard, rng);
+        var ak47 = CombatBalance.RollDamage("AK47", AttackMode.Burst, rng);
+
+        Assert.Equal(5, makarov);
+        Assert.Equal(16, ak47);
+    }
+
+    [Theory]
+    [InlineData(2, 5, 1)]
+    [InlineData(9, 3, 6)]
+    [InlineData(12, 0, 12)]
+    public void CombatBalance_ApplyArmorReduction_HasMinimumFloor(int incomingDamage, int armorReduction, int expected)
+    {
+        var mitigated = CombatBalance.ApplyArmorReduction(incomingDamage, armorReduction);
+
+        Assert.Equal(expected, mitigated);
+    }
+
+    [Theory]
+    [InlineData("Makarov", 240)]
+    [InlineData("PPSH", 650)]
+    [InlineData("AK74", 1250)]
+    [InlineData("AK47", 1700)]
+    [InlineData("6B2 body armor", 380)]
+    [InlineData("6B13 assault armor", 900)]
+    [InlineData("6B43 Zabralo-Sh body armor", 1800)]
+    public void CombatBalance_Prices_AreConfigured(string itemName, int buyPrice)
+    {
+        Assert.Equal(buyPrice, CombatBalance.GetBuyPrice(itemName));
+    }
+
+    [Theory]
+    [InlineData("Makarov", 8)]
+    [InlineData("PPSH", 35)]
+    [InlineData("AK74", 30)]
+    [InlineData("AK47", 30)]
+    [InlineData("Rusty Knife", 0)]
+    [InlineData("Unknown Weapon", 8)]
+    public void CombatBalance_AmmoCapacity_ByWeapon(string weaponName, int capacity)
+    {
+        Assert.Equal(capacity, CombatBalance.GetMagazineCapacity(weaponName));
+    }
+
+    [Theory]
+    [InlineData("Rusty Knife", false)]
+    [InlineData("Makarov", true)]
+    [InlineData("PPSH", true)]
+    [InlineData("AK74", true)]
+    [InlineData("AK47", true)]
+    public void CombatBalance_WeaponAmmoUsage_ByWeapon(string weaponName, bool usesAmmo)
+    {
+        Assert.Equal(usesAmmo, CombatBalance.WeaponUsesAmmo(weaponName));
+    }
+
     [Fact]
     public void ApplyCombatDamage_ReducesHealth_AndMarksDeathAtZero()
     {
@@ -28,11 +114,26 @@ public class RaidEngineTests
             broughtItems: [],
             raidLoot: []);
 
-        var addedFirst = RaidEngine.TryAddLoot(state, new Item("Bandage", ItemType.Consumable, 1));
+        var addedFirst = RaidEngine.TryAddLoot(state, new Item("Bandage", ItemType.Sellable, 1));
         var addedSecond = RaidEngine.TryAddLoot(state, new Item("Rifle", ItemType.Weapon, 2));
 
         Assert.True(addedFirst);
         Assert.False(addedSecond);
+        Assert.Single(state.RaidLoot);
+    }
+
+    [Fact]
+    public void Sellable_Items_AreRegularLootForCapacityChecks()
+    {
+        var state = new RaidState(
+            health: 30,
+            backpackCapacity: 1,
+            broughtItems: [],
+            raidLoot: []);
+
+        var added = RaidEngine.TryAddLoot(state, new Item("Ammo Box", ItemType.Sellable, 1));
+
+        Assert.True(added);
         Assert.Single(state.RaidLoot);
     }
 
@@ -86,5 +187,22 @@ public class RaidEngineTests
         Assert.DoesNotContain(game.Stash, i => i.Name == "Backpack");
         Assert.DoesNotContain(game.Stash, i => i.Name == "Ammo");
         Assert.Contains(game.Stash, i => i.Name == "Spare Knife");
+    }
+
+    private sealed class SequenceRng : IRng
+    {
+        private readonly Queue<int> _sequence;
+
+        public SequenceRng(IEnumerable<int> sequence)
+        {
+            _sequence = new Queue<int>(sequence);
+        }
+
+        public int Next(int minInclusive, int maxExclusive)
+        {
+            var offset = _sequence.Dequeue();
+            var span = maxExclusive - minInclusive;
+            return minInclusive + (offset % span);
+        }
     }
 }

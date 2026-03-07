@@ -1,8 +1,7 @@
 # RaidLoop
 
-[![Build](https://github.com/jpeckham/extractor-shooter-light/actions/workflows/ci.yml/badge.svg)](https://github.com/jpeckham/extractor-shooter-light/actions/workflows/ci.yml)
-[![Deploy](https://github.com/jpeckham/extractor-shooter-light/actions/workflows/deploy-pages.yml/badge.svg)](https://github.com/jpeckham/extractor-shooter-light/actions/workflows/deploy-pages.yml)
-[![Coverage](.github/badges/coverage.svg)](https://github.com/jpeckham/extractor-shooter-light/actions/workflows/ci.yml)
+[![Continuous Delivery](https://github.com/jpeckham/extractor-shooter-light/actions/workflows/continuous-delivery.yml/badge.svg)](https://github.com/jpeckham/extractor-shooter-light/actions/workflows/continuous-delivery.yml)
+[![Coverage](https://raw.githubusercontent.com/jpeckham/extractor-shooter-light/main/.github/badges/coverage.svg)](https://github.com/jpeckham/extractor-shooter-light/actions/workflows/continuous-delivery.yml)
 
 RaidLoop is a lightweight extraction-shooter loop built with Blazor WebAssembly.
 You prepare gear, run raids, fight or loot, and try to extract with profit.
@@ -58,6 +57,5 @@ dotnet build RaidLoop.sln
 
 ## CI / Coverage / Deploy
 
-- `CI` workflow builds, tests, generates coverage report, and updates coverage badge.
-- `Deploy` workflow publishes the Blazor app to GitHub Pages.
-- Coverage reports are uploaded as workflow artifacts on CI runs.
+- `Continuous Delivery` workflow runs quality checks, coverage, Pages deploy, and release tagging in one pipeline.
+- Coverage reports are uploaded as workflow artifacts.

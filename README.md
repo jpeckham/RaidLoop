@@ -1,7 +1,11 @@
 # RaidLoop
 
-[![Continuous Delivery](https://github.com/jpeckham/RaidLoop/actions/workflows/continuous-delivery.yml/badge.svg)](https://github.com/jpeckham/RaidLoop/actions/workflows/continuous-delivery.yml)
-[![Coverage](https://raw.githubusercontent.com/jpeckham/RaidLoop/main/.github/badges/coverage.svg)](https://github.com/jpeckham/RaidLoop/actions/workflows/continuous-delivery.yml)
+<!-- badges:start -->
+## Status Badges
+
+[![Continuous Delivery](https://github.com/jpeckham/RaidLoop/actions/workflows/continuous-delivery-dotnet-blazor-github-pages.yml/badge.svg)](https://github.com/jpeckham/RaidLoop/actions/workflows/continuous-delivery-dotnet-blazor-github-pages.yml)
+[![Coverage](https://raw.githubusercontent.com/jpeckham/RaidLoop/main/.github/badges/coverage.svg)](https://github.com/jpeckham/RaidLoop/actions/workflows/continuous-delivery-dotnet-blazor-github-pages.yml)
+<!-- badges:end -->
 
 RaidLoop is a lightweight extraction-shooter loop built with Blazor WebAssembly.
 You prepare gear, run raids, fight or loot, and try to extract with profit.

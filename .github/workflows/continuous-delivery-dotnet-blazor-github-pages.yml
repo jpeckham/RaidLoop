@@ -1,0 +1,22 @@
+name: Continuous Delivery
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  continuous-delivery:
+    uses: jpeckham/.github/.github/workflows/continuous-delivery-dotnet-blazor-github-pages.yml@main
+    with:
+      main_branch: main
+      dotnet_version: 10.0.x
+      solution_path: RaidLoop.sln
+      test_project_path: tests/RaidLoop.Core.Tests/RaidLoop.Core.Tests.csproj
+      publish_project_path: src/RaidLoop.Client/RaidLoop.Client.csproj
+      publish_output_dir: publish
+      version_file: version.json
+      coverage_badge_path: .github/badges/coverage.svg
+    secrets: inherit
+

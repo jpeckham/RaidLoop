@@ -4,7 +4,7 @@
 ## Status Badges
 
 [![Continuous Delivery](https://github.com/jpeckham/RaidLoop/actions/workflows/continuous-delivery-dotnet-blazor-github-pages.yml/badge.svg)](https://github.com/jpeckham/RaidLoop/actions/workflows/continuous-delivery-dotnet-blazor-github-pages.yml)
-[![Coverage](https://raw.githubusercontent.com/jpeckham/RaidLoop/main/.github/badges/coverage.svg)](https://github.com/jpeckham/RaidLoop/actions/workflows/continuous-delivery-dotnet-blazor-github-pages.yml)
+[![Coverage](.github/badges/coverage.svg)](https://jpeckham.github.io/RaidLoop/coverage/)
 <!-- badges:end -->
 
 RaidLoop is a lightweight extraction-shooter loop built with Blazor WebAssembly.

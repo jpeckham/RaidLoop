@@ -18,5 +18,6 @@ jobs:
       publish_output_dir: publish
       version_file: version.json
       coverage_badge_path: .github/badges/coverage.svg
+      coverage_pages_subpath: coverage
     secrets: inherit
 

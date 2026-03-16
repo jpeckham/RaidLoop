@@ -1,0 +1,24 @@
+<div>
+    <h3>Storage</h3>
+    <p>Your secured items. They cannot be lost when you raid.</p>
+    @for (var i = 0; i < Items.Count; i++)
+    {
+        var stashIndex = i;
+        var item = Items[stashIndex];
+        <div class="row-item">
+            <span>@item.Name</span>
+            <small>@item.Type</small>
+            <button class="action" @onclick="() => OnMoveToLoadout.InvokeAsync(stashIndex)">@GetPrimaryActionLabel(item)</button>
+            <button class="action" disabled="@(!CanSellItem(item))" @onclick="() => OnSell.InvokeAsync(stashIndex)">Sell ($@GetSellPrice(item.Name))</button>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public IReadOnlyList<Item> Items { get; set; } = [];
+    [Parameter, EditorRequired] public Func<Item, string> GetPrimaryActionLabel { get; set; } = _ => string.Empty;
+    [Parameter, EditorRequired] public Func<Item, bool> CanSellItem { get; set; } = _ => false;
+    [Parameter, EditorRequired] public Func<string, int> GetSellPrice { get; set; } = _ => 0;
+    [Parameter, EditorRequired] public EventCallback<int> OnMoveToLoadout { get; set; }
+    [Parameter, EditorRequired] public EventCallback<int> OnSell { get; set; }
+}

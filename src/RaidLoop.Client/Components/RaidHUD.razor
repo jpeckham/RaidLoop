@@ -1,0 +1,168 @@
+<section class="panel">
+    <h2>In Raid</h2>
+
+    <div class="hud">
+        <span>Health: @Raid.Health / @MaxHealth</span>
+        <span>@AmmoHudText</span>
+        <span>Weapon: @(WeaponMalfunction ? "Malfunctioned" : "Operational")</span>
+        <span>Medkits: @Medkits</span>
+        <span>Loot Slots: @LootSlots / @Raid.BackpackCapacity</span>
+        <span>Extract Progress: @ExtractProgress / @ExtractRequired</span>
+    </div>
+
+    <div class="encounter">
+        <h3>@EncounterTitle</h3>
+        <p>@EncounterDescription</p>
+
+        @if (EncounterType == EncounterType.Combat)
+        {
+            <p>Enemy: @EnemyName (HP: @EnemyHealth)</p>
+            <div class="actions">
+                <button class="action" disabled="@(!CanAttack)" @onclick="() => OnAttack.InvokeAsync()">Attack</button>
+                <button class="action" disabled="@(!CanBurstFire)" @onclick="() => OnBurstFire.InvokeAsync()">Use Skill: Burst Fire</button>
+                <button class="action" @onclick="() => OnReload.InvokeAsync()">@(WeaponMalfunction ? "Fix Malfunction" : "Reload")</button>
+                <button class="action" @onclick="() => OnFlee.InvokeAsync()">Flee</button>
+            </div>
+        }
+        else if (EncounterType == EncounterType.Loot)
+        {
+            <p>Container discovered: @LootContainer</p>
+            <div class="grid-two">
+                <div>
+                    @if (DiscoveredLoot.Count == 0)
+                    {
+                        <p>Nothing useful left.</p>
+                    }
+                    else
+                    {
+                        <h4>Discovered Loot</h4>
+                        <ul>
+                            @foreach (var lootItem in DiscoveredLoot)
+                            {
+                                <li>
+                                    @lootItem.Name
+                                    <button class="action" disabled="@(!CanLootItem(lootItem))" @onclick="() => OnTakeLoot.InvokeAsync(lootItem)">Loot</button>
+                                    @if (CanEquipItem(lootItem))
+                                    {
+                                        <button class="action" @onclick="() => OnEquipFromDiscovered.InvokeAsync(lootItem)">Equip</button>
+                                    }
+                                </li>
+                            }
+                        </ul>
+                    }
+                    @if (DiscoveredLoot.Any(item => !CanLootItem(item)))
+                    {
+                        <p>Backpack full for some items.</p>
+                    }
+                </div>
+                <div>
+                    <h4>Character Inventory</h4>
+                    <h4>Equipped</h4>
+                    @foreach (var equipped in EquippedItems)
+                    {
+                        <div class="row-item">
+                            <span>@equipped.Name</span>
+                            <small>@equipped.Type</small>
+                            <button class="action" @onclick="() => OnDropEquipped.InvokeAsync(equipped.Type)">Drop</button>
+                        </div>
+                    }
+
+                    <h4>Carried</h4>
+                    @if (CarriedLoot.Count == 0)
+                    {
+                        <p>No carried loot.</p>
+                    }
+                    else
+                    {
+                        @foreach (var carried in CarriedLoot)
+                        {
+                            <div class="row-item">
+                                <span>@carried.Name</span>
+                                <small>@carried.Type</small>
+                                <button class="action" @onclick="() => OnDropCarried.InvokeAsync(carried)">Drop</button>
+                                @if (CanEquipItem(carried))
+                                {
+                                    <button class="action" @onclick="() => OnEquipFromCarried.InvokeAsync(carried)">Equip</button>
+                                }
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+        }
+        else if (EncounterType == EncounterType.Extraction)
+        {
+            <div class="actions">
+                <button class="action" @onclick="() => OnAttemptExtract.InvokeAsync()">Attempt Extraction</button>
+                <button class="action" @onclick="() => OnContinueSearching.InvokeAsync()">Continue Searching</button>
+            </div>
+        }
+        else if (EncounterType == EncounterType.Neutral)
+        {
+            <div class="actions">
+                <button class="action" @onclick="() => OnContinueSearching.InvokeAsync()">Keep Searching</button>
+                <button class="action" @onclick="() => OnMoveTowardExtract.InvokeAsync()">Move to Extract</button>
+            </div>
+        }
+
+        @if (AwaitingDecision || EncounterType == EncounterType.Loot)
+        {
+            <div class="actions top-gap">
+                <button class="action" @onclick="() => OnContinueSearching.InvokeAsync()">Continue Searching</button>
+                <button class="action" @onclick="() => OnMoveTowardExtract.InvokeAsync()">@(EncounterType == EncounterType.Loot ? "Move To Extract" : "Move Toward Extract")</button>
+            </div>
+        }
+
+        <div class="actions top-gap">
+            <button class="action" disabled="@(!CanUseMedkit)" @onclick="() => OnUseMedkit.InvokeAsync()">Use Medkit</button>
+        </div>
+    </div>
+
+    <h3>Raid Log</h3>
+    <ul>
+        @foreach (var entry in LogEntries)
+        {
+            <li>@entry</li>
+        }
+    </ul>
+</section>
+
+@code {
+    [Parameter, EditorRequired] public RaidState Raid { get; set; } = default!;
+    [Parameter, EditorRequired] public int MaxHealth { get; set; }
+    [Parameter, EditorRequired] public string AmmoHudText { get; set; } = string.Empty;
+    [Parameter, EditorRequired] public bool WeaponMalfunction { get; set; }
+    [Parameter, EditorRequired] public int Medkits { get; set; }
+    [Parameter, EditorRequired] public int LootSlots { get; set; }
+    [Parameter, EditorRequired] public int ExtractProgress { get; set; }
+    [Parameter, EditorRequired] public int ExtractRequired { get; set; }
+    [Parameter, EditorRequired] public EncounterType EncounterType { get; set; }
+    [Parameter, EditorRequired] public string EncounterTitle { get; set; } = string.Empty;
+    [Parameter, EditorRequired] public string EncounterDescription { get; set; } = string.Empty;
+    [Parameter] public string EnemyName { get; set; } = string.Empty;
+    [Parameter, EditorRequired] public int EnemyHealth { get; set; }
+    [Parameter] public string LootContainer { get; set; } = string.Empty;
+    [Parameter, EditorRequired] public IReadOnlyList<Item> DiscoveredLoot { get; set; } = [];
+    [Parameter, EditorRequired] public IReadOnlyList<Item> CarriedLoot { get; set; } = [];
+    [Parameter, EditorRequired] public IReadOnlyList<Item> EquippedItems { get; set; } = [];
+    [Parameter, EditorRequired] public IReadOnlyList<string> LogEntries { get; set; } = [];
+    [Parameter, EditorRequired] public bool AwaitingDecision { get; set; }
+    [Parameter, EditorRequired] public bool CanAttack { get; set; }
+    [Parameter, EditorRequired] public bool CanBurstFire { get; set; }
+    [Parameter, EditorRequired] public bool CanUseMedkit { get; set; }
+    [Parameter, EditorRequired] public Func<Item, bool> CanLootItem { get; set; } = _ => false;
+    [Parameter, EditorRequired] public Func<Item, bool> CanEquipItem { get; set; } = _ => false;
+    [Parameter, EditorRequired] public EventCallback OnAttack { get; set; }
+    [Parameter, EditorRequired] public EventCallback OnBurstFire { get; set; }
+    [Parameter, EditorRequired] public EventCallback OnReload { get; set; }
+    [Parameter, EditorRequired] public EventCallback OnFlee { get; set; }
+    [Parameter, EditorRequired] public EventCallback OnUseMedkit { get; set; }
+    [Parameter, EditorRequired] public EventCallback<Item> OnTakeLoot { get; set; }
+    [Parameter, EditorRequired] public EventCallback<Item> OnDropCarried { get; set; }
+    [Parameter, EditorRequired] public EventCallback<ItemType> OnDropEquipped { get; set; }
+    [Parameter, EditorRequired] public EventCallback<Item> OnEquipFromDiscovered { get; set; }
+    [Parameter, EditorRequired] public EventCallback<Item> OnEquipFromCarried { get; set; }
+    [Parameter, EditorRequired] public EventCallback OnAttemptExtract { get; set; }
+    [Parameter, EditorRequired] public EventCallback OnContinueSearching { get; set; }
+    [Parameter, EditorRequired] public EventCallback OnMoveTowardExtract { get; set; }
+}

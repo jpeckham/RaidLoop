@@ -19,9 +19,9 @@ public partial class Home : IDisposable
     private IRng CombatRng => new RandomRng(_rng);
     private readonly List<ShopStock> _shopStock =
     [
-        new("Medkit", ItemType.Consumable),
-        new("Makarov", ItemType.Weapon),
-        new("Small Backpack", ItemType.Backpack)
+        new(new Item("Medkit", ItemType.Consumable, 1, Rarity.Common)),
+        new(new Item("Makarov", ItemType.Weapon, 1, Rarity.Common)),
+        new(new Item("Small Backpack", ItemType.Backpack, 1, Rarity.Uncommon))
     ];
 
     private GameState _mainGame = new([]);
@@ -56,6 +56,8 @@ public partial class Home : IDisposable
     private int _extractProgress;
     private string _resultMessage = string.Empty;
     private string _activeRaiderName = "Main Character";
+    private string _activeRaidId = string.Empty;
+    private List<Item> _enemyLoadout = [];
     private readonly List<string> _log = [];
 
     protected override async Task OnInitializedAsync()
@@ -248,14 +250,14 @@ public partial class Home : IDisposable
 
     private async Task BuyFromShopAsync(ShopStock stock)
     {
-        var price = GetBuyPrice(stock.Name);
+        var price = GetBuyPrice(stock.Item.Name);
         if (_money < price)
         {
             return;
         }
 
         _money -= price;
-        _onPersonItems.Add(new OnPersonEntry(new Item(stock.Name, stock.Type, 1), false));
+        _onPersonItems.Add(new OnPersonEntry(stock.Item, false));
         NormalizeEquippedSlots();
         await SaveAllAsync();
     }
@@ -367,12 +369,16 @@ public partial class Home : IDisposable
         }
 
         _resultMessage = string.Empty;
+        _activeRaidId = Guid.NewGuid().ToString("N");
+        GameEventLog.Clear();
+        GameEventLog.SetRaidContext(_activeRaidId);
         _raid = RaidEngine.StartRaid(_activeGame, _raidLoadout, backpackCapacity, MaxHealth);
         _inRaid = true;
         _awaitingDecision = false;
         _extractProgress = 0;
         _ammo = CurrentMagazineCapacity;
         _weaponMalfunction = false;
+        _enemyLoadout = [];
         _log.Clear();
         _log.Add($"Raid started as {_activeRaiderName}.");
 
@@ -488,6 +494,12 @@ public partial class Home : IDisposable
             _encounterType = EncounterType.Combat;
             _enemyName = _rng.Next(100) < 65 ? "Scav" : "Patrol Guard";
             _enemyHealth = _rng.Next(12, 21);
+            _enemyLoadout = LootTables.EnemyLoadout().Draw(CombatRng, _rng.Next(1, 3));
+            GameEventLog.Append(new GameEvent(
+                "enemy.loadout.generated",
+                _activeRaidId,
+                GameEventLog.CreateItemSnapshots(_enemyLoadout),
+                DateTimeOffset.UtcNow));
             _encounterDescription = "Enemy contact on your position.";
             _log.Add($"Combat started vs {_enemyName}.");
             return;
@@ -496,7 +508,7 @@ public partial class Home : IDisposable
         if (roll < 80)
         {
             var container = GetRandomLootContainer();
-            var discovered = GenerateLootItems(_rng.Next(2, 5));
+            var discovered = GetLootTableForContainer(container).Draw(CombatRng, _rng.Next(2, 5));
             ShowDiscoveredLoot(container, discovered, "A searchable container appears.");
             return;
         }
@@ -512,64 +524,14 @@ public partial class Home : IDisposable
         return options[_rng.Next(options.Length)];
     }
 
-    private Item GenerateLootItem()
+    private LootTable GetLootTableForContainer(string container)
     {
-        var roll = _rng.Next(100);
-        if (roll < 50)
+        return container switch
         {
-            var commonLoot = new List<Item>
-            {
-                new("Bandage", ItemType.Sellable, 1),
-                new("Ammo Box", ItemType.Sellable, 1),
-                new("Scrap Metal", ItemType.Material, 1),
-                new("Rare Scope", ItemType.Material, 1)
-            };
-
-            return commonLoot[_rng.Next(commonLoot.Count)];
-        }
-
-        if (roll < 80)
-        {
-            var uncommonLoot = new List<Item>
-            {
-                new("Medkit", ItemType.Consumable, 1),
-                new("PPSH", ItemType.Weapon, 1),
-                new("6B2 body armor", ItemType.Armor, 1),
-                new("Legendary Trigger Group", ItemType.Material, 1)
-            };
-
-            return uncommonLoot[_rng.Next(uncommonLoot.Count)];
-        }
-
-        if (roll < 95)
-        {
-            var rareLoot = new List<Item>
-            {
-                new("AK74", ItemType.Weapon, 1),
-                new("6B13 assault armor", ItemType.Armor, 1)
-            };
-
-            return rareLoot[_rng.Next(rareLoot.Count)];
-        }
-
-        var veryRareLoot = new List<Item>
-        {
-            new("AK47", ItemType.Weapon, 1),
-            new("6B43 Zabralo-Sh body armor", ItemType.Armor, 1)
+            "Weapons Crate" => LootTables.WeaponsCrate(),
+            "Medical Container" => LootTables.MixedCache(),
+            _ => LootTables.MixedCache()
         };
-
-        return veryRareLoot[_rng.Next(veryRareLoot.Count)];
-    }
-
-    private List<Item> GenerateLootItems(int count)
-    {
-        var items = new List<Item>();
-        for (var i = 0; i < count; i++)
-        {
-            items.Add(GenerateLootItem());
-        }
-
-        return items;
     }
 
     private async Task AttackAsync()
@@ -733,8 +695,8 @@ public partial class Home : IDisposable
             return;
         }
 
-        var drop = GenerateLootItem();
-        ShowDiscoveredLoot("Dead Body", [drop], "Enemy down. Check the body for loot.");
+        var droppedItems = _enemyLoadout.Count > 0 ? _enemyLoadout : LootTables.EnemyLoadout().Draw(CombatRng, 1);
+        ShowDiscoveredLoot("Dead Body", droppedItems, "Enemy down. Check the body for loot.");
     }
 
     private Task TakeLootAsync(Item lootItem)
@@ -746,6 +708,11 @@ public partial class Home : IDisposable
 
         if (RaidEngine.TryLootFromDiscovered(_raid, lootItem))
         {
+            GameEventLog.Append(new GameEvent(
+                "loot.acquired",
+                _activeRaidId,
+                GameEventLog.CreateItemSnapshots([lootItem]),
+                DateTimeOffset.UtcNow));
             _log.Add($"Looted {lootItem.Name}.");
         }
         else
@@ -799,6 +766,11 @@ public partial class Home : IDisposable
 
         if (RaidEngine.TryEquipFromDiscovered(_raid, item))
         {
+            GameEventLog.Append(new GameEvent(
+                "player.equip",
+                _activeRaidId,
+                GameEventLog.CreateItemSnapshots([item]),
+                DateTimeOffset.UtcNow));
             _log.Add($"Equipped {item.Name} from discovered loot.");
             if (item.Type == ItemType.Weapon)
             {
@@ -819,6 +791,11 @@ public partial class Home : IDisposable
 
         if (RaidEngine.TryEquipFromCarried(_raid, item))
         {
+            GameEventLog.Append(new GameEvent(
+                "player.equip",
+                _activeRaidId,
+                GameEventLog.CreateItemSnapshots([item]),
+                DateTimeOffset.UtcNow));
             _log.Add($"Equipped {item.Name} from carried loot.");
             if (item.Type == ItemType.Weapon)
             {
@@ -919,6 +896,8 @@ public partial class Home : IDisposable
             return;
         }
 
+        var retainedItems = extracted ? _raid.Inventory.GetExtractableItems().ToList() : [];
+
         if (_activeProfile == RaidProfile.Main)
         {
             foreach (var prior in _currentMainRaidBroughtItems)
@@ -959,6 +938,15 @@ public partial class Home : IDisposable
             }
         }
 
+        if (extracted)
+        {
+            GameEventLog.Append(new GameEvent(
+                "extraction.complete",
+                _activeRaidId,
+                GameEventLog.CreateItemSnapshots(retainedItems),
+                DateTimeOffset.UtcNow));
+        }
+
         await SaveAllAsync();
 
         _resultMessage = message;
@@ -966,6 +954,7 @@ public partial class Home : IDisposable
         _awaitingDecision = false;
         _raid = null;
         _activeGame = null;
+        _enemyLoadout = [];
     }
 
     private void EnterDecisionState()

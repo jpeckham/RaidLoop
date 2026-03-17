@@ -12,7 +12,7 @@
             var onPersonIndex = i;
             var entry = OnPersonItems[onPersonIndex];
             <div class="row-item">
-                <span>@entry.Item.Name</span>
+                <span class="rarity-@entry.Item.Rarity.ToString().ToLower()">@entry.Item.Name</span>
                 <small>@entry.Item.Type</small>
                 @if (IsSlotType(entry.Item.Type))
                 {

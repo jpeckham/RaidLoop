@@ -40,7 +40,7 @@
                             @foreach (var lootItem in DiscoveredLoot)
                             {
                                 <li>
-                                    @lootItem.Name
+                                    <span class="rarity-@lootItem.Rarity.ToString().ToLower()">@lootItem.Name</span>
                                     <button class="action" disabled="@(!CanLootItem(lootItem))" @onclick="() => OnTakeLoot.InvokeAsync(lootItem)">Loot</button>
                                     @if (CanEquipItem(lootItem))
                                     {
@@ -61,7 +61,7 @@
                     @foreach (var equipped in EquippedItems)
                     {
                         <div class="row-item">
-                            <span>@equipped.Name</span>
+                            <span class="rarity-@equipped.Rarity.ToString().ToLower()">@equipped.Name</span>
                             <small>@equipped.Type</small>
                             <button class="action" @onclick="() => OnDropEquipped.InvokeAsync(equipped.Type)">Drop</button>
                         </div>
@@ -77,7 +77,7 @@
                         @foreach (var carried in CarriedLoot)
                         {
                             <div class="row-item">
-                                <span>@carried.Name</span>
+                                <span class="rarity-@carried.Rarity.ToString().ToLower()">@carried.Name</span>
                                 <small>@carried.Type</small>
                                 <button class="action" @onclick="() => OnDropCarried.InvokeAsync(carried)">Drop</button>
                                 @if (CanEquipItem(carried))

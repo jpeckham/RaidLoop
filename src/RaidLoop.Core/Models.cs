@@ -10,7 +10,7 @@ public enum ItemType
     Material
 }
 
-public sealed record Item(string Name, ItemType Type, int Slots = 1);
+public sealed record Item(string Name, ItemType Type, int Slots = 1, Rarity Rarity = Rarity.Common);
 
 public sealed class GameState
 {

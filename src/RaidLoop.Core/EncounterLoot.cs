@@ -8,6 +8,12 @@ public static class EncounterLoot
         AppendDiscoveredLoot(discoveredLoot, items);
     }
 
+    public static void StartLootEncounter(List<Item> discoveredLoot, LootTable table, IRng rng, int drawCount = 3)
+    {
+        discoveredLoot.Clear();
+        AppendDiscoveredLoot(discoveredLoot, table.Draw(rng, drawCount));
+    }
+
     public static void AppendDiscoveredLoot(List<Item> discoveredLoot, IEnumerable<Item> items)
     {
         discoveredLoot.AddRange(items);

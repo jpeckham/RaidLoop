@@ -1,0 +1,57 @@
+<section class="panel top-gap">
+    <h2>Luck Run</h2>
+    <p>Available once every 5 minutes. Generates a random kit to raid with. Keep what you extract.</p>
+
+    @if (RandomCharacter is null)
+    {
+        @if (IsRandomCharacterReady)
+        {
+            <button class="action" disabled="@(!CanStartLuckRunRaid)" @onclick="() => OnStartLuckRun.InvokeAsync()">Enter Raid (Luck Run)</button>
+            @if (!CanStartLuckRunRaid && !string.IsNullOrWhiteSpace(LuckRunBlockReason))
+            {
+                <p>@LuckRunBlockReason</p>
+            }
+        }
+        else
+        {
+            <p>Next Luck Run in: @RandomCooldownText</p>
+        }
+    }
+    else if (RandomCharacter.Inventory.Count > 0)
+    {
+        <p><strong>@RandomCharacter.Name</strong> brought back loot. Process it before the next raid.</p>
+        @for (var i = 0; i < RandomCharacter.Inventory.Count; i++)
+        {
+            var luckIndex = i;
+            var item = RandomCharacter.Inventory[luckIndex];
+            <div class="row-item">
+                <ItemTypeIcon Type="item.Type" />
+                <span class="item-name rarity-@item.DisplayRarity.ToString().ToLower()">@item.Name</span>
+                <div class="row-actions">
+                    <button class="action" disabled="@IsStashFull" @onclick="() => OnStoreLuckRunItem.InvokeAsync(luckIndex)">Store</button>
+                    <button class="action" @onclick="() => OnMoveToForRaid.InvokeAsync(luckIndex)">For Raid</button>
+                    <button class="action" disabled="@(!CanSellItem(item))" @onclick="() => OnSellLuckRunItem.InvokeAsync(luckIndex)">Sell ($@GetSellPrice(item))</button>
+                </div>
+            </div>
+        }
+        @if (IsStashFull)
+        {
+            <p>Storage full. Sell or move items to For Raid.</p>
+        }
+    }
+</section>
+
+@code {
+    [Parameter] public RandomCharacterState? RandomCharacter { get; set; }
+    [Parameter, EditorRequired] public bool IsRandomCharacterReady { get; set; }
+    [Parameter, EditorRequired] public bool CanStartLuckRunRaid { get; set; }
+    [Parameter] public string? LuckRunBlockReason { get; set; }
+    [Parameter, EditorRequired] public string RandomCooldownText { get; set; } = string.Empty;
+    [Parameter, EditorRequired] public bool IsStashFull { get; set; }
+    [Parameter, EditorRequired] public Func<Item, bool> CanSellItem { get; set; } = _ => false;
+    [Parameter, EditorRequired] public Func<Item, int> GetSellPrice { get; set; } = _ => 0;
+    [Parameter, EditorRequired] public EventCallback OnStartLuckRun { get; set; }
+    [Parameter, EditorRequired] public EventCallback<int> OnStoreLuckRunItem { get; set; }
+    [Parameter, EditorRequired] public EventCallback<int> OnMoveToForRaid { get; set; }
+    [Parameter, EditorRequired] public EventCallback<int> OnSellLuckRunItem { get; set; }
+}

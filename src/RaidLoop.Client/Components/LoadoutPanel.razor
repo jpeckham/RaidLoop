@@ -1,0 +1,58 @@
+<div>
+    <h3>For Raid</h3>
+    <p>You are taking these into raid with you and they will be lost if you die.</p>
+    @if (OnPersonItems.Count == 0)
+    {
+        <p>Nothing selected.</p>
+    }
+    else
+    {
+        @for (var i = 0; i < OnPersonItems.Count; i++)
+        {
+            var onPersonIndex = i;
+            var entry = OnPersonItems[onPersonIndex];
+            <div class="row-item">
+                <ItemTypeIcon Type="entry.Item.Type" />
+                <span class="item-name rarity-@entry.Item.DisplayRarity.ToString().ToLower()">@entry.Item.Name</span>
+                <div class="row-actions">
+                    @if (IsSlotType(entry.Item.Type))
+                    {
+                        <button class="action" @onclick="() => ToggleEquipAsync(onPersonIndex, entry.IsEquipped)">@(entry.IsEquipped ? "Unequip" : "Equip")</button>
+                    }
+                    <button class="action" disabled="@(!CanStashItem)" @onclick="() => OnStore.InvokeAsync(onPersonIndex)">Store</button>
+                    <button class="action" disabled="@(!CanSellItem(entry.Item))" @onclick="() => OnSell.InvokeAsync(onPersonIndex)">Sell ($@GetSellPrice(entry.Item))</button>
+                </div>
+            </div>
+        }
+        @if (!CanStashItem)
+        {
+            <p>Stash full. Sell or use items first.</p>
+        }
+    }
+
+    <button class="action top-gap" disabled="@(!CanStartRaid)" @onclick="() => OnStartRaid.InvokeAsync()">Enter Raid</button>
+    @if (!CanStartRaid && !string.IsNullOrWhiteSpace(RaidBlockReason))
+    {
+        <p>@RaidBlockReason</p>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public IReadOnlyList<OnPersonEntry> OnPersonItems { get; set; } = [];
+    [Parameter, EditorRequired] public bool CanStashItem { get; set; }
+    [Parameter, EditorRequired] public bool CanStartRaid { get; set; }
+    [Parameter] public string? RaidBlockReason { get; set; }
+    [Parameter, EditorRequired] public Func<Item, bool> CanSellItem { get; set; } = _ => false;
+    [Parameter, EditorRequired] public Func<Item, int> GetSellPrice { get; set; } = _ => 0;
+    [Parameter, EditorRequired] public Func<ItemType, bool> IsSlotType { get; set; } = _ => false;
+    [Parameter, EditorRequired] public EventCallback<int> OnEquip { get; set; }
+    [Parameter, EditorRequired] public EventCallback<int> OnUnequip { get; set; }
+    [Parameter, EditorRequired] public EventCallback<int> OnStore { get; set; }
+    [Parameter, EditorRequired] public EventCallback<int> OnSell { get; set; }
+    [Parameter, EditorRequired] public EventCallback OnStartRaid { get; set; }
+
+    private Task ToggleEquipAsync(int index, bool isEquipped)
+    {
+        return isEquipped ? OnUnequip.InvokeAsync(index) : OnEquip.InvokeAsync(index);
+    }
+}

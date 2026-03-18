@@ -89,16 +89,16 @@ public sealed class StashStorage
         return NormalizeSave(new GameSave(
             MainStash:
             [
-                new Item("Makarov", ItemType.Weapon, 1),
-                new Item("PPSH", ItemType.Weapon, 1),
-                new Item("AK74", ItemType.Weapon, 1),
-                new Item("6B2 body armor", ItemType.Armor, 1),
-                new Item("6B13 assault armor", ItemType.Armor, 1),
-                new Item("Small Backpack", ItemType.Backpack, 1),
-                new Item("Tactical Backpack", ItemType.Backpack, 1),
-                new Item("Medkit", ItemType.Consumable, 1),
-                new Item("Bandage", ItemType.Sellable, 1),
-                new Item("Ammo Box", ItemType.Sellable, 1)
+                ItemCatalog.Create("Makarov"),
+                ItemCatalog.Create("PPSH"),
+                ItemCatalog.Create("AK74"),
+                ItemCatalog.Create("6B2 body armor"),
+                ItemCatalog.Create("6B13 assault armor"),
+                ItemCatalog.Create("Small Backpack"),
+                ItemCatalog.Create("Tactical Backpack"),
+                ItemCatalog.Create("Medkit"),
+                ItemCatalog.Create("Bandage"),
+                ItemCatalog.Create("Ammo Box")
             ],
             RandomCharacterAvailableAt: DateTimeOffset.MinValue,
             RandomCharacter: null,
@@ -140,7 +140,7 @@ public sealed class StashStorage
         var onPersonHasWeapon = onPerson.Any(entry => entry.Item.Type == ItemType.Weapon);
         if (!stashHasWeapon && !onPersonHasWeapon)
         {
-            stash.Add(new Item("Rusty Knife", ItemType.Weapon, 1));
+            stash.Add(ItemCatalog.Create("Rusty Knife"));
         }
     }
 
@@ -168,6 +168,11 @@ public sealed class StashStorage
             "Medkit" => ItemType.Consumable,
             _ => item.Type
         };
+
+        if (ItemCatalog.TryGet(normalizedName, out var catalogItem))
+        {
+            return catalogItem!;
+        }
 
         return item with { Name = normalizedName, Type = normalizedType };
     }

@@ -1,0 +1,57 @@
+<span class="item-type-icon item-type-@Type.ToString().ToLower()" title="@GetTitle()" aria-label="@GetTitle()">
+    @switch (Type)
+    {
+        case ItemType.Weapon:
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M3 17.25V15.5l8.6-5.37 2.27 2.27-5.37 8.6H6.75l1.25-2-1-1z" />
+                <path d="M13.75 8.5 16 6.25l1.75 1.75L15.5 10.25z" />
+                <path d="M17.25 5l1.25-1.25L21 6.25 19.75 7.5z" />
+            </svg>
+            break;
+        case ItemType.Armor:
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 3 18 5.5v5.2c0 4.1-2.45 7.78-6 9.3-3.55-1.52-6-5.2-6-9.3V5.5z" />
+                <path d="M12 7.5 9.5 9v2.2c0 2.3 1 4.34 2.5 5.54 1.5-1.2 2.5-3.24 2.5-5.54V9z" />
+            </svg>
+            break;
+        case ItemType.Backpack:
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M8 7.5A4 4 0 0 1 12 4a4 4 0 0 1 4 3.5" />
+                <rect x="6" y="7" width="12" height="13" rx="2" />
+                <path d="M9 11h6M9 14.5h6" />
+            </svg>
+            break;
+        case ItemType.Consumable:
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M10 4h4v4l3.5 3.5a4.95 4.95 0 0 1 0 7L16 20H8l-1.5-1.5a4.95 4.95 0 0 1 0-7L10 8z" />
+                <path d="M9 12h6M12 9v6" />
+            </svg>
+            break;
+        case ItemType.Material:
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M5 12 12 5l7 7-7 7z" />
+                <path d="M12 5v14M5 12h14" />
+            </svg>
+            break;
+        default:
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M4 9V6.5A1.5 1.5 0 0 1 5.5 5h7.25a2 2 0 0 1 1.41.59l5 5A2 2 0 0 1 19.75 12H16a2 2 0 0 1-2-2V6.25" />
+                <path d="M8 13h8M8 16h5" />
+            </svg>
+            break;
+    }
+</span>
+
+@code {
+    [Parameter, EditorRequired] public ItemType Type { get; set; }
+
+    private string GetTitle() => Type switch
+    {
+        ItemType.Weapon => "Weapon",
+        ItemType.Armor => "Armor",
+        ItemType.Backpack => "Backpack",
+        ItemType.Consumable => "Consumable",
+        ItemType.Material => "Material",
+        _ => "Sell item"
+    };
+}

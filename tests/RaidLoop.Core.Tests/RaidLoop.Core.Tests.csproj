@@ -20,6 +20,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\RaidLoop.Core\RaidLoop.Core.csproj" />
+    <ProjectReference Include="..\..\src\RaidLoop.Client\RaidLoop.Client.csproj" />
   </ItemGroup>
 
 </Project>

@@ -6,10 +6,12 @@
         var stashIndex = i;
         var item = Items[stashIndex];
         <div class="row-item">
-            <span class="rarity-@item.Rarity.ToString().ToLower()">@item.Name</span>
-            <small>@item.Type</small>
-            <button class="action" @onclick="() => OnMoveToLoadout.InvokeAsync(stashIndex)">@GetPrimaryActionLabel(item)</button>
-            <button class="action" disabled="@(!CanSellItem(item))" @onclick="() => OnSell.InvokeAsync(stashIndex)">Sell ($@GetSellPrice(item.Name))</button>
+            <ItemTypeIcon Type="item.Type" />
+            <span class="item-name rarity-@item.DisplayRarity.ToString().ToLower()">@item.Name</span>
+            <div class="row-actions">
+                <button class="action" @onclick="() => OnMoveToLoadout.InvokeAsync(stashIndex)">@GetPrimaryActionLabel(item)</button>
+                <button class="action" disabled="@(!CanSellItem(item))" @onclick="() => OnSell.InvokeAsync(stashIndex)">Sell ($@GetSellPrice(item))</button>
+            </div>
         </div>
     }
 </div>
@@ -18,7 +20,7 @@
     [Parameter, EditorRequired] public IReadOnlyList<Item> Items { get; set; } = [];
     [Parameter, EditorRequired] public Func<Item, string> GetPrimaryActionLabel { get; set; } = _ => string.Empty;
     [Parameter, EditorRequired] public Func<Item, bool> CanSellItem { get; set; } = _ => false;
-    [Parameter, EditorRequired] public Func<string, int> GetSellPrice { get; set; } = _ => 0;
+    [Parameter, EditorRequired] public Func<Item, int> GetSellPrice { get; set; } = _ => 0;
     [Parameter, EditorRequired] public EventCallback<int> OnMoveToLoadout { get; set; }
     [Parameter, EditorRequired] public EventCallback<int> OnSell { get; set; }
 }

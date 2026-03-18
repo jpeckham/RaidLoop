@@ -2,65 +2,94 @@ namespace RaidLoop.Core;
 
 public static class LootTables
 {
-    private const int CommonWeight = 40;
-    private const int UncommonWeight = 12;
-    private const int RareWeight = 6;
-    private const int LegendaryWeight = 2;
-    private const int MixedCacheCommonWeight = 10;
-    private const int MixedCacheUncommonWeight = 12;
-    private const int MixedCacheRareWeight = 3;
-    private const int EnemyLoadoutCommonWeight = 20;
-    private const int EnemyLoadoutUncommonWeight = 6;
-    private const int EnemyLoadoutRareWeight = 3;
+    private static readonly LootTierProfile WeaponsCrateProfile = new(
+        commonWeight: 40,
+        uncommonWeight: 12,
+        rareWeight: 6,
+        epicWeight: 3,
+        legendaryWeight: 2);
+
+    private static readonly LootTierProfile ArmourCrateProfile = new(
+        commonWeight: 40,
+        uncommonWeight: 12,
+        rareWeight: 6,
+        epicWeight: 3,
+        legendaryWeight: 2);
+
+    private static readonly LootTierProfile MixedCacheProfile = new(
+        commonWeight: 40,
+        uncommonWeight: 12,
+        rareWeight: 6,
+        epicWeight: 3,
+        legendaryWeight: 2);
+
+    private static readonly LootTierProfile EnemyLoadoutProfile = new(
+        commonWeight: 55,
+        uncommonWeight: 10,
+        rareWeight: 3,
+        epicWeight: 1,
+        legendaryWeight: 1);
 
     public static LootTable WeaponsCrate()
     {
-        return new LootTable(
+        return new LootTable(WeaponsCrateProfile,
         [
-            (new Item("Makarov", ItemType.Weapon, 1, Rarity.Common), CommonWeight),
-            (new Item("PPSH", ItemType.Weapon, 1, Rarity.Uncommon), UncommonWeight),
-            (new Item("AK74", ItemType.Weapon, 1, Rarity.Rare), RareWeight),
-            (new Item("AK47", ItemType.Weapon, 1, Rarity.Legendary), LegendaryWeight)
+            ItemCatalog.Create("Makarov"),
+            ItemCatalog.Create("PPSH"),
+            ItemCatalog.Create("AK74"),
+            ItemCatalog.Create("SVDS"),
+            ItemCatalog.Create("AK47"),
+            ItemCatalog.Create("PKP")
         ]);
     }
 
     public static LootTable ArmourCrate()
     {
-        return new LootTable(
+        return new LootTable(ArmourCrateProfile,
         [
-            (new Item("6B2 body armor", ItemType.Armor, 1, Rarity.Common), CommonWeight),
-            (new Item("Small Backpack", ItemType.Backpack, 1, Rarity.Uncommon), UncommonWeight),
-            (new Item("6B13 assault armor", ItemType.Armor, 1, Rarity.Rare), RareWeight),
-            (new Item("6B43 Zabralo-Sh body armor", ItemType.Armor, 1, Rarity.Legendary), LegendaryWeight)
+            ItemCatalog.Create("6B2 body armor"),
+            ItemCatalog.Create("Small Backpack"),
+            ItemCatalog.Create("6B13 assault armor"),
+            ItemCatalog.Create("Tactical Backpack"),
+            ItemCatalog.Create("FORT Defender-2"),
+            ItemCatalog.Create("Tasmanian Tiger Trooper 35"),
+            ItemCatalog.Create("6B43 Zabralo-Sh body armor"),
+            ItemCatalog.Create("NFM THOR"),
+            ItemCatalog.Create("6Sh118")
         ]);
     }
 
     public static LootTable MixedCache()
     {
-        return new LootTable(
+        return new LootTable(MixedCacheProfile,
         [
-            (new Item("Bandage", ItemType.Sellable, 1, Rarity.Common), MixedCacheCommonWeight),
-            (new Item("Ammo Box", ItemType.Sellable, 1, Rarity.Common), MixedCacheCommonWeight),
-            (new Item("Scrap Metal", ItemType.Material, 1, Rarity.Common), MixedCacheCommonWeight),
-            (new Item("Medkit", ItemType.Consumable, 1, Rarity.Common), MixedCacheCommonWeight),
-            (new Item("PPSH", ItemType.Weapon, 1, Rarity.Uncommon), MixedCacheUncommonWeight),
-            (new Item("Rare Scope", ItemType.Material, 1, Rarity.Rare), MixedCacheRareWeight),
-            (new Item("AK74", ItemType.Weapon, 1, Rarity.Rare), MixedCacheRareWeight),
-            (new Item("Legendary Trigger Group", ItemType.Material, 1, Rarity.Legendary), LegendaryWeight)
+            ItemCatalog.Create("Bandage"),
+            ItemCatalog.Create("Ammo Box"),
+            ItemCatalog.Create("Scrap Metal"),
+            ItemCatalog.Create("Medkit"),
+            ItemCatalog.Create("PPSH"),
+            new Item("Rare Scope", ItemType.Material, Value: 16, Slots: 1, Rarity: Rarity.Rare, DisplayRarity: DisplayRarity.Rare),
+            ItemCatalog.Create("AK74"),
+            ItemCatalog.Create("SVDS"),
+            ItemCatalog.Create("Legendary Trigger Group")
         ]);
     }
 
     public static LootTable EnemyLoadout()
     {
-        return new LootTable(
+        return new LootTable(EnemyLoadoutProfile,
         [
-            (new Item("Makarov", ItemType.Weapon, 1, Rarity.Common), EnemyLoadoutCommonWeight),
-            (new Item("Bandage", ItemType.Sellable, 1, Rarity.Common), EnemyLoadoutCommonWeight),
-            (new Item("PPSH", ItemType.Weapon, 1, Rarity.Uncommon), EnemyLoadoutUncommonWeight),
-            (new Item("6B2 body armor", ItemType.Armor, 1, Rarity.Uncommon), EnemyLoadoutUncommonWeight),
-            (new Item("AK74", ItemType.Weapon, 1, Rarity.Rare), EnemyLoadoutRareWeight),
-            (new Item("6B13 assault armor", ItemType.Armor, 1, Rarity.Rare), EnemyLoadoutRareWeight),
-            (new Item("AK47", ItemType.Weapon, 1, Rarity.Legendary), LegendaryWeight)
+            ItemCatalog.Create("Makarov"),
+            ItemCatalog.Create("Bandage"),
+            ItemCatalog.Create("PPSH"),
+            ItemCatalog.Create("6B2 body armor"),
+            ItemCatalog.Create("AK74"),
+            ItemCatalog.Create("6B13 assault armor"),
+            ItemCatalog.Create("SVDS"),
+            ItemCatalog.Create("FORT Defender-2"),
+            ItemCatalog.Create("AK47"),
+            ItemCatalog.Create("PKP"),
+            ItemCatalog.Create("NFM THOR")
         ]);
     }
 }

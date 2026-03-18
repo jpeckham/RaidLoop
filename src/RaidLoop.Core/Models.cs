@@ -10,7 +10,13 @@ public enum ItemType
     Material
 }
 
-public sealed record Item(string Name, ItemType Type, int Slots = 1, Rarity Rarity = Rarity.Common);
+public sealed record Item(
+    string Name,
+    ItemType Type,
+    int Value = 1,
+    int Slots = 1,
+    Rarity Rarity = Rarity.Common,
+    DisplayRarity DisplayRarity = DisplayRarity.Common);
 
 public sealed class GameState
 {
@@ -82,7 +88,7 @@ public sealed class RaidInventory
 
         for (var i = 0; i < MedkitCount; i++)
         {
-            yield return new Item("Medkit", ItemType.Consumable, 1);
+            yield return ItemCatalog.Create("Medkit");
         }
     }
 

@@ -8,11 +8,15 @@ public class RaidEngineTests
     [InlineData("Makarov", AttackMode.Standard, 5, 8)]
     [InlineData("PPSH", AttackMode.Standard, 6, 10)]
     [InlineData("AK74", AttackMode.Standard, 8, 12)]
+    [InlineData("SVDS", AttackMode.Standard, 11, 16)]
     [InlineData("AK47", AttackMode.Standard, 9, 14)]
+    [InlineData("PKP", AttackMode.Standard, 12, 18)]
     [InlineData("Makarov", AttackMode.Burst, 8, 12)]
     [InlineData("PPSH", AttackMode.Burst, 10, 15)]
     [InlineData("AK74", AttackMode.Burst, 12, 17)]
+    [InlineData("SVDS", AttackMode.Burst, 15, 21)]
     [InlineData("AK47", AttackMode.Burst, 13, 19)]
+    [InlineData("PKP", AttackMode.Burst, 16, 24)]
     public void CombatBalance_WeaponDamageProfiles_AreConfigured(string weapon, AttackMode mode, int min, int max)
     {
         var range = CombatBalance.GetDamageRange(weapon, mode);
@@ -24,7 +28,9 @@ public class RaidEngineTests
     [Theory]
     [InlineData("6B2 body armor", 1)]
     [InlineData("6B13 assault armor", 3)]
+    [InlineData("FORT Defender-2", 4)]
     [InlineData("6B43 Zabralo-Sh body armor", 5)]
+    [InlineData("NFM THOR", 6)]
     [InlineData("Unknown armor", 0)]
     public void CombatBalance_ArmorReduction_ByQuality(string armorName, int reduction)
     {
@@ -58,10 +64,16 @@ public class RaidEngineTests
     [InlineData("Makarov", 240)]
     [InlineData("PPSH", 650)]
     [InlineData("AK74", 1250)]
+    [InlineData("SVDS", 2200)]
     [InlineData("AK47", 1700)]
+    [InlineData("PKP", 3200)]
     [InlineData("6B2 body armor", 380)]
     [InlineData("6B13 assault armor", 900)]
+    [InlineData("FORT Defender-2", 1500)]
     [InlineData("6B43 Zabralo-Sh body armor", 1800)]
+    [InlineData("NFM THOR", 2600)]
+    [InlineData("Tasmanian Tiger Trooper 35", 1600)]
+    [InlineData("6Sh118", 2400)]
     public void CombatBalance_Prices_AreConfigured(string itemName, int buyPrice)
     {
         Assert.Equal(buyPrice, CombatBalance.GetBuyPrice(itemName));
@@ -71,7 +83,9 @@ public class RaidEngineTests
     [InlineData("Makarov", 8)]
     [InlineData("PPSH", 35)]
     [InlineData("AK74", 30)]
+    [InlineData("SVDS", 20)]
     [InlineData("AK47", 30)]
+    [InlineData("PKP", 100)]
     [InlineData("Rusty Knife", 0)]
     [InlineData("Unknown Weapon", 8)]
     public void CombatBalance_AmmoCapacity_ByWeapon(string weaponName, int capacity)
@@ -84,10 +98,23 @@ public class RaidEngineTests
     [InlineData("Makarov", true)]
     [InlineData("PPSH", true)]
     [InlineData("AK74", true)]
+    [InlineData("SVDS", true)]
     [InlineData("AK47", true)]
+    [InlineData("PKP", true)]
     public void CombatBalance_WeaponAmmoUsage_ByWeapon(string weaponName, bool usesAmmo)
     {
         Assert.Equal(usesAmmo, CombatBalance.WeaponUsesAmmo(weaponName));
+    }
+
+    [Theory]
+    [InlineData("Small Backpack", 3)]
+    [InlineData("Tactical Backpack", 6)]
+    [InlineData("Tasmanian Tiger Trooper 35", 8)]
+    [InlineData("6Sh118", 10)]
+    [InlineData(null, 2)]
+    public void CombatBalance_BackpackCapacity_ByBackpack(string? backpackName, int capacity)
+    {
+        Assert.Equal(capacity, CombatBalance.GetBackpackCapacity(backpackName));
     }
 
     [Fact]
@@ -95,10 +122,10 @@ public class RaidEngineTests
     {
         var discovered = new List<Item>
         {
-            new("Old Loot", ItemType.Sellable, 1)
+            new("Old Loot", ItemType.Sellable, Slots: 1)
         };
 
-        EncounterLoot.StartLootEncounter(discovered, [new Item("New Loot", ItemType.Material, 1)]);
+        EncounterLoot.StartLootEncounter(discovered, [new Item("New Loot", ItemType.Material, Slots: 1)]);
 
         Assert.Single(discovered);
         Assert.Equal("New Loot", discovered[0].Name);
@@ -109,10 +136,10 @@ public class RaidEngineTests
     {
         var discovered = new List<Item>
         {
-            new("First", ItemType.Material, 1)
+            new("First", ItemType.Material, Slots: 1)
         };
 
-        EncounterLoot.AppendDiscoveredLoot(discovered, [new Item("Second", ItemType.Weapon, 1)]);
+        EncounterLoot.AppendDiscoveredLoot(discovered, [new Item("Second", ItemType.Weapon, Slots: 1)]);
 
         Assert.Equal(2, discovered.Count);
         Assert.Equal("First", discovered[0].Name);
@@ -143,8 +170,8 @@ public class RaidEngineTests
             broughtItems: [],
             raidLoot: []);
 
-        var addedFirst = RaidEngine.TryAddLoot(state, new Item("Bandage", ItemType.Sellable, 1));
-        var addedSecond = RaidEngine.TryAddLoot(state, new Item("Rifle", ItemType.Weapon, 2));
+        var addedFirst = RaidEngine.TryAddLoot(state, new Item("Bandage", ItemType.Sellable, Slots: 1));
+        var addedSecond = RaidEngine.TryAddLoot(state, new Item("Rifle", ItemType.Weapon, Slots: 2));
 
         Assert.True(addedFirst);
         Assert.False(addedSecond);
@@ -160,7 +187,7 @@ public class RaidEngineTests
             broughtItems: [],
             raidLoot: []);
 
-        var added = RaidEngine.TryAddLoot(state, new Item("Ammo Box", ItemType.Sellable, 1));
+        var added = RaidEngine.TryAddLoot(state, new Item("Ammo Box", ItemType.Sellable, Slots: 1));
 
         Assert.True(added);
         Assert.Single(state.RaidLoot);
@@ -175,7 +202,7 @@ public class RaidEngineTests
             broughtItems: [],
             raidLoot: []);
 
-        RaidEngine.StartDiscoveredLootEncounter(state, [new Item("Medkit", ItemType.Consumable, 1)]);
+        RaidEngine.StartDiscoveredLootEncounter(state, [new Item("Medkit", ItemType.Consumable, Slots: 1)]);
 
         var looted = RaidEngine.TryLootFromDiscovered(state, state.Inventory.DiscoveredLoot[0]);
 
@@ -191,10 +218,10 @@ public class RaidEngineTests
         var state = new RaidState(
             health: 30,
             backpackCapacity: 2,
-            broughtItems: [new Item("Makarov", ItemType.Weapon, 1)],
+            broughtItems: [new Item("Makarov", ItemType.Weapon, Slots: 1)],
             raidLoot: []);
 
-        RaidEngine.StartDiscoveredLootEncounter(state, [new Item("AK74", ItemType.Weapon, 1)]);
+        RaidEngine.StartDiscoveredLootEncounter(state, [new Item("AK74", ItemType.Weapon, Slots: 1)]);
 
         var equipped = RaidEngine.TryEquipFromDiscovered(state, state.Inventory.DiscoveredLoot[0]);
 
@@ -212,13 +239,13 @@ public class RaidEngineTests
             backpackCapacity: 6,
             broughtItems:
             [
-                new Item("Makarov", ItemType.Weapon, 1),
-                new Item("Tactical Backpack", ItemType.Backpack, 1)
+                new Item("Makarov", ItemType.Weapon, Slots: 1),
+                new Item("Tactical Backpack", ItemType.Backpack, Slots: 1)
             ],
             raidLoot:
             [
-                new Item("Scrap Metal", ItemType.Material, 1),
-                new Item("Rare Scope", ItemType.Material, 1)
+                new Item("Scrap Metal", ItemType.Material, Slots: 1),
+                new Item("Rare Scope", ItemType.Material, Slots: 1)
             ]);
 
         var dropped = RaidEngine.TryDropEquippedToDiscovered(state, ItemType.Backpack);
@@ -235,14 +262,14 @@ public class RaidEngineTests
     [Fact]
     public void FinalizeRaid_Success_TransfersBroughtItemsAndLootToStash()
     {
-        var game = new GameState([new Item("Spare Knife", ItemType.Weapon, 1)]);
+        var game = new GameState([new Item("Spare Knife", ItemType.Weapon, Slots: 1)]);
         var loadout = new List<Item>
         {
-            new("Pistol", ItemType.Weapon, 1),
-            new("Light Armor", ItemType.Armor, 1)
+            new("Pistol", ItemType.Weapon, Slots: 1),
+            new("Light Armor", ItemType.Armor, Slots: 1)
         };
         var raid = RaidEngine.StartRaid(game, loadout, backpackCapacity: 4, startingHealth: 30);
-        RaidEngine.TryAddLoot(raid, new Item("Medkit", ItemType.Consumable, 1));
+        RaidEngine.TryAddLoot(raid, new Item("Medkit", ItemType.Consumable, Slots: 1));
 
         RaidEngine.FinalizeRaid(game, raid, extracted: true);
 
@@ -255,8 +282,8 @@ public class RaidEngineTests
     [Fact]
     public void StartRaid_RemovesLoadoutFromStash()
     {
-        var pistol = new Item("Pistol", ItemType.Weapon, 1);
-        var backpack = new Item("Backpack", ItemType.Backpack, 1);
+        var pistol = new Item("Pistol", ItemType.Weapon, Slots: 1);
+        var backpack = new Item("Backpack", ItemType.Backpack, Slots: 1);
         var game = new GameState([pistol, backpack]);
 
         _ = RaidEngine.StartRaid(game, [pistol, backpack], backpackCapacity: 3, startingHealth: 20);
@@ -267,14 +294,14 @@ public class RaidEngineTests
     [Fact]
     public void FinalizeRaid_Death_LosesBroughtItemsAndRaidLoot()
     {
-        var game = new GameState([new Item("Spare Knife", ItemType.Weapon, 1)]);
+        var game = new GameState([new Item("Spare Knife", ItemType.Weapon, Slots: 1)]);
         var loadout = new List<Item>
         {
-            new("Pistol", ItemType.Weapon, 1),
-            new("Backpack", ItemType.Backpack, 1)
+            new("Pistol", ItemType.Weapon, Slots: 1),
+            new("Backpack", ItemType.Backpack, Slots: 1)
         };
         var raid = RaidEngine.StartRaid(game, loadout, backpackCapacity: 2, startingHealth: 10);
-        RaidEngine.TryAddLoot(raid, new Item("Ammo", ItemType.Material, 1));
+        RaidEngine.TryAddLoot(raid, new Item("Ammo", ItemType.Material, Slots: 1));
 
         RaidEngine.FinalizeRaid(game, raid, extracted: false);
 

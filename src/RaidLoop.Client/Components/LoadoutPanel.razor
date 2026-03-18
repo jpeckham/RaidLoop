@@ -12,14 +12,16 @@
             var onPersonIndex = i;
             var entry = OnPersonItems[onPersonIndex];
             <div class="row-item">
-                <span class="rarity-@entry.Item.Rarity.ToString().ToLower()">@entry.Item.Name</span>
-                <small>@entry.Item.Type</small>
-                @if (IsSlotType(entry.Item.Type))
-                {
-                    <button class="action" @onclick="() => ToggleEquipAsync(onPersonIndex, entry.IsEquipped)">@(entry.IsEquipped ? "Unequip" : "Equip")</button>
-                }
-                <button class="action" disabled="@(!CanStashItem)" @onclick="() => OnStore.InvokeAsync(onPersonIndex)">Store</button>
-                <button class="action" disabled="@(!CanSellItem(entry.Item))" @onclick="() => OnSell.InvokeAsync(onPersonIndex)">Sell ($@GetSellPrice(entry.Item.Name))</button>
+                <ItemTypeIcon Type="entry.Item.Type" />
+                <span class="item-name rarity-@entry.Item.DisplayRarity.ToString().ToLower()">@entry.Item.Name</span>
+                <div class="row-actions">
+                    @if (IsSlotType(entry.Item.Type))
+                    {
+                        <button class="action" @onclick="() => ToggleEquipAsync(onPersonIndex, entry.IsEquipped)">@(entry.IsEquipped ? "Unequip" : "Equip")</button>
+                    }
+                    <button class="action" disabled="@(!CanStashItem)" @onclick="() => OnStore.InvokeAsync(onPersonIndex)">Store</button>
+                    <button class="action" disabled="@(!CanSellItem(entry.Item))" @onclick="() => OnSell.InvokeAsync(onPersonIndex)">Sell ($@GetSellPrice(entry.Item))</button>
+                </div>
             </div>
         }
         @if (!CanStashItem)
@@ -41,7 +43,7 @@
     [Parameter, EditorRequired] public bool CanStartRaid { get; set; }
     [Parameter] public string? RaidBlockReason { get; set; }
     [Parameter, EditorRequired] public Func<Item, bool> CanSellItem { get; set; } = _ => false;
-    [Parameter, EditorRequired] public Func<string, int> GetSellPrice { get; set; } = _ => 0;
+    [Parameter, EditorRequired] public Func<Item, int> GetSellPrice { get; set; } = _ => 0;
     [Parameter, EditorRequired] public Func<ItemType, bool> IsSlotType { get; set; } = _ => false;
     [Parameter, EditorRequired] public EventCallback<int> OnEquip { get; set; }
     [Parameter, EditorRequired] public EventCallback<int> OnUnequip { get; set; }

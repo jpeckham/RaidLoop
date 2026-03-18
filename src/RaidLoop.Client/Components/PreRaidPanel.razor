@@ -25,11 +25,13 @@
             var luckIndex = i;
             var item = RandomCharacter.Inventory[luckIndex];
             <div class="row-item">
-                <span class="rarity-@item.Rarity.ToString().ToLower()">@item.Name</span>
-                <small>@item.Type</small>
-                <button class="action" disabled="@IsStashFull" @onclick="() => OnStoreLuckRunItem.InvokeAsync(luckIndex)">Store</button>
-                <button class="action" @onclick="() => OnMoveToForRaid.InvokeAsync(luckIndex)">For Raid</button>
-                <button class="action" disabled="@(!CanSellItem(item))" @onclick="() => OnSellLuckRunItem.InvokeAsync(luckIndex)">Sell ($@GetSellPrice(item.Name))</button>
+                <ItemTypeIcon Type="item.Type" />
+                <span class="item-name rarity-@item.DisplayRarity.ToString().ToLower()">@item.Name</span>
+                <div class="row-actions">
+                    <button class="action" disabled="@IsStashFull" @onclick="() => OnStoreLuckRunItem.InvokeAsync(luckIndex)">Store</button>
+                    <button class="action" @onclick="() => OnMoveToForRaid.InvokeAsync(luckIndex)">For Raid</button>
+                    <button class="action" disabled="@(!CanSellItem(item))" @onclick="() => OnSellLuckRunItem.InvokeAsync(luckIndex)">Sell ($@GetSellPrice(item))</button>
+                </div>
             </div>
         }
         @if (IsStashFull)
@@ -47,7 +49,7 @@
     [Parameter, EditorRequired] public string RandomCooldownText { get; set; } = string.Empty;
     [Parameter, EditorRequired] public bool IsStashFull { get; set; }
     [Parameter, EditorRequired] public Func<Item, bool> CanSellItem { get; set; } = _ => false;
-    [Parameter, EditorRequired] public Func<string, int> GetSellPrice { get; set; } = _ => 0;
+    [Parameter, EditorRequired] public Func<Item, int> GetSellPrice { get; set; } = _ => 0;
     [Parameter, EditorRequired] public EventCallback OnStartLuckRun { get; set; }
     [Parameter, EditorRequired] public EventCallback<int> OnStoreLuckRunItem { get; set; }
     [Parameter, EditorRequired] public EventCallback<int> OnMoveToForRaid { get; set; }

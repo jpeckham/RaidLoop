@@ -4,9 +4,10 @@
     @foreach (var stock in Stock)
     {
         <div class="row-item">
-            <span class="rarity-@stock.Item.Rarity.ToString().ToLower()">@stock.Item.Name</span>
-            <small>$@GetBuyPrice(stock.Item.Name)</small>
-            <button class="action" disabled="@(Money < GetBuyPrice(stock.Item.Name))" @onclick="() => OnBuy.InvokeAsync(stock)">Buy</button>
+            <span class="item-name rarity-@stock.Item.DisplayRarity.ToString().ToLower()">@stock.Item.Name</span>
+            <div class="row-actions">
+                <button class="action" disabled="@(Money < GetBuyPrice(stock.Item.Name))" @onclick="() => OnBuy.InvokeAsync(stock)">Buy ($@GetBuyPrice(stock.Item.Name))</button>
+            </div>
         </div>
     }
 </section>

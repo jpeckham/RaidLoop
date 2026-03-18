@@ -1,7 +1,8 @@
 namespace RaidLoop.Core;
 
-public enum Rarity
+public enum DisplayRarity
 {
+    SellOnly,
     Common,
     Uncommon,
     Rare,

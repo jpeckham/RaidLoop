@@ -19,9 +19,9 @@ public partial class Home : IDisposable
     private IRng CombatRng => new RandomRng(_rng);
     private readonly List<ShopStock> _shopStock =
     [
-        new(new Item("Medkit", ItemType.Consumable, 1, Rarity.Common)),
-        new(new Item("Makarov", ItemType.Weapon, 1, Rarity.Common)),
-        new(new Item("Small Backpack", ItemType.Backpack, 1, Rarity.Uncommon))
+        new(ItemCatalog.Create("Medkit")),
+        new(ItemCatalog.Create("Makarov")),
+        new(ItemCatalog.Create("Small Backpack"))
     ];
 
     private GameState _mainGame = new([]);
@@ -133,7 +133,7 @@ public partial class Home : IDisposable
         }
 
         var item = _mainGame.Stash[stashIndex];
-        var sellPrice = GetSellPrice(item.Name);
+        var sellPrice = GetSellPrice(item);
         if (sellPrice <= 0)
         {
             return;
@@ -179,7 +179,7 @@ public partial class Home : IDisposable
         }
 
         var item = _onPersonItems[onPersonIndex].Item;
-        var sellPrice = GetSellPrice(item.Name);
+        var sellPrice = GetSellPrice(item);
         if (sellPrice <= 0)
         {
             return;
@@ -339,7 +339,7 @@ public partial class Home : IDisposable
         }
 
         var item = _randomCharacter.Inventory[luckIndex];
-        var sellPrice = GetSellPrice(item.Name);
+        var sellPrice = GetSellPrice(item);
         if (sellPrice <= 0)
         {
             return;
@@ -407,29 +407,24 @@ public partial class Home : IDisposable
     {
         var backpacks = new[]
         {
-            new Item("Small Backpack", ItemType.Backpack, 1),
-            new Item("Tactical Backpack", ItemType.Backpack, 1)
+            ItemCatalog.Create("Small Backpack"),
+            ItemCatalog.Create("Tactical Backpack")
         };
 
         return
         [
-            new Item("Makarov", ItemType.Weapon, 1),
+            ItemCatalog.Create("Makarov"),
             backpacks[_rng.Next(backpacks.Length)],
-            new Item("Medkit", ItemType.Consumable, 1),
-            new Item("Bandage", ItemType.Sellable, 1),
-            new Item("Ammo Box", ItemType.Sellable, 1)
+            ItemCatalog.Create("Medkit"),
+            ItemCatalog.Create("Bandage"),
+            ItemCatalog.Create("Ammo Box")
         ];
     }
 
     private int GetBackpackCapacity(IEnumerable<Item> items)
     {
         var backpack = items.FirstOrDefault(i => i.Type == ItemType.Backpack);
-        return backpack?.Name switch
-        {
-            "Tactical Backpack" => 6,
-            "Small Backpack" => 3,
-            _ => 2
-        };
+        return CombatBalance.GetBackpackCapacity(backpack?.Name);
     }
 
     private int GetArmorReduction()
@@ -944,7 +939,8 @@ public partial class Home : IDisposable
                 "extraction.complete",
                 _activeRaidId,
                 GameEventLog.CreateItemSnapshots(retainedItems),
-                DateTimeOffset.UtcNow));
+                DateTimeOffset.UtcNow,
+                retainedItems.Sum(item => item.Value)));
         }
 
         await SaveAllAsync();
@@ -973,19 +969,19 @@ public partial class Home : IDisposable
         return CombatBalance.GetBuyPrice(itemName);
     }
 
-    private int GetSellPrice(string itemName)
+    private int GetSellPrice(Item item)
     {
-        if (string.Equals(itemName, FallbackKnifeName, StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(item.Name, FallbackKnifeName, StringComparison.OrdinalIgnoreCase))
         {
             return 0;
         }
 
-        return (int)Math.Floor(GetBuyPrice(itemName) * 0.6);
+        return item.Value;
     }
 
     private bool CanSellItem(Item item)
     {
-        return GetSellPrice(item.Name) > 0;
+        return GetSellPrice(item) > 0;
     }
 
     private bool CanLootItem(Item item)
@@ -1038,7 +1034,7 @@ public partial class Home : IDisposable
         var onPersonHasWeapon = _onPersonItems.Any(entry => entry.Item.Type == ItemType.Weapon);
         if (!stashHasWeapon && !onPersonHasWeapon)
         {
-            _mainGame.Stash.Add(new Item("Rusty Knife", ItemType.Weapon, 1));
+            _mainGame.Stash.Add(ItemCatalog.Create("Rusty Knife"));
         }
     }
 

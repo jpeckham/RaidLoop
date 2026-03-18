@@ -40,12 +40,17 @@
                             @foreach (var lootItem in DiscoveredLoot)
                             {
                                 <li>
-                                    <span class="rarity-@lootItem.Rarity.ToString().ToLower()">@lootItem.Name</span>
-                                    <button class="action" disabled="@(!CanLootItem(lootItem))" @onclick="() => OnTakeLoot.InvokeAsync(lootItem)">Loot</button>
-                                    @if (CanEquipItem(lootItem))
-                                    {
-                                        <button class="action" @onclick="() => OnEquipFromDiscovered.InvokeAsync(lootItem)">Equip</button>
-                                    }
+                                    <div class="row-item row-item-inline">
+                                        <ItemTypeIcon Type="lootItem.Type" />
+                                        <span class="item-name rarity-@lootItem.DisplayRarity.ToString().ToLower()">@lootItem.Name</span>
+                                        <div class="row-actions">
+                                            @if (CanEquipItem(lootItem))
+                                            {
+                                                <button class="action" @onclick="() => OnEquipFromDiscovered.InvokeAsync(lootItem)">Equip</button>
+                                            }
+                                            <button class="action" disabled="@(!CanLootItem(lootItem))" @onclick="() => OnTakeLoot.InvokeAsync(lootItem)">Loot</button>
+                                        </div>
+                                    </div>
                                 </li>
                             }
                         </ul>
@@ -61,9 +66,11 @@
                     @foreach (var equipped in EquippedItems)
                     {
                         <div class="row-item">
-                            <span class="rarity-@equipped.Rarity.ToString().ToLower()">@equipped.Name</span>
-                            <small>@equipped.Type</small>
-                            <button class="action" @onclick="() => OnDropEquipped.InvokeAsync(equipped.Type)">Drop</button>
+                            <ItemTypeIcon Type="equipped.Type" />
+                            <span class="item-name rarity-@equipped.DisplayRarity.ToString().ToLower()">@equipped.Name</span>
+                            <div class="row-actions">
+                                <button class="action" @onclick="() => OnDropEquipped.InvokeAsync(equipped.Type)">Drop</button>
+                            </div>
                         </div>
                     }
 
@@ -77,13 +84,15 @@
                         @foreach (var carried in CarriedLoot)
                         {
                             <div class="row-item">
-                                <span class="rarity-@carried.Rarity.ToString().ToLower()">@carried.Name</span>
-                                <small>@carried.Type</small>
-                                <button class="action" @onclick="() => OnDropCarried.InvokeAsync(carried)">Drop</button>
-                                @if (CanEquipItem(carried))
-                                {
-                                    <button class="action" @onclick="() => OnEquipFromCarried.InvokeAsync(carried)">Equip</button>
-                                }
+                                <ItemTypeIcon Type="carried.Type" />
+                                <span class="item-name rarity-@carried.DisplayRarity.ToString().ToLower()">@carried.Name</span>
+                                <div class="row-actions">
+                                    <button class="action" @onclick="() => OnDropCarried.InvokeAsync(carried)">Drop</button>
+                                    @if (CanEquipItem(carried))
+                                    {
+                                        <button class="action" @onclick="() => OnEquipFromCarried.InvokeAsync(carried)">Equip</button>
+                                    }
+                                </div>
                             </div>
                         }
                     }

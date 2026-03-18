@@ -5,18 +5,34 @@ namespace RaidLoop.Core.Tests;
 public class RarityTests
 {
     [Fact]
-    public void Item_DefaultsRarityToCommon()
+    public void DisplayRarity_DefinesExpectedOrder()
     {
-        var item = new Item("Pistol", ItemType.Weapon, 1);
+        var values = Enum.GetValues<DisplayRarity>();
 
-        Assert.Equal(Rarity.Common, item.Rarity);
+        Assert.Equal(
+        [
+            DisplayRarity.SellOnly,
+            DisplayRarity.Common,
+            DisplayRarity.Uncommon,
+            DisplayRarity.Rare,
+            DisplayRarity.Epic,
+            DisplayRarity.Legendary
+        ], values);
     }
 
     [Fact]
-    public void Item_PreservesExplicitRarity()
+    public void DisplayRarity_NamesMatchUiLabels()
     {
-        var item = new Item("AK74", ItemType.Weapon, 1, Rarity.Rare);
+        var names = Enum.GetNames<DisplayRarity>();
 
-        Assert.Equal(Rarity.Rare, item.Rarity);
+        Assert.Equal(
+        [
+            "SellOnly",
+            "Common",
+            "Uncommon",
+            "Rare",
+            "Epic",
+            "Legendary"
+        ], names);
     }
 }

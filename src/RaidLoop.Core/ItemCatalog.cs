@@ -9,7 +9,7 @@ public static class ItemCatalog
         ["PPSH"] = new Item("PPSH", ItemType.Weapon, Value: 20, Slots: 1, Rarity: Rarity.Uncommon, DisplayRarity: DisplayRarity.Uncommon),
         ["AK74"] = new Item("AK74", ItemType.Weapon, Value: 34, Slots: 1, Rarity: Rarity.Rare, DisplayRarity: DisplayRarity.Rare),
         ["SVDS"] = new Item("SVDS", ItemType.Weapon, Value: 44, Slots: 1, Rarity: Rarity.Epic, DisplayRarity: DisplayRarity.Epic),
-        ["AK47"] = new Item("AK47", ItemType.Weapon, Value: 48, Slots: 1, Rarity: Rarity.Legendary, DisplayRarity: DisplayRarity.Legendary),
+        ["AK47"] = new Item("AK47", ItemType.Weapon, Value: 38, Slots: 1, Rarity: Rarity.Rare, DisplayRarity: DisplayRarity.Rare),
         ["PKP"] = new Item("PKP", ItemType.Weapon, Value: 66, Slots: 1, Rarity: Rarity.Legendary, DisplayRarity: DisplayRarity.Legendary),
         ["6B2 body armor"] = new Item("6B2 body armor", ItemType.Armor, Value: 14, Slots: 1, Rarity: Rarity.Common, DisplayRarity: DisplayRarity.Common),
         ["6B13 assault armor"] = new Item("6B13 assault armor", ItemType.Armor, Value: 30, Slots: 1, Rarity: Rarity.Rare, DisplayRarity: DisplayRarity.Rare),
@@ -24,6 +24,7 @@ public static class ItemCatalog
         ["Bandage"] = new Item("Bandage", ItemType.Sellable, Value: 4, Slots: 1, Rarity: Rarity.Common, DisplayRarity: DisplayRarity.SellOnly),
         ["Ammo Box"] = new Item("Ammo Box", ItemType.Sellable, Value: 6, Slots: 1, Rarity: Rarity.Common, DisplayRarity: DisplayRarity.SellOnly),
         ["Scrap Metal"] = new Item("Scrap Metal", ItemType.Material, Value: 5, Slots: 1, Rarity: Rarity.Common, DisplayRarity: DisplayRarity.SellOnly),
+        ["Rare Scope"] = new Item("Rare Scope", ItemType.Material, Value: 16, Slots: 1, Rarity: Rarity.Rare, DisplayRarity: DisplayRarity.SellOnly),
         ["Legendary Trigger Group"] = new Item("Legendary Trigger Group", ItemType.Material, Value: 26, Slots: 1, Rarity: Rarity.Legendary, DisplayRarity: DisplayRarity.SellOnly)
     };
 

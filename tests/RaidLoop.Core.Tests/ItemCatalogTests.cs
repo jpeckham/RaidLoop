@@ -38,8 +38,8 @@ public sealed class ItemCatalogTests
         Assert.Equal(ItemType.Weapon, makarov.Type);
         Assert.True(ppsh.Value > makarov.Value);
         Assert.True(ak74.Value > ppsh.Value);
-        Assert.True(svds.Value > ak74.Value);
-        Assert.True(ak47.Value > svds.Value);
+        Assert.True(ak47.Value > ak74.Value);
+        Assert.True(svds.Value > ak47.Value);
         Assert.True(pkp.Value > ak47.Value);
     }
 
@@ -89,7 +89,17 @@ public sealed class ItemCatalogTests
         Assert.Equal(DisplayRarity.SellOnly, ItemCatalog.Get("Bandage").DisplayRarity);
         Assert.Equal(DisplayRarity.SellOnly, ItemCatalog.Get("Ammo Box").DisplayRarity);
         Assert.Equal(DisplayRarity.SellOnly, ItemCatalog.Get("Scrap Metal").DisplayRarity);
+        Assert.Equal(DisplayRarity.SellOnly, ItemCatalog.Get("Rare Scope").DisplayRarity);
         Assert.Equal(DisplayRarity.SellOnly, ItemCatalog.Get("Legendary Trigger Group").DisplayRarity);
+    }
+
+    [Fact]
+    public void Ak47_UsesRareDisplayAndLootTier()
+    {
+        var ak47 = ItemCatalog.Get("AK47");
+
+        Assert.Equal(Rarity.Rare, ak47.Rarity);
+        Assert.Equal(DisplayRarity.Rare, ak47.DisplayRarity);
     }
 
     [Fact]

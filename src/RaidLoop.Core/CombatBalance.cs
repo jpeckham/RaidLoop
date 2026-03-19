@@ -86,7 +86,7 @@ public static class CombatBalance
             "PPSH" => 650,
             "AK74" => 1250,
             "SVDS" => 2200,
-            "AK47" => 1700,
+            "AK47" => 1500,
             "PKP" => 3200,
             "6B2 body armor" => 380,
             "6B13 assault armor" => 900,

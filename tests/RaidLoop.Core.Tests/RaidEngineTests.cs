@@ -65,7 +65,7 @@ public class RaidEngineTests
     [InlineData("PPSH", 650)]
     [InlineData("AK74", 1250)]
     [InlineData("SVDS", 2200)]
-    [InlineData("AK47", 1700)]
+    [InlineData("AK47", 1500)]
     [InlineData("PKP", 3200)]
     [InlineData("6B2 body armor", 380)]
     [InlineData("6B13 assault armor", 900)]

@@ -68,7 +68,7 @@ public static class LootTables
             ItemCatalog.Create("Scrap Metal"),
             ItemCatalog.Create("Medkit"),
             ItemCatalog.Create("PPSH"),
-            new Item("Rare Scope", ItemType.Material, Value: 16, Slots: 1, Rarity: Rarity.Rare, DisplayRarity: DisplayRarity.Rare),
+            ItemCatalog.Create("Rare Scope"),
             ItemCatalog.Create("AK74"),
             ItemCatalog.Create("SVDS"),
             ItemCatalog.Create("Legendary Trigger Group")

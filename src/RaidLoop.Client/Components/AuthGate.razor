@@ -1,0 +1,57 @@
+@inject RaidLoop.Client.Services.SupabaseAuthService AuthService
+@implements IDisposable
+
+@if (AuthService.IsLoading)
+{
+    <p>Checking login...</p>
+}
+else if (!AuthService.IsAuthenticated)
+{
+    <section class="panel">
+        <h2>Login Required</h2>
+        <p>Sign in to load your account and play.</p>
+        <button class="action" @onclick="SignInWithGoogleAsync">Sign in with Google</button>
+    </section>
+}
+else
+{
+    @if (!string.IsNullOrWhiteSpace(AuthService.UserEmail))
+    {
+        <div class="panel top-gap">
+            <p><strong>Signed in:</strong> @AuthService.UserEmail</p>
+            <button class="action" @onclick="SignOutAsync">Sign out</button>
+        </div>
+    }
+
+    @ChildContent
+}
+
+@code {
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        AuthService.AuthStateChanged += HandleAuthStateChanged;
+        await AuthService.InitializeAsync();
+    }
+
+    private async Task SignInWithGoogleAsync()
+    {
+        await AuthService.SignInWithGoogleAsync();
+    }
+
+    private async Task SignOutAsync()
+    {
+        await AuthService.SignOutAsync();
+    }
+
+    private void HandleAuthStateChanged()
+    {
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        AuthService.AuthStateChanged -= HandleAuthStateChanged;
+    }
+}

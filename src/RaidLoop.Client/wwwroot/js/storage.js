@@ -4,5 +4,8 @@ window.raidLoopStorage = {
   },
   save: function (key, value) {
     window.localStorage.setItem(key, value);
+  },
+  remove: function (key) {
+    window.localStorage.removeItem(key);
   }
 };

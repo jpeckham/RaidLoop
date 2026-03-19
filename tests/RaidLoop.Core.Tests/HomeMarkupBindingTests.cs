@@ -4,6 +4,10 @@ namespace RaidLoop.Core.Tests;
 
 public sealed class HomeMarkupBindingTests
 {
+    private static readonly string AppMarkupPath = Path.GetFullPath(
+        Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "RaidLoop.Client", "App.razor"));
+    private static readonly string ProgramPath = Path.GetFullPath(
+        Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "RaidLoop.Client", "Program.cs"));
     private static readonly string HomeMarkupPath = Path.GetFullPath(
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "RaidLoop.Client", "Pages", "Home.razor"));
     private static readonly string LoadoutPanelPath = Path.GetFullPath(
@@ -113,6 +117,23 @@ public sealed class HomeMarkupBindingTests
         Assert.True(rowActionsIndex >= 0);
         Assert.True(equipIndex > rowActionsIndex);
         Assert.True(lootIndex > equipIndex);
+    }
+
+    [Fact]
+    public void AppUsesAuthGateForGoogleLogin()
+    {
+        var markup = File.ReadAllText(AppMarkupPath);
+
+        Assert.Contains("<AuthGate>", markup);
+        Assert.Contains("</AuthGate>", markup);
+    }
+
+    [Fact]
+    public void ProgramRegistersSupabaseAuthService()
+    {
+        var program = File.ReadAllText(ProgramPath);
+
+        Assert.Contains("AddScoped<SupabaseAuthService>", program);
     }
 
     private static void AssertUsesDisplayRarityMarkup(string path)

@@ -29,8 +29,10 @@ jobs:
         with:
           node-version: 24
 
-      - name: Install Supabase CLI
-        run: npm install -g supabase@2.81.3
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: 2.81.3
 
       - name: Validate required secrets
         run: |

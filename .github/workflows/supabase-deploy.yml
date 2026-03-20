@@ -23,32 +23,52 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Detect Supabase changes
+        id: changes
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            migrations:
+              - 'supabase/migrations/**'
+            functions:
+              - 'supabase/functions/**'
+              - 'supabase/config.toml'
+
       - name: Setup Node.js
+        if: ${{ steps.changes.outputs.migrations == 'true' || steps.changes.outputs.functions == 'true' }}
         uses: actions/setup-node@v4
         with:
           node-version: 24
 
       - name: Setup Supabase CLI
+        if: ${{ steps.changes.outputs.migrations == 'true' || steps.changes.outputs.functions == 'true' }}
         uses: supabase/setup-cli@v1
         with:
           version: 2.81.3
 
-      - name: Validate required secrets
+      - name: Validate migration secrets
+        if: ${{ steps.changes.outputs.migrations == 'true' }}
         run: |
-          test -n "$SUPABASE_ACCESS_TOKEN"
           test -n "$SUPABASE_PROJECT_ID"
           test -n "$SUPABASE_DB_PASSWORD"
 
       - name: Link Supabase project
+        if: ${{ steps.changes.outputs.migrations == 'true' }}
         run: supabase link --project-ref "$SUPABASE_PROJECT_ID" --password "$SUPABASE_DB_PASSWORD" --yes
 
       - name: Apply database migrations
+        if: ${{ steps.changes.outputs.migrations == 'true' }}
         run: supabase db push --linked --include-all --password "$SUPABASE_DB_PASSWORD"
 
-      - name: Deploy Edge Functions
+      - name: Validate function deploy secrets
+        if: ${{ steps.changes.outputs.functions == 'true' }}
         run: |
           test -n "$SUPABASE_ACCESS_TOKEN"
           test -n "$SUPABASE_PROJECT_ID"
+
+      - name: Deploy Edge Functions
+        if: ${{ steps.changes.outputs.functions == 'true' }}
+        run: |
           supabase functions deploy profile-bootstrap --project-ref "$SUPABASE_PROJECT_ID"
           supabase functions deploy profile-save --project-ref "$SUPABASE_PROJECT_ID"
           supabase functions deploy game-action --project-ref "$SUPABASE_PROJECT_ID"

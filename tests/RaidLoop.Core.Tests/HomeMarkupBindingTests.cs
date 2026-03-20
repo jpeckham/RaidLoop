@@ -183,6 +183,15 @@ public sealed class HomeMarkupBindingTests
     }
 
     [Fact]
+    public void SupabaseAuthServiceRefreshesSessionBeforeReturningAccessToken()
+    {
+        var authService = File.ReadAllText(SupabaseAuthServicePath);
+
+        Assert.Contains("await _client.Auth.RetrieveSessionAsync();", authService);
+        Assert.Contains("public async Task<string> GetAccessTokenAsync()", authService);
+    }
+
+    [Fact]
     public void SupabaseFunctionsDisableGatewayJwtVerification()
     {
         var config = File.ReadAllText(SupabaseConfigPath);

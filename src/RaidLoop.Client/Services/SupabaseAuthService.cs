@@ -152,15 +152,27 @@ public sealed class SupabaseAuthService : ISupabaseSessionProvider
         NotifyAuthStateChanged();
     }
 
-    public Task<string> GetAccessTokenAsync()
+    public async Task<string> GetAccessTokenAsync()
     {
+        if (_client is null)
+        {
+            await InitializeAsync();
+        }
+
+        if (_client is null)
+        {
+            throw new InvalidOperationException("Supabase client is not available.");
+        }
+
+        await _client.Auth.RetrieveSessionAsync();
+
         var accessToken = _client?.Auth.CurrentSession?.AccessToken;
         if (string.IsNullOrWhiteSpace(accessToken))
         {
             throw new InvalidOperationException("Supabase session is not available.");
         }
 
-        return Task.FromResult(accessToken);
+        return accessToken;
     }
 
     private async Task PersistSessionAsync(Session session)

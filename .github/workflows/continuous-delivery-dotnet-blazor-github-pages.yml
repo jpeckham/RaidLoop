@@ -4,10 +4,46 @@ on:
   push:
     branches: ["main"]
   pull_request:
+  workflow_run:
+    workflows: ["Supabase Deploy"]
+    types: [completed]
   workflow_dispatch:
 
 jobs:
+  detect-supabase-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      supabase_changed: ${{ steps.paths.outputs.supabase || steps.default.outputs.supabase }}
+    steps:
+      - name: Checkout
+        if: ${{ github.event_name == 'push' || github.event_name == 'pull_request' }}
+        uses: actions/checkout@v4
+
+      - name: Detect Supabase changes
+        if: ${{ github.event_name == 'push' || github.event_name == 'pull_request' }}
+        id: paths
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            supabase:
+              - 'supabase/**'
+
+      - name: Default Supabase change flag
+        if: ${{ github.event_name != 'push' && github.event_name != 'pull_request' }}
+        id: default
+        run: echo "supabase=false" >> "$GITHUB_OUTPUT"
+
   continuous-delivery:
+    needs: detect-supabase-changes
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'pull_request' ||
+      (github.event_name == 'push' && needs.detect-supabase-changes.outputs.supabase_changed != 'true') ||
+      (github.event_name == 'workflow_run' &&
+       github.event.workflow_run.name == 'Supabase Deploy' &&
+       github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push' &&
+       github.event.workflow_run.head_branch == 'main')
     uses: jpeckham/.github/.github/workflows/continuous-delivery-dotnet-blazor-github-pages.yml@main
     with:
       main_branch: main

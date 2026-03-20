@@ -70,4 +70,29 @@ public sealed class ContractsTests
         Assert.Equal("Action resolved.", response.Message);
         Assert.Equal(640, response.Snapshot.Money);
     }
+
+    [Fact]
+    public void GameActionResponse_DeserializesLegacySupabaseUtcTimestampFormat()
+    {
+        const string json = """
+            {
+              "snapshot": {
+                "money": 54,
+                "mainStash": [],
+                "onPersonItems": [],
+                "randomCharacterAvailableAt": "2026-03-20 02:39:44.905934",
+                "randomCharacter": null,
+                "activeRaid": null
+              },
+              "message": null
+            }
+            """;
+
+        var response = JsonSerializer.Deserialize<GameActionResponse>(json, new JsonSerializerOptions(JsonSerializerDefaults.Web));
+
+        Assert.NotNull(response);
+        Assert.Equal(
+            DateTimeOffset.Parse("2026-03-20T02:39:44.905934+00:00"),
+            response!.Snapshot.RandomCharacterAvailableAt);
+    }
 }

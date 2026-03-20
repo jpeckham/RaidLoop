@@ -584,6 +584,12 @@ public partial class Home : IDisposable
             ? null
             : new RandomCharacterState(snapshot.RandomCharacter.Name, [.. snapshot.RandomCharacter.Inventory]);
         _randomCharacterAvailableAt = snapshot.RandomCharacterAvailableAt;
+
+        if (_randomCharacter is not null && _randomCharacter.Inventory.Count == 0)
+        {
+            _randomCharacter = null;
+        }
+
         _money = snapshot.Money;
         _onPersonItems = snapshot.OnPersonItems
             .Select(entry => new OnPersonEntry(entry.Item, entry.IsEquipped))

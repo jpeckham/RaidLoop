@@ -127,6 +127,47 @@ public sealed class ProfileMutationFlowTests
         Assert.Equal(cooldown, Assert.IsType<DateTimeOffset>(GetField(home, "_randomCharacterAvailableAt")));
     }
 
+    [Fact]
+    public void ApplySnapshot_ClearsEmptyRandomCharacter_And_LeavesReadyStateWhenCooldownMissing()
+    {
+        var home = CreateHome(new FakeGameActionApiClient());
+
+        InvokePrivateVoid(
+            home,
+            "ApplySnapshot",
+            new PlayerSnapshot(
+                Money: 500,
+                MainStash: [],
+                OnPersonItems: [],
+                RandomCharacterAvailableAt: DateTimeOffset.MinValue,
+                RandomCharacter: new RandomCharacterSnapshot("Ghost-101", []),
+                ActiveRaid: null));
+
+        Assert.Null(GetField(home, "_randomCharacter"));
+        Assert.Equal(DateTimeOffset.MinValue, Assert.IsType<DateTimeOffset>(GetField(home, "_randomCharacterAvailableAt")));
+    }
+
+    [Fact]
+    public void ApplySnapshot_ClearsEmptyRandomCharacter_And_PreservesExistingCooldown()
+    {
+        var home = CreateHome(new FakeGameActionApiClient());
+        var expectedCooldown = DateTimeOffset.UtcNow.AddMinutes(3);
+
+        InvokePrivateVoid(
+            home,
+            "ApplySnapshot",
+            new PlayerSnapshot(
+                Money: 500,
+                MainStash: [],
+                OnPersonItems: [],
+                RandomCharacterAvailableAt: expectedCooldown,
+                RandomCharacter: new RandomCharacterSnapshot("Ghost-101", []),
+                ActiveRaid: null));
+
+        Assert.Null(GetField(home, "_randomCharacter"));
+        Assert.Equal(expectedCooldown, Assert.IsType<DateTimeOffset>(GetField(home, "_randomCharacterAvailableAt")));
+    }
+
     private static Home CreateHome(FakeGameActionApiClient actionClient)
     {
         var home = new Home();
@@ -181,6 +222,13 @@ public sealed class ProfileMutationFlowTests
         var task = method!.Invoke(instance, args) as Task;
         Assert.NotNull(task);
         await task!;
+    }
+
+    private static void InvokePrivateVoid(object instance, string methodName, params object[] args)
+    {
+        var method = instance.GetType().GetMethod(methodName, BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.NotNull(method);
+        method!.Invoke(instance, args);
     }
 
     private sealed class FakeProfileApiClient : IProfileApiClient

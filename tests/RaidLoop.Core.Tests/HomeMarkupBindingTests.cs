@@ -14,6 +14,10 @@ public sealed class HomeMarkupBindingTests
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026031806_game_inventory_functions.sql"));
     private static readonly string RaidActionMigrationPath = Path.GetFullPath(
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026031809_game_raid_action_functions.sql"));
+    private static readonly string RandomCharacterTimestampMigrationPath = Path.GetFullPath(
+        Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026031812_fix_random_character_timestamp_format.sql"));
+    private static readonly string EmptyLuckRunReadyMigrationPath = Path.GetFullPath(
+        Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026031813_empty_luck_run_means_ready.sql"));
     private static readonly string SupabaseAuthServicePath = Path.GetFullPath(
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "RaidLoop.Client", "Services", "SupabaseAuthService.cs"));
     private static readonly string ProfileApiClientPath = Path.GetFullPath(
@@ -220,6 +224,26 @@ public sealed class HomeMarkupBindingTests
         Assert.Contains("game.settle_random_character(", inventoryMigration);
         Assert.Contains("game.settle_random_character(", raidActionMigration);
         Assert.Contains("extractable_items", raidActionMigration);
+    }
+
+    [Fact]
+    public void LuckRunSettlementNormalizesUtcTimestampStringsForClientContracts()
+    {
+        var migration = File.ReadAllText(RandomCharacterTimestampMigrationPath);
+
+        Assert.Contains("replace(trim(both '\"' from normalized_available_at::text), ' ', 'T')", migration);
+        Assert.Contains("|| '+00:00'", migration);
+        Assert.Contains("position('+' in available_at_text) = 0", migration);
+    }
+
+    [Fact]
+    public void EmptyLuckRunSettlementResetsToReadyStateInsteadOfStartingCooldown()
+    {
+        var migration = File.ReadAllText(EmptyLuckRunReadyMigrationPath);
+
+        Assert.Contains("normalized_random_character := null;", migration);
+        Assert.Contains("normalized_available_at := to_jsonb('0001-01-01T00:00:00+00:00'::text);", migration);
+        Assert.DoesNotContain("interval '5 minutes'", migration);
     }
 
     [Fact]

@@ -135,12 +135,12 @@ public class LootTableTests
                 ItemCatalog.Create("Makarov"),
                 ItemCatalog.Create("Bandage"),
                 ItemCatalog.Create("Scrap Metal"),
-                ItemCatalog.Create("AK47")
+                ItemCatalog.Create("PKP")
             ]);
 
         var drawn = table.Draw(new TestSequenceRng([12, 0]), 1);
 
-        Assert.Equal("AK47", Assert.Single(drawn).Name);
+        Assert.Equal("PKP", Assert.Single(drawn).Name);
     }
 
     [Fact]

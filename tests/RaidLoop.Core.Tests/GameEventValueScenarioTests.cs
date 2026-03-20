@@ -1,8 +1,9 @@
 using System.Reflection;
-using Microsoft.JSInterop;
 using RaidLoop.Client.Pages;
 using RaidLoop.Client.Services;
+using RaidLoop.Client.Configuration;
 using RaidLoop.Core;
+using RaidLoop.Core.Contracts;
 
 namespace RaidLoop.Core.Tests;
 
@@ -15,26 +16,11 @@ public class GameEventValueScenarioTests : IDisposable
     }
 
     [Fact]
-    public async Task EndRaidAsync_SuccessfulExtraction_EmitsTotalValue()
+    public void ClientNoLongerImplementsLocalRaidSettlement()
     {
-        var home = CreateHome();
-        var equipped = new Item("PPSH", ItemType.Weapon, Value: 3, Slots: 1, Rarity: Rarity.Uncommon);
-        var carried = new Item("Rare Scope", ItemType.Material, Value: 8, Slots: 1, Rarity: Rarity.Rare);
-        var raid = new RaidState(
-            health: 30,
-            inventory: RaidInventory.FromItems([equipped], [carried], backpackCapacity: 4));
+        var method = typeof(Home).GetMethod("EndRaidAsync", BindingFlags.Instance | BindingFlags.NonPublic);
 
-        SetField(home, "_mainGame", new GameState([]));
-        SetField(home, "_activeGame", new GameState([]));
-        SetField(home, "_raid", raid);
-        SetField(home, "_activeRaidId", "raid-value");
-
-        await InvokePrivateAsync(home, "EndRaidAsync", true, "Extraction complete.");
-
-        var evt = Assert.Single(GameEventLog.Events);
-        Assert.Equal("extraction.complete", evt.EventName);
-        Assert.Equal(11, evt.TotalValue);
-        Assert.Equal([3, 8], evt.Items.Select(x => x.Value).Order().ToArray());
+        Assert.Null(method);
     }
 
     [Fact]
@@ -76,26 +62,11 @@ public class GameEventValueScenarioTests : IDisposable
     }
 
     [Fact]
-    public async Task EndRaidAsync_SuccessfulLuckRun_KeepsLootInLuckRunInventory()
+    public void ClientNoLongerTracksLocalRaidProfileSettlementState()
     {
-        var home = CreateHome();
-        var equipped = ItemCatalog.Create("Makarov");
-        var carried = ItemCatalog.Create("Bandage");
-        var raid = new RaidState(
-            health: 30,
-            inventory: RaidInventory.FromItems([equipped], [carried], backpackCapacity: 4));
+        var profileField = typeof(Home).GetField("_activeProfile", BindingFlags.Instance | BindingFlags.NonPublic);
 
-        SetField(home, "_mainGame", new GameState([]));
-        SetField(home, "_activeGame", new GameState([]));
-        SetField(home, "_raid", raid);
-        SetField(home, "_activeRaidId", "raid-luck");
-        SetField(home, "_randomCharacter", new RandomCharacterState("Ghost-101", []));
-        SetNestedEnumField(home, "_activeProfile", "Random");
-
-        await InvokePrivateAsync(home, "EndRaidAsync", true, "Luck run extracted.");
-
-        var randomCharacter = Assert.IsType<RandomCharacterState>(GetField(home, "_randomCharacter"));
-        Assert.NotEmpty(randomCharacter.Inventory);
+        Assert.Null(profileField);
     }
 
     public void Dispose()
@@ -106,9 +77,12 @@ public class GameEventValueScenarioTests : IDisposable
     private static Home CreateHome()
     {
         var home = new Home();
-        var storageProperty = home.GetType().GetProperty("Storage", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-        Assert.NotNull(storageProperty);
-        storageProperty!.SetValue(home, new StashStorage(new FakeJsRuntime()));
+        var profilesProperty = home.GetType().GetProperty("Profiles", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+        Assert.NotNull(profilesProperty);
+        profilesProperty!.SetValue(home, CreateProfileApiClient());
+        var actionsProperty = home.GetType().GetProperty("Actions", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+        Assert.NotNull(actionsProperty);
+        actionsProperty!.SetValue(home, CreateGameActionApiClient());
         return home;
     }
 
@@ -135,28 +109,72 @@ public class GameEventValueScenarioTests : IDisposable
         await task!;
     }
 
-    private static void SetNestedEnumField(object instance, string fieldName, string enumValue)
+    private static ProfileApiClient CreateProfileApiClient()
     {
-        var field = instance.GetType().GetField(fieldName, BindingFlags.Instance | BindingFlags.NonPublic);
-        Assert.NotNull(field);
-        var enumType = field!.FieldType;
-        field.SetValue(instance, Enum.Parse(enumType, enumValue));
+        var httpClient = new HttpClient(new FakeHandler())
+        {
+            BaseAddress = new Uri("https://dblgbpzlrglcdwqyagnx.supabase.co/functions/v1/")
+        };
+        return new ProfileApiClient(
+            httpClient,
+            new StubSessionProvider(),
+            new SupabaseOptions
+            {
+                Url = "https://dblgbpzlrglcdwqyagnx.supabase.co",
+                PublishableKey = "publishable-key"
+            });
     }
 
-    private sealed class FakeJsRuntime : IJSRuntime
+    private static IGameActionApiClient CreateGameActionApiClient()
     {
-        public ValueTask<TValue> InvokeAsync<TValue>(string identifier, object?[]? args)
-        {
-            return identifier switch
-            {
-                "raidLoopStorage.load" => ValueTask.FromResult((TValue)(object?)null!),
-                _ => ValueTask.FromResult(default(TValue)!)
-            };
-        }
+        return new StubGameActionApiClient();
+    }
 
-        public ValueTask<TValue> InvokeAsync<TValue>(string identifier, CancellationToken cancellationToken, object?[]? args)
+    private sealed class StubSessionProvider : ISupabaseSessionProvider
+    {
+        public string? UserEmail => "player@example.com";
+
+        public Task<string> GetAccessTokenAsync()
         {
-            return InvokeAsync<TValue>(identifier, args);
+            return Task.FromResult("token-123");
+        }
+    }
+
+    private sealed class FakeHandler : HttpMessageHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            var payload = request.RequestUri!.AbsolutePath.EndsWith("/profile-bootstrap", StringComparison.Ordinal)
+                ? "{\"isAuthenticated\":true,\"userEmail\":\"player@example.com\",\"snapshot\":{\"money\":500,\"mainStash\":[],\"onPersonItems\":[],\"randomCharacterAvailableAt\":\"0001-01-01T00:00:00+00:00\",\"randomCharacter\":null,\"activeRaid\":null}}"
+                : "{\"message\":\"Profile saved.\"}";
+
+            return Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.OK)
+            {
+                Content = new StringContent(payload)
+            });
+        }
+    }
+
+    private sealed class StubGameActionApiClient : IGameActionApiClient
+    {
+        public Task<GameActionResponse> SendAsync(string action, object payload, CancellationToken cancellationToken = default)
+        {
+            if (string.Equals(action, "sell-stash-item", StringComparison.Ordinal))
+            {
+                return Task.FromResult(new GameActionResponse(
+                    new PlayerSnapshot(
+                        20,
+                        [ItemCatalog.Create("Rusty Knife")],
+                        [],
+                        DateTimeOffset.MinValue,
+                        null,
+                        null),
+                    null));
+            }
+
+            return Task.FromResult(new GameActionResponse(
+                new PlayerSnapshot(0, [], [], DateTimeOffset.MinValue, null, null),
+                null));
         }
     }
 }

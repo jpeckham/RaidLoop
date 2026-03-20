@@ -18,6 +18,8 @@ public sealed class HomeMarkupBindingTests
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026031812_fix_random_character_timestamp_format.sql"));
     private static readonly string EmptyLuckRunReadyMigrationPath = Path.GetFullPath(
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026031813_empty_luck_run_means_ready.sql"));
+    private static readonly string BootstrapNormalizationMigrationPath = Path.GetFullPath(
+        Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026031814_normalize_profile_bootstrap.sql"));
     private static readonly string SupabaseAuthServicePath = Path.GetFullPath(
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "RaidLoop.Client", "Services", "SupabaseAuthService.cs"));
     private static readonly string ProfileApiClientPath = Path.GetFullPath(
@@ -247,6 +249,15 @@ public sealed class HomeMarkupBindingTests
     }
 
     [Fact]
+    public void ProfileBootstrapNormalizesSavedPayloadBeforeReturningSnapshot()
+    {
+        var migration = File.ReadAllText(BootstrapNormalizationMigrationPath);
+
+        Assert.Contains("create or replace function public.profile_bootstrap()", migration);
+        Assert.Contains("game.normalize_save_payload(game.bootstrap_player(auth.uid()))", migration);
+    }
+
+    [Fact]
     public void ClientDoesNotExposeGenericProfileSnapshotSavePath()
     {
         var profileApiClient = File.ReadAllText(ProfileApiClientPath);
@@ -297,6 +308,16 @@ public sealed class HomeMarkupBindingTests
         Assert.Contains("AddScoped<IProfileApiClient>", program);
         Assert.Contains("AddScoped<IGameActionApiClient>", program);
         Assert.DoesNotContain("AddScoped<StashStorage>", program);
+    }
+
+    [Fact]
+    public void PreRaidPanelTreatsEmptyLuckRunInventoryAsStartableState()
+    {
+        var markup = File.ReadAllText(PreRaidPanelPath);
+
+        Assert.Contains("var hasLuckRunLoot = RandomCharacter is not null && RandomCharacter.Inventory.Count > 0;", markup);
+        Assert.Contains("@if (!hasLuckRunLoot)", markup);
+        Assert.DoesNotContain("@if (RandomCharacter is null)", markup);
     }
 
     private static void AssertUsesDisplayRarityMarkup(string path)

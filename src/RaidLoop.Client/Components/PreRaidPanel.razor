@@ -2,7 +2,11 @@
     <h2>Luck Run</h2>
     <p>Available once every 5 minutes. Generates a random kit to raid with. Keep what you extract.</p>
 
-    @if (RandomCharacter is null)
+    @{
+        var hasLuckRunLoot = RandomCharacter is not null && RandomCharacter.Inventory.Count > 0;
+    }
+
+    @if (!hasLuckRunLoot)
     {
         @if (IsRandomCharacterReady)
         {
@@ -17,13 +21,14 @@
             <p>Next Luck Run in: @RandomCooldownText</p>
         }
     }
-    else if (RandomCharacter.Inventory.Count > 0)
+    else
     {
-        <p><strong>@RandomCharacter.Name</strong> brought back loot. Process it before the next raid.</p>
-        @for (var i = 0; i < RandomCharacter.Inventory.Count; i++)
+        var lootCharacter = RandomCharacter!;
+        <p><strong>@lootCharacter.Name</strong> brought back loot. Process it before the next raid.</p>
+        @for (var i = 0; i < lootCharacter.Inventory.Count; i++)
         {
             var luckIndex = i;
-            var item = RandomCharacter.Inventory[luckIndex];
+            var item = lootCharacter.Inventory[luckIndex];
             <div class="row-item">
                 <ItemTypeIcon Type="item.Type" />
                 <span class="item-name rarity-@item.DisplayRarity.ToString().ToLower()">@item.Name</span>

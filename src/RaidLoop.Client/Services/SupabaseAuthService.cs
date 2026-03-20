@@ -78,8 +78,7 @@ public sealed class SupabaseAuthService : ISupabaseSessionProvider
             }
 
             await ClearPkceVerifierAsync();
-            var cleanPath = _navigationManager.ToBaseRelativePath(_navigationManager.Uri).Split('?', '#')[0];
-            _navigationManager.NavigateTo(string.IsNullOrWhiteSpace(cleanPath) ? "/" : cleanPath, replace: true);
+            _navigationManager.NavigateTo(GetCurrentPathWithoutQueryOrFragment(), replace: true);
         }
         else
         {
@@ -122,7 +121,7 @@ public sealed class SupabaseAuthService : ISupabaseSessionProvider
             new SignInOptions
             {
                 FlowType = Constants.OAuthFlowType.PKCE,
-                RedirectTo = _navigationManager.BaseUri
+                RedirectTo = GetCurrentUriWithoutQueryOrFragment()
             });
 
         if (!string.IsNullOrWhiteSpace(providerState.PKCEVerifier))
@@ -233,6 +232,23 @@ public sealed class SupabaseAuthService : ISupabaseSessionProvider
     private void NotifyAuthStateChanged()
     {
         AuthStateChanged?.Invoke();
+    }
+
+    private string GetCurrentUriWithoutQueryOrFragment()
+    {
+        var currentUri = new Uri(_navigationManager.Uri);
+        return currentUri.GetLeftPart(UriPartial.Path);
+    }
+
+    private string GetCurrentPathWithoutQueryOrFragment()
+    {
+        var currentUri = new Uri(_navigationManager.Uri);
+        var path = currentUri.GetLeftPart(UriPartial.Path);
+        return _navigationManager.ToBaseRelativePath(path) switch
+        {
+            "" => ".",
+            var relativePath => relativePath
+        };
     }
 
     private static bool TryGetQueryParameter(Uri uri, string key, out string value)

@@ -158,6 +158,9 @@ public sealed class HomeMarkupBindingTests
         Assert.Contains("FlowType = Constants.OAuthFlowType.PKCE", authService);
         Assert.Contains("providerState.PKCEVerifier", authService);
         Assert.Contains("ExchangeCodeForSession", authService);
+        Assert.Contains("RedirectTo = GetCurrentUriWithoutQueryOrFragment()", authService);
+        Assert.Contains("_navigationManager.NavigateTo(GetCurrentPathWithoutQueryOrFragment(), replace: true);", authService);
+        Assert.DoesNotContain("RedirectTo = _navigationManager.BaseUri", authService);
     }
 
     [Fact]

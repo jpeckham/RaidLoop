@@ -7,9 +7,10 @@ using Supabase.Gotrue;
 
 namespace RaidLoop.Client.Services;
 
-public sealed class SupabaseAuthService
+public sealed class SupabaseAuthService : ISupabaseSessionProvider
 {
     private const string SessionStorageKey = "raidloop.auth.session.v1";
+    private const string PkceVerifierStorageKey = "raidloop.auth.pkce-verifier.v1";
 
     private readonly IJSRuntime _jsRuntime;
     private readonly NavigationManager _navigationManager;
@@ -17,6 +18,7 @@ public sealed class SupabaseAuthService
 
     private Supabase.Client? _client;
     private bool _isInitialized;
+    private bool _isSignedOutLocally;
 
     public SupabaseAuthService(
         IJSRuntime jsRuntime,
@@ -32,7 +34,7 @@ public sealed class SupabaseAuthService
 
     public bool IsLoading { get; private set; }
 
-    public bool IsAuthenticated => _client?.Auth.CurrentSession is not null;
+    public bool IsAuthenticated => !_isSignedOutLocally && _client?.Auth.CurrentSession is not null;
 
     public string? UserEmail => _client?.Auth.CurrentUser?.Email;
 
@@ -57,17 +59,25 @@ public sealed class SupabaseAuthService
             });
 
         await _client.InitializeAsync();
-        _client.Auth.AddStateChangedListener((_, _) => NotifyAuthStateChanged());
+        _client.Auth.AddStateChangedListener((_, _) => _ = HandleAuthSessionChangedAsync());
+        _isSignedOutLocally = false;
 
         var currentUri = new Uri(_navigationManager.Uri);
-        if (currentUri.Query.Contains("code=", StringComparison.OrdinalIgnoreCase))
+        if (TryGetQueryParameter(currentUri, "code", out var code))
         {
-            var session = await _client.Auth.GetSessionFromUrl(currentUri);
+            Session? session = null;
+            var pkceVerifier = await LoadPkceVerifierAsync();
+            if (!string.IsNullOrWhiteSpace(pkceVerifier))
+            {
+                session = await _client.Auth.ExchangeCodeForSession(pkceVerifier, code);
+            }
+
             if (session is not null)
             {
                 await PersistSessionAsync(session);
             }
 
+            await ClearPkceVerifierAsync();
             var cleanPath = _navigationManager.ToBaseRelativePath(_navigationManager.Uri).Split('?', '#')[0];
             _navigationManager.NavigateTo(string.IsNullOrWhiteSpace(cleanPath) ? "/" : cleanPath, replace: true);
         }
@@ -87,6 +97,12 @@ public sealed class SupabaseAuthService
             }
         }
 
+        if (_client.Auth.CurrentSession is not null)
+        {
+            _isSignedOutLocally = false;
+            await PersistSessionAsync(_client.Auth.CurrentSession);
+        }
+
         _isInitialized = true;
         IsLoading = false;
         NotifyAuthStateChanged();
@@ -99,12 +115,20 @@ public sealed class SupabaseAuthService
             await InitializeAsync();
         }
 
+        _isSignedOutLocally = false;
+
         var providerState = await _client!.Auth.SignIn(
             Supabase.Gotrue.Constants.Provider.Google,
             new SignInOptions
             {
+                FlowType = Constants.OAuthFlowType.PKCE,
                 RedirectTo = _navigationManager.BaseUri
             });
+
+        if (!string.IsNullOrWhiteSpace(providerState.PKCEVerifier))
+        {
+            await PersistPkceVerifierAsync(providerState.PKCEVerifier);
+        }
 
         _navigationManager.NavigateTo(providerState.Uri.ToString(), forceLoad: true);
     }
@@ -113,11 +137,31 @@ public sealed class SupabaseAuthService
     {
         if (_client?.Auth is not null)
         {
-            await _client.Auth.SignOut();
+            try
+            {
+                await _client.Auth.SignOut();
+            }
+            catch
+            {
+                // Force a local sign-out path when the remote session is already invalid.
+            }
         }
 
+        _isSignedOutLocally = true;
         await ClearPersistedSessionAsync();
+        await ClearPkceVerifierAsync();
         NotifyAuthStateChanged();
+    }
+
+    public Task<string> GetAccessTokenAsync()
+    {
+        var accessToken = _client?.Auth.CurrentSession?.AccessToken;
+        if (string.IsNullOrWhiteSpace(accessToken))
+        {
+            throw new InvalidOperationException("Supabase session is not available.");
+        }
+
+        return Task.FromResult(accessToken);
     }
 
     private async Task PersistSessionAsync(Session session)
@@ -155,9 +199,58 @@ public sealed class SupabaseAuthService
         await _jsRuntime.InvokeVoidAsync("raidLoopStorage.remove", SessionStorageKey);
     }
 
+    private async Task PersistPkceVerifierAsync(string verifier)
+    {
+        await _jsRuntime.InvokeVoidAsync("raidLoopStorage.save", PkceVerifierStorageKey, verifier);
+    }
+
+    private Task<string?> LoadPkceVerifierAsync()
+    {
+        return _jsRuntime.InvokeAsync<string?>("raidLoopStorage.load", PkceVerifierStorageKey).AsTask();
+    }
+
+    private async Task ClearPkceVerifierAsync()
+    {
+        await _jsRuntime.InvokeVoidAsync("raidLoopStorage.remove", PkceVerifierStorageKey);
+    }
+
+    private async Task HandleAuthSessionChangedAsync()
+    {
+        if (_client?.Auth.CurrentSession is not null)
+        {
+            _isSignedOutLocally = false;
+            await PersistSessionAsync(_client.Auth.CurrentSession);
+        }
+        else
+        {
+            _isSignedOutLocally = true;
+            await ClearPersistedSessionAsync();
+        }
+
+        NotifyAuthStateChanged();
+    }
+
     private void NotifyAuthStateChanged()
     {
         AuthStateChanged?.Invoke();
+    }
+
+    private static bool TryGetQueryParameter(Uri uri, string key, out string value)
+    {
+        foreach (var pair in uri.Query.TrimStart('?').Split('&', StringSplitOptions.RemoveEmptyEntries))
+        {
+            var parts = pair.Split('=', 2);
+            if (!string.Equals(parts[0], key, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            value = parts.Length > 1 ? Uri.UnescapeDataString(parts[1]) : string.Empty;
+            return true;
+        }
+
+        value = string.Empty;
+        return false;
     }
 
     private sealed record PersistedSession(string AccessToken, string RefreshToken);

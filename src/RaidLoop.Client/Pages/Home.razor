@@ -1,6 +1,8 @@
 @page "/"
 @using RaidLoop.Client.Services
-@inject StashStorage Storage
+@inject IProfileApiClient Profiles
+@inject IGameActionApiClient Actions
+@inject SupabaseAuthService AuthService
 
 <PageTitle>RaidLoop</PageTitle>
 

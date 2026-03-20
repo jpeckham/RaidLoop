@@ -1,0 +1,63 @@
+name: Supabase Deploy
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "supabase/**"
+      - ".github/workflows/supabase-deploy.yml"
+  workflow_dispatch:
+
+jobs:
+  deploy-supabase:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+      SUPABASE_CONNECTION_STRING: ${{ secrets.SUPABASE_CONNECTION_STRING }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install Supabase CLI
+        run: npm install -g supabase@2.81.3
+
+      - name: Validate required secrets
+        run: |
+          if [ -n "$SUPABASE_CONNECTION_STRING" ]; then
+            exit 0
+          fi
+
+          test -n "$SUPABASE_ACCESS_TOKEN"
+          test -n "$SUPABASE_PROJECT_ID"
+          test -n "$SUPABASE_DB_PASSWORD"
+
+      - name: Link Supabase project
+        if: ${{ env.SUPABASE_CONNECTION_STRING == '' }}
+        run: supabase link --project-ref "$SUPABASE_PROJECT_ID" --password "$SUPABASE_DB_PASSWORD" --yes
+
+      - name: Apply database migrations
+        run: |
+          if [ -n "$SUPABASE_CONNECTION_STRING" ]; then
+            supabase db push --db-url "$SUPABASE_CONNECTION_STRING" --include-all
+          else
+            supabase db push --linked --include-all --password "$SUPABASE_DB_PASSWORD"
+          fi
+
+      - name: Deploy Edge Functions
+        run: |
+          test -n "$SUPABASE_ACCESS_TOKEN"
+          test -n "$SUPABASE_PROJECT_ID"
+          supabase functions deploy profile-bootstrap --project-ref "$SUPABASE_PROJECT_ID"
+          supabase functions deploy profile-save --project-ref "$SUPABASE_PROJECT_ID"
+          supabase functions deploy game-action --project-ref "$SUPABASE_PROJECT_ID"

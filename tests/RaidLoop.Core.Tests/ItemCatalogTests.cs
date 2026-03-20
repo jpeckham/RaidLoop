@@ -2,11 +2,15 @@ using RaidLoop.Core;
 using RaidLoop.Client.Pages;
 using RaidLoop.Client.Services;
 using System.Reflection;
+using System.IO;
 
 namespace RaidLoop.Core.Tests;
 
 public sealed class ItemCatalogTests
 {
+    private static readonly string RaidStartMigrationPath = Path.GetFullPath(
+        Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026031807_game_raid_start_functions.sql"));
+
     [Fact]
     public void KeyItems_HaveAuthoredValuesGreaterThanOne()
     {
@@ -105,28 +109,25 @@ public sealed class ItemCatalogTests
     [Fact]
     public void RandomLoadout_UsesAuthoredItemDefinitions()
     {
-        var home = new Home();
+        var migration = ReadRandomLuckRunLoadoutFunction();
 
-        var loadout = InvokePrivate<List<Item>>(home, "GenerateRandomLoadout");
-
-        Assert.Contains(ItemCatalog.Get("Makarov"), loadout);
-        Assert.Contains(ItemCatalog.Get("Medkit"), loadout);
-        Assert.Contains(ItemCatalog.Get("Bandage"), loadout);
-        Assert.Contains(ItemCatalog.Get("Ammo Box"), loadout);
-        Assert.Contains(loadout, item =>
-            item == ItemCatalog.Get("Small Backpack")
-            || item == ItemCatalog.Get("Tactical Backpack"));
+        Assert.Contains("'Makarov'", migration);
+        Assert.Contains("'Medkit'", migration);
+        Assert.Contains("'Bandage'", migration);
+        Assert.Contains("'Ammo Box'", migration);
+        Assert.Contains("'Small Backpack'", migration);
+        Assert.Contains("'Tactical Backpack'", migration);
     }
 
     [Fact]
     public void RandomLoadout_DoesNotUseEpicOrLegendaryGear()
     {
-        var home = new Home();
+        var migration = ReadRandomLuckRunLoadoutFunction();
 
-        var loadout = InvokePrivate<List<Item>>(home, "GenerateRandomLoadout");
-
-        Assert.DoesNotContain(loadout, item =>
-            item.DisplayRarity is DisplayRarity.Epic or DisplayRarity.Legendary);
+        Assert.DoesNotContain("'SVDS'", migration);
+        Assert.DoesNotContain("'PKP'", migration);
+        Assert.DoesNotContain("'NFM THOR'", migration);
+        Assert.DoesNotContain("'6Sh118'", migration);
     }
 
     [Fact]
@@ -182,5 +183,15 @@ public sealed class ItemCatalogTests
         Assert.NotNull(field);
 
         return (T)field!.GetValue(instance)!;
+    }
+
+    private static string ReadRandomLuckRunLoadoutFunction()
+    {
+        var migration = File.ReadAllText(RaidStartMigrationPath);
+        var start = migration.IndexOf("create or replace function game.random_luck_run_loadout()", StringComparison.Ordinal);
+        Assert.True(start >= 0);
+        var end = migration.IndexOf("create or replace function game.random_container_name()", start, StringComparison.Ordinal);
+        Assert.True(end > start);
+        return migration[start..end];
     }
 }

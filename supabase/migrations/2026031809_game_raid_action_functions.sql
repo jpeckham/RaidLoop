@@ -292,6 +292,7 @@ declare
     on_person_items jsonb := coalesce(updated_save->'onPersonItems', '[]'::jsonb);
     random_character jsonb := updated_save->'randomCharacter';
     random_available_at jsonb := updated_save->'randomCharacterAvailableAt';
+    settled_random_state jsonb;
     extractable_items jsonb := case when extracted then game.raid_extractable_items(raid_payload) else '[]'::jsonb end;
 begin
     if raid_profile = 'main' then
@@ -322,11 +323,11 @@ begin
             );
         else
             random_character := null;
-            random_available_at := to_jsonb((timezone('utc', now()) + interval '5 minutes')::text);
         end if;
 
-        updated_save := jsonb_set(updated_save, '{randomCharacter}', coalesce(random_character, 'null'::jsonb), true);
-        updated_save := jsonb_set(updated_save, '{randomCharacterAvailableAt}', random_available_at, true);
+        settled_random_state := game.settle_random_character(random_character, random_available_at);
+        updated_save := jsonb_set(updated_save, '{randomCharacter}', coalesce(settled_random_state->'randomCharacter', 'null'::jsonb), true);
+        updated_save := jsonb_set(updated_save, '{randomCharacterAvailableAt}', settled_random_state->'randomCharacterAvailableAt', true);
     end if;
 
     updated_save := jsonb_set(updated_save, '{activeRaid}', 'null'::jsonb, true);

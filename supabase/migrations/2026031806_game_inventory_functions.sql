@@ -61,19 +61,49 @@ as $$
     end;
 $$;
 
+create or replace function game.settle_random_character(random_character jsonb, random_available_at jsonb)
+returns jsonb
+language plpgsql
+volatile
+as $$
+declare
+    normalized_random_character jsonb := game.normalize_random_character(random_character);
+    normalized_available_at jsonb := coalesce(random_available_at, to_jsonb('0001-01-01T00:00:00+00:00'::text));
+begin
+    if normalized_random_character is not null
+       and jsonb_array_length(coalesce(normalized_random_character->'inventory', '[]'::jsonb)) = 0 then
+        normalized_random_character := null;
+        if trim(both '"' from normalized_available_at::text) = '0001-01-01T00:00:00+00:00' then
+            normalized_available_at := to_jsonb((timezone('utc', now()) + interval '5 minutes')::text);
+        end if;
+    end if;
+
+    return jsonb_build_object(
+        'randomCharacterAvailableAt', normalized_available_at,
+        'randomCharacter', normalized_random_character
+    );
+end;
+$$;
+
 create or replace function game.normalize_save_payload(payload jsonb)
 returns jsonb
-language sql
-stable
+language plpgsql
+volatile
 as $$
-    select jsonb_build_object(
+declare
+    settled_random_state jsonb := game.settle_random_character(
+        coalesce(payload->'randomCharacter', payload->'RandomCharacter'),
+        coalesce(payload->'randomCharacterAvailableAt', payload->'RandomCharacterAvailableAt', to_jsonb('0001-01-01T00:00:00+00:00'::text)));
+begin
+    return jsonb_build_object(
         'money', greatest(coalesce((payload->>'money')::int, (payload->>'Money')::int, 0), 0),
         'mainStash', game.normalize_items(coalesce(payload->'mainStash', payload->'MainStash')),
         'onPersonItems', game.normalize_on_person_items(coalesce(payload->'onPersonItems', payload->'OnPersonItems')),
-        'randomCharacterAvailableAt', coalesce(payload->'randomCharacterAvailableAt', payload->'RandomCharacterAvailableAt', to_jsonb('0001-01-01T00:00:00+00:00'::text)),
-        'randomCharacter', game.normalize_random_character(coalesce(payload->'randomCharacter', payload->'RandomCharacter')),
+        'randomCharacterAvailableAt', settled_random_state->'randomCharacterAvailableAt',
+        'randomCharacter', settled_random_state->'randomCharacter',
         'activeRaid', coalesce(payload->'activeRaid', payload->'ActiveRaid', 'null'::jsonb)
     );
+end;
 $$;
 
 create or replace function game.default_save_payload()
@@ -242,6 +272,7 @@ declare
     random_character jsonb;
     random_inventory jsonb;
     random_available_at jsonb;
+    settled_random_state jsonb;
     active_raid jsonb;
     selected_item jsonb;
     selected_entry jsonb;
@@ -411,12 +442,14 @@ begin
             end if;
     end case;
 
+    settled_random_state := game.settle_random_character(random_character, random_available_at);
+
     save_payload := jsonb_build_object(
         'money', coalesce((save_payload->>'money')::int, 0),
         'mainStash', game.normalize_items(stash),
         'onPersonItems', game.normalize_on_person_items(on_person_items),
-        'randomCharacterAvailableAt', random_available_at,
-        'randomCharacter', game.normalize_random_character(random_character),
+        'randomCharacterAvailableAt', settled_random_state->'randomCharacterAvailableAt',
+        'randomCharacter', settled_random_state->'randomCharacter',
         'activeRaid', active_raid
     );
 
@@ -443,6 +476,7 @@ revoke all on function game.normalize_item(jsonb) from public;
 revoke all on function game.normalize_items(jsonb) from public;
 revoke all on function game.normalize_on_person_items(jsonb) from public;
 revoke all on function game.normalize_random_character(jsonb) from public;
+revoke all on function game.settle_random_character(jsonb, jsonb) from public;
 revoke all on function game.normalize_save_payload(jsonb) from public;
 revoke all on function game.jsonb_array_get(jsonb, int) from public;
 revoke all on function game.jsonb_array_remove(jsonb, int) from public;

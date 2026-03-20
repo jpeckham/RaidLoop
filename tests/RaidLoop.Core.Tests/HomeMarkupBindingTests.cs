@@ -10,6 +10,8 @@ public sealed class HomeMarkupBindingTests
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "RaidLoop.Client", "Program.cs"));
     private static readonly string SupabaseConfigPath = Path.GetFullPath(
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "config.toml"));
+    private static readonly string InventoryMigrationPath = Path.GetFullPath(
+        Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026031806_game_inventory_functions.sql"));
     private static readonly string RaidActionMigrationPath = Path.GetFullPath(
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026031809_game_raid_action_functions.sql"));
     private static readonly string SupabaseAuthServicePath = Path.GetFullPath(
@@ -204,6 +206,20 @@ public sealed class HomeMarkupBindingTests
         Assert.Contains("move-toward-extract", migration);
         Assert.Contains("attempt-extract", migration);
         Assert.Contains("select raid_sessions.profile, raid_sessions.payload", migration);
+    }
+
+    [Fact]
+    public void LuckRunSettlementIsServerAuthoritative()
+    {
+        var inventoryMigration = File.ReadAllText(InventoryMigrationPath);
+        var raidActionMigration = File.ReadAllText(RaidActionMigrationPath);
+
+        Assert.Contains("create or replace function game.settle_random_character", inventoryMigration);
+        Assert.Contains("jsonb_array_length(coalesce(normalized_random_character->'inventory', '[]'::jsonb)) = 0", inventoryMigration);
+        Assert.Contains("timezone('utc', now()) + interval '5 minutes'", inventoryMigration);
+        Assert.Contains("game.settle_random_character(", inventoryMigration);
+        Assert.Contains("game.settle_random_character(", raidActionMigration);
+        Assert.Contains("extractable_items", raidActionMigration);
     }
 
     [Fact]

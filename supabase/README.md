@@ -4,13 +4,17 @@
 
 Apply the SQL files in `supabase/migrations/` in timestamp order.
 
-## CI/CD Secrets
+## CI/CD Configuration
 
-GitHub Actions production deploy expects these repository secrets:
+GitHub Actions production deploy expects:
 
-- `SUPABASE_ACCESS_TOKEN`
-- `SUPABASE_PROJECT_ID`
-- `SUPABASE_DB_PASSWORD`
+- Repository variables:
+  - `SUPABASE_PROJECT_ID`
+  - `SUPABASE_URL`
+  - `SUPABASE_PUBLISHABLE_KEY`
+- Repository secrets:
+  - `SUPABASE_ACCESS_TOKEN`
+  - `SUPABASE_DB_PASSWORD`
 
 The project id is the Supabase project ref, for example `dblgbpzlrglcdwqyagnx`, not the project display name.
 

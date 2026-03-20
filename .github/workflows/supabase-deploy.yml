@@ -18,7 +18,6 @@ jobs:
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
       SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
       SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
-      SUPABASE_CONNECTION_STRING: ${{ secrets.SUPABASE_CONNECTION_STRING }}
 
     steps:
       - name: Checkout
@@ -36,25 +35,15 @@ jobs:
 
       - name: Validate required secrets
         run: |
-          if [ -n "$SUPABASE_CONNECTION_STRING" ]; then
-            exit 0
-          fi
-
           test -n "$SUPABASE_ACCESS_TOKEN"
           test -n "$SUPABASE_PROJECT_ID"
           test -n "$SUPABASE_DB_PASSWORD"
 
       - name: Link Supabase project
-        if: ${{ env.SUPABASE_CONNECTION_STRING == '' }}
         run: supabase link --project-ref "$SUPABASE_PROJECT_ID" --password "$SUPABASE_DB_PASSWORD" --yes
 
       - name: Apply database migrations
-        run: |
-          if [ -n "$SUPABASE_CONNECTION_STRING" ]; then
-            supabase db push --db-url "$SUPABASE_CONNECTION_STRING" --include-all
-          else
-            supabase db push --linked --include-all --password "$SUPABASE_DB_PASSWORD"
-          fi
+        run: supabase db push --linked --include-all --password "$SUPABASE_DB_PASSWORD"
 
       - name: Deploy Edge Functions
         run: |

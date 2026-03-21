@@ -72,6 +72,73 @@ public sealed class ContractsTests
     }
 
     [Fact]
+    public void GameActionResponse_Serializes_To_LegacySnapshotShape()
+    {
+        var response = new GameActionResponse(
+            Snapshot: new PlayerSnapshot(
+                Money: 640,
+                MainStash: [],
+                OnPersonItems: [],
+                RandomCharacterAvailableAt: DateTimeOffset.MinValue,
+                RandomCharacter: null,
+                ActiveRaid: null),
+            Message: "Action resolved.");
+
+        var json = JsonSerializer.Serialize(response, new JsonSerializerOptions(JsonSerializerDefaults.Web));
+
+        Assert.Contains("\"snapshot\"", json);
+        Assert.Contains("\"message\":\"Action resolved.\"", json);
+        Assert.DoesNotContain("\"eventType\"", json);
+        Assert.DoesNotContain("\"event\"", json);
+        Assert.DoesNotContain("\"projections\"", json);
+    }
+
+    [Fact]
+    public void GameActionResult_DeserializesEventEnvelopeAndProjectionPayload()
+    {
+        const string json = """
+            {
+              "eventType": "CombatResolved",
+              "event": {
+                "enemyDamage": 2,
+                "playerDamage": 3,
+                "ammoSpent": 1,
+                "weaponMalfunctioned": true
+              },
+              "projections": {
+                "raid": {
+                  "health": 17,
+                  "enemyHealth": 6,
+                  "ammo": 4,
+                  "weaponMalfunction": true
+                }
+              },
+              "snapshot": {
+                "money": 54,
+                "mainStash": [],
+                "onPersonItems": [],
+                "randomCharacterAvailableAt": "2026-03-20T02:39:44.905934+00:00",
+                "randomCharacter": null,
+                "activeRaid": null
+              },
+              "message": "Action resolved."
+            }
+            """;
+
+        var response = JsonSerializer.Deserialize<GameActionResult>(json, new JsonSerializerOptions(JsonSerializerDefaults.Web));
+
+        Assert.NotNull(response);
+        Assert.Equal("CombatResolved", response!.EventType);
+        Assert.True(response.Event.HasValue);
+        Assert.Equal(2, response.Event.Value.GetProperty("enemyDamage").GetInt32());
+        Assert.True(response.Projections.HasValue);
+        Assert.Equal(17, response.Projections.Value.GetProperty("raid").GetProperty("health").GetInt32());
+        Assert.NotNull(response.Snapshot);
+        Assert.Equal(54, response.Snapshot!.Money);
+        Assert.Equal("Action resolved.", response.Message);
+    }
+
+    [Fact]
     public void GameActionResponse_DeserializesLegacySupabaseUtcTimestampFormat()
     {
         const string json = """

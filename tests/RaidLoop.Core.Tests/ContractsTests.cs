@@ -50,47 +50,32 @@ public sealed class ContractsTests
     }
 
     [Fact]
-    public void GameActionRequest_And_Response_HaveExplicitActionEnvelope()
+    public void GameActionRequest_HasExplicitActionEnvelope()
     {
         var request = new GameActionRequest(
             Action: "attack",
             Payload: JsonDocument.Parse("{\"target\":\"enemy\"}").RootElement.Clone());
-        var response = new GameActionResponse(
-            Snapshot: new PlayerSnapshot(
-                Money: 640,
-                MainStash: [],
-                OnPersonItems: [],
-                RandomCharacterAvailableAt: DateTimeOffset.MinValue,
-                RandomCharacter: null,
-                ActiveRaid: null),
-            Message: "Action resolved.");
 
         Assert.Equal("attack", request.Action);
         Assert.Equal("enemy", request.Payload.GetProperty("target").GetString());
-        Assert.Equal("Action resolved.", response.Message);
-        Assert.Equal(640, response.Snapshot.Money);
     }
 
     [Fact]
-    public void GameActionResponse_Serializes_To_LegacySnapshotShape()
+    public void GameActionResult_Serializes_WithoutSnapshotShape()
     {
-        var response = new GameActionResponse(
-            Snapshot: new PlayerSnapshot(
-                Money: 640,
-                MainStash: [],
-                OnPersonItems: [],
-                RandomCharacterAvailableAt: DateTimeOffset.MinValue,
-                RandomCharacter: null,
-                ActiveRaid: null),
+        var response = new GameActionResult(
+            EventType: "CombatResolved",
+            Event: JsonDocument.Parse("""{ "enemyDamage": 2 }""").RootElement.Clone(),
+            Projections: JsonDocument.Parse("""{ "raid": { "health": 17 } }""").RootElement.Clone(),
             Message: "Action resolved.");
 
         var json = JsonSerializer.Serialize(response, new JsonSerializerOptions(JsonSerializerDefaults.Web));
 
-        Assert.Contains("\"snapshot\"", json);
+        Assert.DoesNotContain("\"snapshot\"", json);
         Assert.Contains("\"message\":\"Action resolved.\"", json);
-        Assert.DoesNotContain("\"eventType\"", json);
-        Assert.DoesNotContain("\"event\"", json);
-        Assert.DoesNotContain("\"projections\"", json);
+        Assert.Contains("\"eventType\":\"CombatResolved\"", json);
+        Assert.Contains("\"event\":", json);
+        Assert.Contains("\"projections\":", json);
     }
 
     [Fact]
@@ -113,14 +98,6 @@ public sealed class ContractsTests
                   "weaponMalfunction": true
                 }
               },
-              "snapshot": {
-                "money": 54,
-                "mainStash": [],
-                "onPersonItems": [],
-                "randomCharacterAvailableAt": "2026-03-20T02:39:44.905934+00:00",
-                "randomCharacter": null,
-                "activeRaid": null
-              },
               "message": "Action resolved."
             }
             """;
@@ -133,33 +110,6 @@ public sealed class ContractsTests
         Assert.Equal(2, response.Event.Value.GetProperty("enemyDamage").GetInt32());
         Assert.True(response.Projections.HasValue);
         Assert.Equal(17, response.Projections.Value.GetProperty("raid").GetProperty("health").GetInt32());
-        Assert.NotNull(response.Snapshot);
-        Assert.Equal(54, response.Snapshot!.Money);
         Assert.Equal("Action resolved.", response.Message);
-    }
-
-    [Fact]
-    public void GameActionResponse_DeserializesLegacySupabaseUtcTimestampFormat()
-    {
-        const string json = """
-            {
-              "snapshot": {
-                "money": 54,
-                "mainStash": [],
-                "onPersonItems": [],
-                "randomCharacterAvailableAt": "2026-03-20 02:39:44.905934",
-                "randomCharacter": null,
-                "activeRaid": null
-              },
-              "message": null
-            }
-            """;
-
-        var response = JsonSerializer.Deserialize<GameActionResponse>(json, new JsonSerializerOptions(JsonSerializerDefaults.Web));
-
-        Assert.NotNull(response);
-        Assert.Equal(
-            DateTimeOffset.Parse("2026-03-20T02:39:44.905934+00:00"),
-            response!.Snapshot.RandomCharacterAvailableAt);
     }
 }

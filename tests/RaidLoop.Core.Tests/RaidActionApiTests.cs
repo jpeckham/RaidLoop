@@ -193,7 +193,6 @@ public sealed class RaidActionApiTests
             "RaidUpdated",
             null,
             JsonDocument.Parse(projectionJson).RootElement.Clone(),
-            null,
             "Action resolved.");
     }
 

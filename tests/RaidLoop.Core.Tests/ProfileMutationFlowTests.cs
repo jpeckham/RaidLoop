@@ -10,7 +10,7 @@ namespace RaidLoop.Core.Tests;
 public sealed class ProfileMutationFlowTests
 {
     [Fact]
-    public async Task SellStashItemAsync_DelegatesToActionApi_And_AppliesReturnedSnapshot()
+    public async Task SellStashItemAsync_DelegatesToActionApi_And_AppliesReturnedProjections()
     {
         var actionClient = new FakeGameActionApiClient
         {
@@ -38,7 +38,7 @@ public sealed class ProfileMutationFlowTests
     }
 
     [Fact]
-    public async Task MoveStashToOnPersonAsync_DelegatesToActionApi_And_AppliesReturnedSnapshot()
+    public async Task MoveStashToOnPersonAsync_DelegatesToActionApi_And_AppliesReturnedProjections()
     {
         var actionClient = new FakeGameActionApiClient
         {
@@ -69,7 +69,7 @@ public sealed class ProfileMutationFlowTests
     }
 
     [Fact]
-    public async Task BuyFromShopAsync_DelegatesToActionApi_And_AppliesReturnedSnapshot()
+    public async Task BuyFromShopAsync_DelegatesToActionApi_And_AppliesReturnedProjections()
     {
         var actionClient = new FakeGameActionApiClient
         {
@@ -97,7 +97,7 @@ public sealed class ProfileMutationFlowTests
     }
 
     [Fact]
-    public async Task SellLuckRunItemAsync_DelegatesToActionApi_And_AppliesReturnedSnapshot()
+    public async Task SellLuckRunItemAsync_DelegatesToActionApi_And_AppliesReturnedProjections()
     {
         var cooldown = DateTimeOffset.Parse("2026-03-18T06:00:00Z");
         var actionClient = new FakeGameActionApiClient
@@ -201,7 +201,6 @@ public sealed class ProfileMutationFlowTests
                 "CombatResolved",
                 eventJson.RootElement.Clone(),
                 projectionJson.RootElement.Clone(),
-                null,
                 "Action resolved."));
 
         Assert.Equal(640, Assert.IsType<int>(GetField(home, "_money")));
@@ -228,7 +227,7 @@ public sealed class ProfileMutationFlowTests
     }
 
     [Fact]
-    public void ApplyActionResult_PrefersProjectionsOverTransitionalSnapshot()
+    public void ApplyActionResult_AppliesProjectionsWithoutSnapshotFallback()
     {
         var home = CreateHome(new FakeGameActionApiClient());
 
@@ -267,13 +266,6 @@ public sealed class ProfileMutationFlowTests
                       }
                     }
                     """).RootElement.Clone(),
-                new PlayerSnapshot(
-                    Money: 111,
-                    MainStash: [ItemCatalog.Create("AK74")],
-                    OnPersonItems: [new OnPersonSnapshot(ItemCatalog.Create("AK74"), true)],
-                    RandomCharacterAvailableAt: DateTimeOffset.Parse("2026-03-20T09:00:00Z"),
-                    RandomCharacter: new RandomCharacterSnapshot("Ghost-999", [ItemCatalog.Create("Bandage")]),
-                    ActiveRaid: null),
                 null));
 
         Assert.Equal(910, Assert.IsType<int>(GetField(home, "_money")));
@@ -287,9 +279,12 @@ public sealed class ProfileMutationFlowTests
     }
 
     [Fact]
-    public void ApplyActionResult_FallsBackToSnapshotWhenProjectionsAreMissing()
+    public void ApplyActionResult_DoesNotFallbackToSnapshotWhenProjectionsAreMissing()
     {
         var home = CreateHome(new FakeGameActionApiClient());
+        SetField(home, "_money", 123);
+        SetField(home, "_mainGame", new GameState([ItemCatalog.Create("AK74")]));
+        SetField(home, "_onPersonItems", new List<OnPersonEntry> { new(ItemCatalog.Create("Makarov"), true) });
 
         InvokePrivateVoid(
             home,
@@ -298,23 +293,16 @@ public sealed class ProfileMutationFlowTests
                 "ProfileMutated",
                 null,
                 null,
-                new PlayerSnapshot(
-                    Money: 777,
-                    MainStash: [ItemCatalog.Create("Makarov")],
-                    OnPersonItems: [new OnPersonSnapshot(ItemCatalog.Create("Medkit"), false)],
-                    RandomCharacterAvailableAt: DateTimeOffset.Parse("2026-03-20T07:00:00Z"),
-                    RandomCharacter: new RandomCharacterSnapshot("Ghost-202", [ItemCatalog.Create("Bandage")]),
-                    ActiveRaid: null),
                 null));
 
-        Assert.Equal(777, Assert.IsType<int>(GetField(home, "_money")));
+        Assert.Equal(123, Assert.IsType<int>(GetField(home, "_money")));
         var mainGame = Assert.IsType<GameState>(GetField(home, "_mainGame"));
-        Assert.Equal(["Makarov"], mainGame.Stash.Select(item => item.Name).ToArray());
+        Assert.Equal(["AK74"], mainGame.Stash.Select(item => item.Name).ToArray());
         var onPersonItems = Assert.IsType<List<OnPersonEntry>>(GetField(home, "_onPersonItems"));
         Assert.Single(onPersonItems);
-        Assert.Equal("Medkit", onPersonItems[0].Item.Name);
-        Assert.Equal(DateTimeOffset.Parse("2026-03-20T07:00:00Z"), Assert.IsType<DateTimeOffset>(GetField(home, "_randomCharacterAvailableAt")));
-        Assert.Equal("Ghost-202", Assert.IsType<RandomCharacterState>(GetField(home, "_randomCharacter")).Name);
+        Assert.Equal("Makarov", onPersonItems[0].Item.Name);
+        Assert.Equal(DateTimeOffset.MinValue, Assert.IsType<DateTimeOffset>(GetField(home, "_randomCharacterAvailableAt")));
+        Assert.Null(GetField(home, "_randomCharacter"));
     }
 
     [Fact]
@@ -362,7 +350,6 @@ public sealed class ProfileMutationFlowTests
                       }
                     }
                     """).RootElement.Clone(),
-                null,
                 null));
 
         var raid = Assert.IsType<RaidState>(GetField(home, "_raid"));
@@ -421,7 +408,6 @@ public sealed class ProfileMutationFlowTests
                       }
                     }
                     """).RootElement.Clone(),
-                null,
                 null));
 
         var raid = Assert.IsType<RaidState>(GetField(home, "_raid"));
@@ -479,7 +465,6 @@ public sealed class ProfileMutationFlowTests
                       }
                     }
                     """).RootElement.Clone(),
-                null,
                 null));
 
         Assert.Equal(7, Assert.IsType<int>(GetField(home, "_ammo")));
@@ -534,7 +519,6 @@ public sealed class ProfileMutationFlowTests
                       }
                     }
                     """).RootElement.Clone(),
-                null,
                 null));
 
         Assert.Null(GetField(home, "_raid"));
@@ -602,7 +586,6 @@ public sealed class ProfileMutationFlowTests
                       }
                     }
                     """).RootElement.Clone(),
-                null,
                 null));
 
         var mainGame = Assert.IsType<GameState>(GetField(home, "_mainGame"));
@@ -682,17 +665,35 @@ public sealed class ProfileMutationFlowTests
         DateTimeOffset? randomCharacterAvailableAt = null,
         RandomCharacterSnapshot? randomCharacter = null)
     {
+        var projections = new Dictionary<string, object?>
+        {
+            ["economy"] = new Dictionary<string, object?>
+            {
+                ["money"] = money
+            },
+            ["stash"] = new Dictionary<string, object?>
+            {
+                ["mainStash"] = mainStash
+            },
+            ["loadout"] = new Dictionary<string, object?>
+            {
+                ["onPersonItems"] = onPersonItems
+            }
+        };
+
+        if (randomCharacterAvailableAt.HasValue || randomCharacter is not null)
+        {
+            projections["luckRun"] = new Dictionary<string, object?>
+            {
+                ["randomCharacterAvailableAt"] = randomCharacterAvailableAt ?? DateTimeOffset.MinValue,
+                ["randomCharacter"] = randomCharacter
+            };
+        }
+
         return new GameActionResult(
             "ProfileMutated",
             null,
-            null,
-            new PlayerSnapshot(
-                Money: money,
-                MainStash: mainStash,
-                OnPersonItems: onPersonItems,
-                RandomCharacterAvailableAt: randomCharacterAvailableAt ?? DateTimeOffset.MinValue,
-                RandomCharacter: randomCharacter,
-                ActiveRaid: null),
+            System.Text.Json.JsonSerializer.SerializeToElement(projections),
             Message: null);
     }
 

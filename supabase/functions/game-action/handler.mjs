@@ -103,7 +103,6 @@ function buildActionResponse(action, payload, snapshot) {
         action,
       },
       projections: buildProfileMutationProjections(action, snapshot),
-      snapshot,
       message: null,
     };
   }
@@ -115,7 +114,6 @@ function buildActionResponse(action, payload, snapshot) {
         action,
       },
       projections: buildRaidStartProjections(action, snapshot),
-      snapshot,
       message: null,
     };
   }
@@ -128,7 +126,6 @@ function buildActionResponse(action, payload, snapshot) {
           action,
         },
         projections: buildRaidFinishedProjections(snapshot),
-        snapshot,
         message: null,
       };
     }
@@ -139,7 +136,6 @@ function buildActionResponse(action, payload, snapshot) {
         action,
       },
       projections: buildInRaidProjections(snapshot, getKnownLogCount(payload)),
-      snapshot,
       message: null,
     };
   }

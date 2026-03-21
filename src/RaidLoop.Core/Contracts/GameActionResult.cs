@@ -6,5 +6,4 @@ public record GameActionResult(
     string EventType,
     JsonElement? Event,
     JsonElement? Projections,
-    PlayerSnapshot? Snapshot,
     string? Message);

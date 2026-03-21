@@ -91,7 +91,7 @@ test("game-action returns profile-mutated projections for sell-stash-item", asyn
   assert.equal(body.eventType, "ProfileMutated");
   assert.equal(body.projections.economy.money, 999);
   assert.equal(body.projections.stash.mainStash[0].name, "Rusty Knife");
-  assert.ok(body.snapshot);
+  assert.equal(body.snapshot, undefined);
 });
 
 test("game-action returns profile-mutated projections for buy-from-shop", async () => {
@@ -260,7 +260,7 @@ test("game-action returns raid-started projections for start-main-raid", async (
   assert.equal(body.projections.raid.health, 27);
   assert.equal(body.projections.raid.ammo, 9);
   assert.equal(body.projections.raid.equippedItems[0].name, "AK74");
-  assert.ok(body.snapshot);
+  assert.equal(body.snapshot, undefined);
 });
 
 test("game-action returns raid-started projections for start-random-raid", async () => {
@@ -554,5 +554,5 @@ test("game-action returns raid-finished projections for attempt-extract", async 
   assert.equal(body.projections.raid, null);
   assert.equal(body.projections.loadout.onPersonItems[0].item.name, "AK74");
   assert.equal(body.projections.loadout.onPersonItems[1].item.name, "Bandage");
-  assert.ok(body.snapshot);
+  assert.equal(body.snapshot, undefined);
 });

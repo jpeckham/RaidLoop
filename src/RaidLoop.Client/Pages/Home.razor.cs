@@ -307,10 +307,6 @@ public partial class Home : IDisposable
         {
             ApplyProjectedState(projections);
         }
-        else if (result.Snapshot is not null)
-        {
-            ApplySnapshot(result.Snapshot);
-        }
 
         if (!string.IsNullOrWhiteSpace(result.Message))
         {

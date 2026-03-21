@@ -164,22 +164,24 @@ public class GameEventValueScenarioTests : IDisposable
                 return Task.FromResult(new GameActionResult(
                     "ProfileMutated",
                     null,
-                    null,
-                    new PlayerSnapshot(
-                        20,
-                        [ItemCatalog.Create("Rusty Knife")],
-                        [],
-                        DateTimeOffset.MinValue,
-                        null,
-                        null),
+                    System.Text.Json.JsonSerializer.SerializeToElement(new
+                    {
+                        economy = new { money = 20 },
+                        stash = new { mainStash = new[] { ItemCatalog.Create("Rusty Knife") } },
+                        loadout = new { onPersonItems = Array.Empty<object>() }
+                    }),
                     null));
             }
 
             return Task.FromResult(new GameActionResult(
                 "ProfileMutated",
                 null,
-                null,
-                new PlayerSnapshot(0, [], [], DateTimeOffset.MinValue, null, null),
+                System.Text.Json.JsonSerializer.SerializeToElement(new
+                {
+                    economy = new { money = 0 },
+                    stash = new { mainStash = Array.Empty<Item>() },
+                    loadout = new { onPersonItems = Array.Empty<object>() }
+                }),
                 null));
         }
     }

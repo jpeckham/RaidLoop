@@ -76,6 +76,30 @@ public sealed class ItemCatalogTests
         Assert.True(raidBackpack.Value > trooperBackpack.Value);
     }
 
+    [Theory]
+    [InlineData("Bandage")]
+    [InlineData("Ammo Box")]
+    [InlineData("Medkit")]
+    [InlineData("Makarov")]
+    [InlineData("AK74")]
+    [InlineData("SVDS")]
+    [InlineData("AK47")]
+    [InlineData("PKP")]
+    [InlineData("6B13 assault armor")]
+    [InlineData("FORT Defender-2")]
+    [InlineData("6B43 Zabralo-Sh body armor")]
+    [InlineData("NFM THOR")]
+    [InlineData("Tasmanian Tiger Trooper 35")]
+    [InlineData("6Sh118")]
+    public void RepresentativeItems_SellForAboutQuarterOfBuyPrice(string itemName)
+    {
+        var item = ItemCatalog.Get(itemName);
+        var buyPrice = CombatBalance.GetBuyPrice(itemName);
+        var ratio = (double)item.Value / buyPrice;
+
+        Assert.InRange(ratio, 0.24d, 0.26d);
+    }
+
     [Fact]
     public void NewHighTierItems_UseRequestedDisplayRarity()
     {

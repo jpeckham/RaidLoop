@@ -20,6 +20,8 @@ public sealed class HomeMarkupBindingTests
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026031813_empty_luck_run_means_ready.sql"));
     private static readonly string BootstrapNormalizationMigrationPath = Path.GetFullPath(
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026031814_normalize_profile_bootstrap.sql"));
+    private static readonly string SellPriceRebalanceMigrationPath = Path.GetFullPath(
+        Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026032010_rebalance_sell_prices.sql"));
     private static readonly string SupabaseAuthServicePath = Path.GetFullPath(
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "RaidLoop.Client", "Services", "SupabaseAuthService.cs"));
     private static readonly string ProfileApiClientPath = Path.GetFullPath(
@@ -264,6 +266,16 @@ public sealed class HomeMarkupBindingTests
 
         Assert.Contains("create or replace function public.profile_bootstrap()", migration);
         Assert.Contains("game.normalize_save_payload(game.bootstrap_player(auth.uid()))", migration);
+    }
+
+    [Fact]
+    public void SellPriceRebalanceMigrationDefinesQuarterSellValuesForKeyItems()
+    {
+        var migration = File.ReadAllText(SellPriceRebalanceMigrationPath);
+
+        Assert.Contains("when 'Medkit' then jsonb_build_object('name', 'Medkit', 'type', 3, 'value', 30", migration);
+        Assert.Contains("when 'AK74' then jsonb_build_object('name', 'AK74', 'type', 0, 'value', 320", migration);
+        Assert.Contains("when 'NFM THOR' then jsonb_build_object('name', 'NFM THOR', 'type', 1, 'value', 650", migration);
     }
 
     [Fact]

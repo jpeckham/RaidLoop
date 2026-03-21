@@ -34,6 +34,8 @@ public sealed class HomeMarkupBindingTests
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "RaidLoop.Client", "Pages", "Home.razor"));
     private static readonly string HomeCodeBehindPath = Path.GetFullPath(
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "RaidLoop.Client", "Pages", "Home.razor.cs"));
+    private static readonly string StorageScriptPath = Path.GetFullPath(
+        Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "RaidLoop.Client", "wwwroot", "js", "storage.js"));
     private static readonly string LoadoutPanelPath = Path.GetFullPath(
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "RaidLoop.Client", "Components", "LoadoutPanel.razor"));
     private static readonly string StashPanelPath = Path.GetFullPath(
@@ -323,6 +325,15 @@ public sealed class HomeMarkupBindingTests
 
         Assert.Contains("catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.Unauthorized)", codeBehind);
         Assert.Contains("await AuthService.SignOutAsync()", codeBehind);
+    }
+
+    [Fact]
+    public void DebugStorageScriptDoesNotProbeAuthUserEndpoint()
+    {
+        var script = File.ReadAllText(StorageScriptPath);
+
+        Assert.DoesNotContain("/auth/v1/user", script);
+        Assert.DoesNotContain("authUserProbe", script);
     }
 
     [Fact]

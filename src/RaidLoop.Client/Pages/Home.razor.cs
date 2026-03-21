@@ -1,4 +1,5 @@
 using System.Net;
+using System.Text.Json;
 using RaidLoop.Client.Services;
 using RaidLoop.Core;
 using RaidLoop.Core.Contracts;
@@ -314,6 +315,458 @@ public partial class Home : IDisposable
         {
             _resultMessage = response.Message;
         }
+    }
+
+    private void ApplyActionResult(GameActionResult result)
+    {
+        if (result.Projections is { ValueKind: JsonValueKind.Object } projections)
+        {
+            ApplyProjectedState(projections);
+        }
+        else if (result.Snapshot is not null)
+        {
+            ApplySnapshot(result.Snapshot);
+        }
+
+        if (!string.IsNullOrWhiteSpace(result.Message))
+        {
+            _resultMessage = result.Message;
+        }
+    }
+
+    private void ApplyProjectedState(JsonElement projections)
+    {
+        var updatedStash = false;
+        var updatedLoadout = false;
+
+        if (TryGetProjection(projections, "economy", out var economy)
+            && TryGetInt32(economy, "money", out var money))
+        {
+            _money = money;
+        }
+
+        if (TryGetProjection(projections, "stash", out var stash)
+            && TryGetProjection(stash, "mainStash", out var mainStash))
+        {
+            if (TryReadItemList(mainStash, out var parsedStash))
+            {
+                _mainGame = new GameState(parsedStash);
+                updatedStash = true;
+            }
+        }
+
+        if (TryGetProjection(projections, "loadout", out var loadout)
+            && TryGetProjection(loadout, "onPersonItems", out var onPersonItems))
+        {
+            if (TryReadOnPersonEntries(onPersonItems, out var parsedOnPersonItems))
+            {
+                _onPersonItems = parsedOnPersonItems;
+                updatedLoadout = true;
+            }
+        }
+
+        if (TryGetProjection(projections, "luckRun", out var luckRun))
+        {
+            if (TryGetString(luckRun, "randomCharacterAvailableAt", out var availableAtText)
+                && DateTimeOffset.TryParse(availableAtText, out var availableAt))
+            {
+                _randomCharacterAvailableAt = availableAt;
+            }
+
+            if (TryGetProjection(luckRun, "randomCharacter", out var randomCharacter))
+            {
+                _randomCharacter = randomCharacter.ValueKind == JsonValueKind.Null
+                    ? null
+                    : ReadRandomCharacter(randomCharacter);
+
+                if (_randomCharacter is not null && _randomCharacter.Inventory.Count == 0)
+                {
+                    _randomCharacter = null;
+                }
+            }
+        }
+
+        if (TryGetProjection(projections, "raid", out var raid))
+        {
+            ApplyRaidProjection(raid);
+        }
+
+        if (updatedStash || updatedLoadout)
+        {
+            EnsureMainCharacterHasWeaponFallback();
+        }
+
+        if (updatedLoadout)
+        {
+            NormalizeEquippedSlots();
+        }
+    }
+
+    private void ApplyRaidProjection(JsonElement raid)
+    {
+        var freshRaid = _raid is null;
+        if (freshRaid)
+        {
+            _raid = new RaidState(MaxHealth, new RaidInventory());
+            _inRaid = true;
+            _awaitingDecision = false;
+            _extractProgress = 0;
+            _ammo = 0;
+            _weaponMalfunction = false;
+            _encounterDescription = string.Empty;
+            _enemyName = string.Empty;
+            _enemyHealth = 0;
+            _lootContainer = string.Empty;
+            _log.Clear();
+            _encounterType = EncounterType.Neutral;
+        }
+
+        var raidState = _raid!;
+        var inventory = raidState.Inventory;
+        var health = raidState.Health;
+        var backpackCapacity = raidState.BackpackCapacity;
+        var hasRaidPatch = freshRaid;
+
+        if (TryGetInt32(raid, "health", out var parsedHealth))
+        {
+            health = parsedHealth;
+            hasRaidPatch = true;
+        }
+
+        if (TryGetInt32(raid, "backpackCapacity", out var parsedBackpackCapacity))
+        {
+            backpackCapacity = parsedBackpackCapacity;
+            hasRaidPatch = true;
+        }
+
+        if (TryGetProjection(raid, "equippedItems", out var equippedItems))
+        {
+            if (TryReadItemList(equippedItems, out var items))
+            {
+                inventory.EquippedWeapon = items.FirstOrDefault(item => item.Type == ItemType.Weapon);
+                inventory.EquippedArmor = items.FirstOrDefault(item => item.Type == ItemType.Armor);
+                inventory.EquippedBackpack = items.FirstOrDefault(item => item.Type == ItemType.Backpack);
+                hasRaidPatch = true;
+            }
+        }
+
+        if (TryGetProjection(raid, "carriedLoot", out var carriedLoot))
+        {
+            if (TryReadItemList(carriedLoot, out var items))
+            {
+                inventory.CarriedItems.Clear();
+                inventory.CarriedItems.AddRange(items);
+                hasRaidPatch = true;
+            }
+        }
+
+        if (TryGetProjection(raid, "discoveredLoot", out var discoveredLoot))
+        {
+            if (TryReadItemList(discoveredLoot, out var items))
+            {
+                inventory.DiscoveredLoot.Clear();
+                inventory.DiscoveredLoot.AddRange(items);
+                hasRaidPatch = true;
+            }
+        }
+
+        if (TryGetInt32(raid, "medkits", out var medkits))
+        {
+            inventory.MedkitCount = medkits;
+            hasRaidPatch = true;
+        }
+
+        if (TryGetInt32(raid, "ammo", out var ammo))
+        {
+            _ammo = ammo;
+            hasRaidPatch = true;
+        }
+
+        if (TryGetBool(raid, "weaponMalfunction", out var weaponMalfunction))
+        {
+            _weaponMalfunction = weaponMalfunction;
+            hasRaidPatch = true;
+        }
+
+        if (TryGetInt32(raid, "extractProgress", out var extractProgress))
+        {
+            _extractProgress = extractProgress;
+            hasRaidPatch = true;
+        }
+
+        if (TryGetBool(raid, "awaitingDecision", out var awaitingDecision))
+        {
+            _awaitingDecision = awaitingDecision;
+            hasRaidPatch = true;
+        }
+
+        if (TryGetString(raid, "encounterDescription", out var encounterDescription))
+        {
+            _encounterDescription = encounterDescription;
+            hasRaidPatch = true;
+        }
+
+        if (TryGetString(raid, "enemyName", out var enemyName))
+        {
+            _enemyName = enemyName;
+            hasRaidPatch = true;
+        }
+
+        if (TryGetInt32(raid, "enemyHealth", out var enemyHealth))
+        {
+            _enemyHealth = enemyHealth;
+            hasRaidPatch = true;
+        }
+
+        if (TryGetString(raid, "lootContainer", out var lootContainer))
+        {
+            _lootContainer = lootContainer;
+            hasRaidPatch = true;
+        }
+
+        if (TryGetString(raid, "encounterType", out var encounterTypeText)
+            && Enum.TryParse<EncounterType>(encounterTypeText, ignoreCase: true, out var encounterType))
+        {
+            _encounterType = encounterType;
+            hasRaidPatch = true;
+        }
+
+        if (TryGetProjection(raid, "logEntries", out var logEntries))
+        {
+            if (logEntries.ValueKind == JsonValueKind.Array)
+            {
+                _log.Clear();
+                _log.AddRange(ReadStringListFromProperty(raid, "logEntries"));
+                hasRaidPatch = true;
+            }
+        }
+
+        inventory.BackpackCapacity = backpackCapacity;
+        raidState.Health = health;
+        raidState.BackpackCapacity = backpackCapacity;
+
+        if (!freshRaid && hasRaidPatch)
+        {
+            _raid = raidState;
+        }
+
+        if (freshRaid || hasRaidPatch)
+        {
+            _inRaid = true;
+        }
+    }
+
+    private static List<Item> ReadItemList(JsonElement items)
+    {
+        return TryReadItemList(items, out var parsedItems) ? parsedItems : [];
+    }
+
+    private static List<Item> ReadItemListFromProperty(JsonElement parent, string propertyName)
+    {
+        return TryGetProjection(parent, propertyName, out var items) ? ReadItemList(items) : [];
+    }
+
+    private static List<OnPersonEntry> ReadOnPersonEntries(JsonElement onPersonItems)
+    {
+        return TryReadOnPersonEntries(onPersonItems, out var parsedEntries) ? parsedEntries : [];
+    }
+
+    private static bool TryReadOnPersonEntries(JsonElement onPersonItems, out List<OnPersonEntry> entries)
+    {
+        entries = [];
+        if (onPersonItems.ValueKind != JsonValueKind.Array)
+        {
+            return false;
+        }
+
+        var hasValidEntry = false;
+        foreach (var entry in onPersonItems.EnumerateArray())
+        {
+            if (!TryGetProjection(entry, "item", out var itemElement)
+                && !TryGetProjection(entry, "Item", out itemElement))
+            {
+                continue;
+            }
+
+            if (!TryReadItem(itemElement, out var parsedItem))
+            {
+                continue;
+            }
+
+            entries.Add(new OnPersonEntry(
+                parsedItem,
+                TryGetBool(entry, "isEquipped", out var isEquipped) && isEquipped));
+            hasValidEntry = true;
+        }
+
+        return hasValidEntry || onPersonItems.GetArrayLength() == 0;
+    }
+
+    private static RandomCharacterState ReadRandomCharacter(JsonElement randomCharacter)
+    {
+        var name = TryGetString(randomCharacter, "name", out var randomCharacterName)
+            ? randomCharacterName
+            : string.Empty;
+        var inventory = TryGetProjection(randomCharacter, "inventory", out var inventoryItems)
+            && TryReadItemList(inventoryItems, out var parsedInventory)
+            ? parsedInventory
+            : [];
+
+        return new RandomCharacterState(name, inventory);
+    }
+
+    private static bool TryReadItemList(JsonElement items, out List<Item> parsedItems)
+    {
+        parsedItems = [];
+        if (items.ValueKind != JsonValueKind.Array)
+        {
+            return false;
+        }
+
+        var hasValidItem = false;
+        foreach (var entry in items.EnumerateArray())
+        {
+            if (!TryReadItem(entry, out var parsedItem))
+            {
+                continue;
+            }
+
+            parsedItems.Add(parsedItem);
+            hasValidItem = true;
+        }
+
+        return hasValidItem || items.GetArrayLength() == 0;
+    }
+
+    private static bool TryReadItem(JsonElement item, out Item parsedItem)
+    {
+        var name = TryGetString(item, "name", out var itemName)
+            ? itemName
+            : TryGetString(item, "Name", out var itemNameUpperCase)
+                ? itemNameUpperCase
+                : string.Empty;
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            parsedItem = default!;
+            return false;
+        }
+
+        if (ItemCatalog.TryGet(name, out var catalogItem))
+        {
+            parsedItem = catalogItem!;
+            return true;
+        }
+
+        var type = TryGetInt32(item, "type", out var parsedType) && Enum.IsDefined(typeof(ItemType), parsedType)
+            ? (ItemType)parsedType
+            : TryGetInt32(item, "Type", out var parsedTypeUpperCase) && Enum.IsDefined(typeof(ItemType), parsedTypeUpperCase)
+                ? (ItemType)parsedTypeUpperCase
+            : ItemType.Sellable;
+        var value = TryGetInt32(item, "value", out var parsedValue)
+            ? parsedValue
+            : TryGetInt32(item, "Value", out var parsedValueUpperCase)
+                ? parsedValueUpperCase
+                : 1;
+        var slots = TryGetInt32(item, "slots", out var parsedSlots)
+            ? parsedSlots
+            : TryGetInt32(item, "Slots", out var parsedSlotsUpperCase)
+                ? parsedSlotsUpperCase
+                : 1;
+        var rarity = TryGetInt32(item, "rarity", out var parsedRarity) && Enum.IsDefined(typeof(Rarity), parsedRarity)
+            ? (Rarity)parsedRarity
+            : TryGetInt32(item, "Rarity", out var parsedRarityUpperCase) && Enum.IsDefined(typeof(Rarity), parsedRarityUpperCase)
+                ? (Rarity)parsedRarityUpperCase
+            : Rarity.Common;
+        var displayRarity = TryGetInt32(item, "displayRarity", out var parsedDisplayRarity) && Enum.IsDefined(typeof(DisplayRarity), parsedDisplayRarity)
+            ? (DisplayRarity)parsedDisplayRarity
+            : TryGetInt32(item, "DisplayRarity", out var parsedDisplayRarityUpperCase) && Enum.IsDefined(typeof(DisplayRarity), parsedDisplayRarityUpperCase)
+                ? (DisplayRarity)parsedDisplayRarityUpperCase
+            : DisplayRarity.Common;
+
+        parsedItem = new Item(name, type, value, slots, rarity, displayRarity);
+        return true;
+    }
+
+    private static List<string> ReadStringListFromProperty(JsonElement parent, string propertyName)
+    {
+        if (!TryGetProjection(parent, propertyName, out var items) || items.ValueKind != JsonValueKind.Array)
+        {
+            return [];
+        }
+
+        return items.EnumerateArray()
+            .Select(item => item.ValueKind == JsonValueKind.String ? item.GetString() ?? string.Empty : string.Empty)
+            .Where(item => !string.IsNullOrWhiteSpace(item))
+            .ToList();
+    }
+
+    private static bool TryGetProjection(JsonElement parent, string propertyName, out JsonElement value)
+    {
+        if (parent.ValueKind == JsonValueKind.Object)
+        {
+            foreach (var property in parent.EnumerateObject())
+            {
+                if (string.Equals(property.Name, propertyName, StringComparison.OrdinalIgnoreCase))
+                {
+                    value = property.Value;
+                    return true;
+                }
+            }
+        }
+
+        value = default;
+        return false;
+    }
+
+    private static bool TryGetInt32(JsonElement parent, string propertyName, out int value)
+    {
+        if (TryGetProjection(parent, propertyName, out var property))
+        {
+            if (property.ValueKind == JsonValueKind.Number && property.TryGetInt32(out value))
+            {
+                return true;
+            }
+
+            if (property.ValueKind == JsonValueKind.String && int.TryParse(property.GetString(), out value))
+            {
+                return true;
+            }
+        }
+
+        value = default;
+        return false;
+    }
+
+    private static bool TryGetBool(JsonElement parent, string propertyName, out bool value)
+    {
+        if (TryGetProjection(parent, propertyName, out var property))
+        {
+            if (property.ValueKind is JsonValueKind.True or JsonValueKind.False)
+            {
+                value = property.GetBoolean();
+                return true;
+            }
+
+            if (property.ValueKind == JsonValueKind.String && bool.TryParse(property.GetString(), out value))
+            {
+                return true;
+            }
+        }
+
+        value = default;
+        return false;
+    }
+
+    private static bool TryGetString(JsonElement parent, string propertyName, out string value)
+    {
+        if (TryGetProjection(parent, propertyName, out var property) && property.ValueKind == JsonValueKind.String)
+        {
+            value = property.GetString() ?? string.Empty;
+            return true;
+        }
+
+        value = string.Empty;
+        return false;
     }
 
     private async Task ExecuteLootActionAsync(string action, Item item, string eventName)

@@ -185,11 +185,15 @@ public sealed class HomeMarkupBindingTests
     }
 
     [Fact]
-    public void SupabaseAuthServiceRefreshesSessionBeforeReturningAccessToken()
+    public void SupabaseAuthServiceRefreshesSessionOnlyWhenAccessTokenIsNearExpiry()
     {
         var authService = File.ReadAllText(SupabaseAuthServicePath);
 
-        Assert.Contains("await _client.Auth.RetrieveSessionAsync();", authService);
+        Assert.Contains("session?.ExpiresAt().Subtract(TimeSpan.FromMinutes(1)) <= DateTime.UtcNow", authService);
+        Assert.Contains("await _client.Auth.RefreshSession();", authService);
+        Assert.Contains("await ClearPersistedSessionAsync();", authService);
+        Assert.Contains("_isSignedOutLocally = true;", authService);
+        Assert.DoesNotContain("await _client.Auth.RetrieveSessionAsync();", authService);
         Assert.Contains("public async Task<string> GetAccessTokenAsync()", authService);
     }
 

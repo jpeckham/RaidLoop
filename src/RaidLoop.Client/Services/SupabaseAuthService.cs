@@ -164,9 +164,24 @@ public sealed class SupabaseAuthService : ISupabaseSessionProvider
             throw new InvalidOperationException("Supabase client is not available.");
         }
 
-        await _client.Auth.RetrieveSessionAsync();
+        var session = _client.Auth.CurrentSession;
+        if (session?.ExpiresAt().Subtract(TimeSpan.FromMinutes(1)) <= DateTime.UtcNow)
+        {
+            try
+            {
+                await _client.Auth.RefreshSession();
+                session = _client.Auth.CurrentSession;
+            }
+            catch
+            {
+                _isSignedOutLocally = true;
+                await ClearPersistedSessionAsync();
+                NotifyAuthStateChanged();
+                throw new InvalidOperationException("Supabase session refresh failed.");
+            }
+        }
 
-        var accessToken = _client?.Auth.CurrentSession?.AccessToken;
+        var accessToken = session?.AccessToken;
         if (string.IsNullOrWhiteSpace(accessToken))
         {
             throw new InvalidOperationException("Supabase session is not available.");

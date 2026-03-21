@@ -48,6 +48,10 @@ public sealed class HomeMarkupBindingTests
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "RaidLoop.Client", "Components", "ShopPanel.razor"));
     private static readonly string ItemTypeIconPath = Path.GetFullPath(
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "RaidLoop.Client", "Components", "ItemTypeIcon.razor"));
+    private static readonly string ContinuousDeliveryWorkflowPath = Path.GetFullPath(
+        Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", ".github", "workflows", "continuous-delivery-dotnet-blazor-github-pages.yml"));
+    private static readonly string SupabaseDeployWorkflowPath = Path.GetFullPath(
+        Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", ".github", "workflows", "supabase-deploy.yml"));
 
     [Fact]
     public void HomePassesDynamicStringParametersAsExpressions()
@@ -354,6 +358,21 @@ public sealed class HomeMarkupBindingTests
         Assert.Contains("var hasLuckRunLoot = RandomCharacter is not null && RandomCharacter.Inventory.Count > 0;", markup);
         Assert.Contains("@if (!hasLuckRunLoot)", markup);
         Assert.DoesNotContain("@if (RandomCharacter is null)", markup);
+    }
+
+    [Fact]
+    public void ContinuousDeliveryWorkflowCoordinatesSupabaseAndPagesInOnePushFlow()
+    {
+        var workflow = File.ReadAllText(ContinuousDeliveryWorkflowPath);
+        var supabaseWorkflow = File.ReadAllText(SupabaseDeployWorkflowPath);
+
+        Assert.DoesNotContain("workflow_run:", workflow);
+        Assert.Contains("deploy-supabase:", workflow);
+        Assert.Contains("continuous-delivery:", workflow);
+        Assert.Contains("needs: [detect-supabase-changes, deploy-supabase]", workflow);
+        Assert.Contains("needs.detect-supabase-changes.outputs.supabase_changed != 'true' || needs.deploy-supabase.result == 'success'", workflow);
+        Assert.DoesNotContain("push:", supabaseWorkflow);
+        Assert.Contains("workflow_dispatch:", supabaseWorkflow);
     }
 
     private static void AssertUsesDisplayRarityMarkup(string path)

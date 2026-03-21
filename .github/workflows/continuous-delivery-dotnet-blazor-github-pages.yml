@@ -4,9 +4,6 @@ on:
   push:
     branches: ["main"]
   pull_request:
-  workflow_run:
-    workflows: ["Supabase Deploy"]
-    types: [completed]
   workflow_dispatch:
 
 jobs:
@@ -33,17 +30,85 @@ jobs:
         id: default
         run: echo "supabase=false" >> "$GITHUB_OUTPUT"
 
-  continuous-delivery:
+  deploy-supabase:
     needs: detect-supabase-changes
+    if: ${{ github.event_name == 'push' && needs.detect-supabase-changes.outputs.supabase_changed == 'true' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_PROJECT_ID: ${{ vars.SUPABASE_PROJECT_ID }}
+      SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+      SUPABASE_PUBLISHABLE_KEY: ${{ vars.SUPABASE_PUBLISHABLE_KEY }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Detect Supabase changes
+        id: changes
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            migrations:
+              - 'supabase/migrations/**'
+            functions:
+              - 'supabase/functions/**'
+              - 'supabase/config.toml'
+
+      - name: Setup Node.js
+        if: ${{ steps.changes.outputs.migrations == 'true' || steps.changes.outputs.functions == 'true' }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Setup Supabase CLI
+        if: ${{ steps.changes.outputs.migrations == 'true' || steps.changes.outputs.functions == 'true' }}
+        uses: supabase/setup-cli@v1
+        with:
+          version: 2.81.3
+
+      - name: Validate migration secrets
+        if: ${{ steps.changes.outputs.migrations == 'true' }}
+        run: |
+          test -n "$SUPABASE_PROJECT_ID"
+          test -n "$SUPABASE_URL"
+          test -n "$SUPABASE_PUBLISHABLE_KEY"
+          test -n "$SUPABASE_DB_PASSWORD"
+
+      - name: Link Supabase project
+        if: ${{ steps.changes.outputs.migrations == 'true' }}
+        run: supabase link --project-ref "$SUPABASE_PROJECT_ID" --password "$SUPABASE_DB_PASSWORD" --yes
+
+      - name: Apply database migrations
+        if: ${{ steps.changes.outputs.migrations == 'true' }}
+        run: supabase db push --linked --include-all --password "$SUPABASE_DB_PASSWORD"
+
+      - name: Validate function deploy secrets
+        if: ${{ steps.changes.outputs.functions == 'true' }}
+        run: |
+          test -n "$SUPABASE_ACCESS_TOKEN"
+          test -n "$SUPABASE_PROJECT_ID"
+          test -n "$SUPABASE_URL"
+          test -n "$SUPABASE_PUBLISHABLE_KEY"
+
+      - name: Deploy Edge Functions
+        if: ${{ steps.changes.outputs.functions == 'true' }}
+        run: |
+          supabase functions deploy profile-bootstrap --project-ref "$SUPABASE_PROJECT_ID"
+          supabase functions deploy profile-save --project-ref "$SUPABASE_PROJECT_ID"
+          supabase functions deploy game-action --project-ref "$SUPABASE_PROJECT_ID"
+
+  continuous-delivery:
+    needs: [detect-supabase-changes, deploy-supabase]
     if: >-
       github.event_name == 'workflow_dispatch' ||
       github.event_name == 'pull_request' ||
-      (github.event_name == 'push' && needs.detect-supabase-changes.outputs.supabase_changed != 'true') ||
-      (github.event_name == 'workflow_run' &&
-       github.event.workflow_run.name == 'Supabase Deploy' &&
-       github.event.workflow_run.conclusion == 'success' &&
-       github.event.workflow_run.event == 'push' &&
-       github.event.workflow_run.head_branch == 'main')
+      (github.event_name == 'push' &&
+       (needs.detect-supabase-changes.outputs.supabase_changed != 'true' || needs.deploy-supabase.result == 'success'))
     uses: jpeckham/.github/.github/workflows/continuous-delivery-dotnet-blazor-github-pages.yml@main
     with:
       main_branch: main

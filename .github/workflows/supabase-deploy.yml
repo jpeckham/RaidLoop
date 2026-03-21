@@ -1,11 +1,6 @@
 name: Supabase Deploy
 
 on:
-  push:
-    branches: ["main"]
-    paths:
-      - "supabase/**"
-      - ".github/workflows/supabase-deploy.yml"
   workflow_dispatch:
 
 jobs:

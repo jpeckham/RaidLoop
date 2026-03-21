@@ -105,10 +105,15 @@ jobs:
   continuous-delivery:
     needs: [detect-supabase-changes, deploy-supabase]
     if: >-
-      github.event_name == 'workflow_dispatch' ||
-      github.event_name == 'pull_request' ||
-      (github.event_name == 'push' &&
-       (needs.detect-supabase-changes.outputs.supabase_changed != 'true' || needs.deploy-supabase.result == 'success'))
+      always() &&
+      (
+        github.event_name == 'workflow_dispatch' ||
+        github.event_name == 'pull_request' ||
+        (github.event_name == 'push' &&
+         (needs.detect-supabase-changes.outputs.supabase_changed != 'true' ||
+          needs.deploy-supabase.result == 'success' ||
+          needs.deploy-supabase.result == 'skipped'))
+      )
     uses: jpeckham/.github/.github/workflows/continuous-delivery-dotnet-blazor-github-pages.yml@main
     with:
       main_branch: main

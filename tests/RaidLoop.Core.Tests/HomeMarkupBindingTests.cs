@@ -370,7 +370,10 @@ public sealed class HomeMarkupBindingTests
         Assert.Contains("deploy-supabase:", workflow);
         Assert.Contains("continuous-delivery:", workflow);
         Assert.Contains("needs: [detect-supabase-changes, deploy-supabase]", workflow);
-        Assert.Contains("needs.detect-supabase-changes.outputs.supabase_changed != 'true' || needs.deploy-supabase.result == 'success'", workflow);
+        Assert.Contains("always()", workflow);
+        Assert.Contains("needs.detect-supabase-changes.outputs.supabase_changed != 'true'", workflow);
+        Assert.Contains("needs.deploy-supabase.result == 'success'", workflow);
+        Assert.Contains("needs.deploy-supabase.result == 'skipped'", workflow);
         Assert.DoesNotContain("push:", supabaseWorkflow);
         Assert.Contains("workflow_dispatch:", supabaseWorkflow);
     }

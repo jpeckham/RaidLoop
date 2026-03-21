@@ -1,4 +1,5 @@
 using System.Reflection;
+using System.Text.Json;
 using RaidLoop.Client;
 using RaidLoop.Client.Pages;
 using RaidLoop.Client.Services;
@@ -15,7 +16,28 @@ public sealed class RaidActionApiTests
         var actionClient = CreateActionClient("attack", payload =>
         {
             Assert.Equal("enemy", payload.GetProperty("target").GetString());
-            return CreateRaidResponse("Combat", "Server combat", "Scav", 11, ammo: 7);
+            return CreateRaidResult("""
+                {
+                  "raid": {
+                    "health": 28,
+                    "ammo": 7,
+                    "weaponMalfunction": false,
+                    "encounterType": "Combat",
+                    "encounterDescription": "Server combat",
+                    "enemyName": "Scav",
+                    "enemyHealth": 11,
+                    "lootContainer": "Dead Body",
+                    "awaitingDecision": false,
+                    "discoveredLoot": [],
+                    "carriedLoot": [],
+                    "equippedItems": [
+                      { "name": "AK74", "type": 0, "value": 320, "slots": 1, "rarity": 2, "displayRarity": 3 },
+                      { "name": "Small Backpack", "type": 2, "value": 75, "slots": 2, "rarity": 2, "displayRarity": 3 }
+                    ],
+                    "logEntries": ["Raid updated on server."]
+                  }
+                }
+                """);
         });
         var home = CreateHome(actionClient);
         SeedRaid(home);
@@ -34,14 +56,30 @@ public sealed class RaidActionApiTests
         var actionClient = CreateActionClient("take-loot", payload =>
         {
             Assert.Equal("Bandage", payload.GetProperty("itemName").GetString());
-            return CreateRaidResponse(
-                "Loot",
-                "Server loot",
-                string.Empty,
-                0,
-                ammo: 8,
-                carriedLoot: [ItemCatalog.Create("Bandage")],
-                discoveredLoot: []);
+            return CreateRaidResult("""
+                {
+                  "raid": {
+                    "health": 28,
+                    "ammo": 8,
+                    "weaponMalfunction": false,
+                    "encounterType": "Loot",
+                    "encounterDescription": "Server loot",
+                    "enemyName": "",
+                    "enemyHealth": 0,
+                    "lootContainer": "Dead Body",
+                    "awaitingDecision": false,
+                    "discoveredLoot": [],
+                    "carriedLoot": [
+                      { "name": "Bandage", "type": 4, "value": 15, "slots": 1, "rarity": 0, "displayRarity": 0 }
+                    ],
+                    "equippedItems": [
+                      { "name": "AK74", "type": 0, "value": 320, "slots": 1, "rarity": 2, "displayRarity": 3 },
+                      { "name": "Small Backpack", "type": 2, "value": 75, "slots": 2, "rarity": 2, "displayRarity": 3 }
+                    ],
+                    "logEntries": ["Raid updated on server."]
+                  }
+                }
+                """);
         });
         var home = CreateHome(actionClient);
         SeedRaid(home);
@@ -58,7 +96,30 @@ public sealed class RaidActionApiTests
     public async Task ContinueSearching_CallsBackend_And_AppliesReturnedRaidSnapshot()
     {
         var actionClient = CreateActionClient("continue-searching", _ =>
-            CreateRaidResponse("Loot", "Server loot", string.Empty, 0, ammo: 8, discoveredLoot: [ItemCatalog.Create("Scrap Metal")]));
+            CreateRaidResult("""
+                {
+                  "raid": {
+                    "health": 28,
+                    "ammo": 8,
+                    "weaponMalfunction": false,
+                    "encounterType": "Loot",
+                    "encounterDescription": "Server loot",
+                    "enemyName": "",
+                    "enemyHealth": 0,
+                    "lootContainer": "Dead Body",
+                    "awaitingDecision": false,
+                    "discoveredLoot": [
+                      { "name": "Scrap Metal", "type": 5, "value": 18, "slots": 1, "rarity": 0, "displayRarity": 0 }
+                    ],
+                    "carriedLoot": [],
+                    "equippedItems": [
+                      { "name": "AK74", "type": 0, "value": 320, "slots": 1, "rarity": 2, "displayRarity": 3 },
+                      { "name": "Small Backpack", "type": 2, "value": 75, "slots": 2, "rarity": 2, "displayRarity": 3 }
+                    ],
+                    "logEntries": ["Raid updated on server."]
+                  }
+                }
+                """));
         var home = CreateHome(actionClient);
         SeedRaid(home);
 
@@ -74,7 +135,28 @@ public sealed class RaidActionApiTests
     public async Task AttemptExtractAsync_CallsBackend_And_AppliesReturnedRaidSnapshot()
     {
         var actionClient = CreateActionClient("attempt-extract", _ =>
-            CreateRaidResponse("Extraction", "Server extraction", string.Empty, 0, ammo: 8));
+            CreateRaidResult("""
+                {
+                  "raid": {
+                    "health": 28,
+                    "ammo": 8,
+                    "weaponMalfunction": false,
+                    "encounterType": "Extraction",
+                    "encounterDescription": "Server extraction",
+                    "enemyName": "",
+                    "enemyHealth": 0,
+                    "lootContainer": "Dead Body",
+                    "awaitingDecision": false,
+                    "discoveredLoot": [],
+                    "carriedLoot": [],
+                    "equippedItems": [
+                      { "name": "AK74", "type": 0, "value": 320, "slots": 1, "rarity": 2, "displayRarity": 3 },
+                      { "name": "Small Backpack", "type": 2, "value": 75, "slots": 2, "rarity": 2, "displayRarity": 3 }
+                    ],
+                    "logEntries": ["Raid updated on server."]
+                  }
+                }
+                """));
         var home = CreateHome(actionClient);
         SeedRaid(home);
 
@@ -105,50 +187,17 @@ public sealed class RaidActionApiTests
         SetField(home, "_ammo", 8);
     }
 
-    private static GameActionResponse CreateRaidResponse(
-        string encounterType,
-        string encounterDescription,
-        string enemyName,
-        int enemyHealth,
-        int ammo,
-        IReadOnlyList<Item>? carriedLoot = null,
-        IReadOnlyList<Item>? discoveredLoot = null)
+    private static GameActionResult CreateRaidResult(string projectionJson)
     {
-        return new GameActionResponse(
-            new PlayerSnapshot(
-                Money: 500,
-                MainStash: [],
-                OnPersonItems:
-                [
-                    new OnPersonSnapshot(ItemCatalog.Create("AK74"), true),
-                    new OnPersonSnapshot(ItemCatalog.Create("Small Backpack"), true)
-                ],
-                RandomCharacterAvailableAt: DateTimeOffset.MinValue,
-                RandomCharacter: null,
-                ActiveRaid: new RaidSnapshot(
-                    Health: 28,
-                    BackpackCapacity: 3,
-                    Ammo: ammo,
-                    WeaponMalfunction: false,
-                    Medkits: 1,
-                    LootSlots: 0,
-                    ExtractProgress: 1,
-                    ExtractRequired: 3,
-                    EncounterType: encounterType,
-                    EncounterTitle: "Server Encounter",
-                    EncounterDescription: encounterDescription,
-                    EnemyName: enemyName,
-                    EnemyHealth: enemyHealth,
-                    LootContainer: "Dead Body",
-                    AwaitingDecision: false,
-                    DiscoveredLoot: discoveredLoot ?? [ItemCatalog.Create("Bandage")],
-                    CarriedLoot: carriedLoot ?? [],
-                    EquippedItems: [ItemCatalog.Create("AK74"), ItemCatalog.Create("Small Backpack")],
-                    LogEntries: ["Raid updated on server."])),
-            null);
+        return new GameActionResult(
+            "RaidUpdated",
+            null,
+            JsonDocument.Parse(projectionJson).RootElement.Clone(),
+            null,
+            "Action resolved.");
     }
 
-    private static FakeGameActionApiClient CreateActionClient(string expectedAction, Func<System.Text.Json.JsonElement, GameActionResponse> responseFactory)
+    private static FakeGameActionApiClient CreateActionClient(string expectedAction, Func<JsonElement, GameActionResult> responseFactory)
     {
         return new FakeGameActionApiClient
         {
@@ -212,12 +261,12 @@ public sealed class RaidActionApiTests
     {
         public List<GameActionRequest> Requests { get; } = [];
 
-        public Func<GameActionRequest, GameActionResponse> ResponseFactory { get; set; } =
+        public Func<GameActionRequest, GameActionResult> ResponseFactory { get; set; } =
             _ => throw new InvalidOperationException("No response configured.");
 
-        public Task<GameActionResponse> SendAsync(string action, object payload, CancellationToken cancellationToken = default)
+        public Task<GameActionResult> SendAsync(string action, object payload, CancellationToken cancellationToken = default)
         {
-            var request = new GameActionRequest(action, System.Text.Json.JsonSerializer.SerializeToElement(payload));
+            var request = new GameActionRequest(action, JsonSerializer.SerializeToElement(payload));
             Requests.Add(request);
             return Task.FromResult(ResponseFactory(request));
         }

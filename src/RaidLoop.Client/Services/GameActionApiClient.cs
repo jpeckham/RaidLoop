@@ -24,7 +24,7 @@ public sealed class GameActionApiClient : IGameActionApiClient
         _publishableKey = options.PublishableKey;
     }
 
-    public async Task<GameActionResponse> SendAsync(string action, object payload, CancellationToken cancellationToken = default)
+    public async Task<GameActionResult> SendAsync(string action, object payload, CancellationToken cancellationToken = default)
     {
         using var request = new HttpRequestMessage(HttpMethod.Post, "game-action")
         {
@@ -36,8 +36,30 @@ public sealed class GameActionApiClient : IGameActionApiClient
         using var response = await _httpClient.SendAsync(request, cancellationToken);
         response.EnsureSuccessStatusCode();
 
-        var body = await response.Content.ReadFromJsonAsync<GameActionResponse>(JsonOptions, cancellationToken);
-        return body ?? throw new InvalidOperationException("Game action returned no payload.");
+        var json = await response.Content.ReadAsStringAsync(cancellationToken);
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            throw new InvalidOperationException("Game action returned no payload.");
+        }
+
+        using var document = JsonDocument.Parse(json);
+        var root = document.RootElement;
+        if (root.ValueKind == JsonValueKind.Object
+            && (root.TryGetProperty("eventType", out _)
+                || root.TryGetProperty("event", out _)
+                || root.TryGetProperty("projections", out _)))
+        {
+            var result = JsonSerializer.Deserialize<GameActionResult>(json, JsonOptions);
+            return result ?? throw new InvalidOperationException("Game action returned no payload.");
+        }
+
+        var legacy = JsonSerializer.Deserialize<GameActionResponse>(json, JsonOptions);
+        if (legacy is null)
+        {
+            throw new InvalidOperationException("Game action returned no payload.");
+        }
+
+        return new GameActionResult("LegacySnapshot", null, null, legacy.Snapshot, legacy.Message);
     }
 
     private async Task AuthorizeAsync(HttpRequestMessage request)

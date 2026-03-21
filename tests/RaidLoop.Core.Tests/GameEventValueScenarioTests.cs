@@ -157,11 +157,14 @@ public class GameEventValueScenarioTests : IDisposable
 
     private sealed class StubGameActionApiClient : IGameActionApiClient
     {
-        public Task<GameActionResponse> SendAsync(string action, object payload, CancellationToken cancellationToken = default)
+        public Task<GameActionResult> SendAsync(string action, object payload, CancellationToken cancellationToken = default)
         {
             if (string.Equals(action, "sell-stash-item", StringComparison.Ordinal))
             {
-                return Task.FromResult(new GameActionResponse(
+                return Task.FromResult(new GameActionResult(
+                    "ProfileMutated",
+                    null,
+                    null,
                     new PlayerSnapshot(
                         20,
                         [ItemCatalog.Create("Rusty Knife")],
@@ -172,7 +175,10 @@ public class GameEventValueScenarioTests : IDisposable
                     null));
             }
 
-            return Task.FromResult(new GameActionResponse(
+            return Task.FromResult(new GameActionResult(
+                "ProfileMutated",
+                null,
+                null,
                 new PlayerSnapshot(0, [], [], DateTimeOffset.MinValue, null, null),
                 null));
         }

@@ -1,4 +1,5 @@
 using System.Reflection;
+using System.Text.Json;
 using RaidLoop.Client;
 using RaidLoop.Client.Pages;
 using RaidLoop.Client.Services;
@@ -17,18 +18,38 @@ public sealed class RaidStartApiTests
             ResponseFactory = request =>
             {
                 Assert.Equal("start-main-raid", request.Action);
-                return new GameActionResponse(
-                    new PlayerSnapshot(
-                        Money: 500,
-                        MainStash: [],
-                        OnPersonItems:
-                        [
-                            new OnPersonSnapshot(ItemCatalog.Create("AK74"), true),
-                            new OnPersonSnapshot(ItemCatalog.Create("Small Backpack"), true)
-                        ],
-                        RandomCharacterAvailableAt: DateTimeOffset.MinValue,
-                        RandomCharacter: null,
-                        ActiveRaid: BuildRaidSnapshot("Combat", "Server combat", "Server Scav", 17, 9)),
+                return new GameActionResult(
+                    "RaidStarted",
+                    null,
+                    JsonDocument.Parse("""
+                        {
+                          "raid": {
+                            "health": 27,
+                            "backpackCapacity": 3,
+                            "ammo": 9,
+                            "weaponMalfunction": false,
+                            "medkits": 1,
+                            "lootSlots": 0,
+                            "extractProgress": 1,
+                            "extractRequired": 3,
+                            "encounterType": "Combat",
+                            "encounterTitle": "Server Encounter",
+                            "encounterDescription": "Server combat",
+                            "enemyName": "Server Scav",
+                            "enemyHealth": 17,
+                            "lootContainer": "Dead Body",
+                            "awaitingDecision": false,
+                            "discoveredLoot": [],
+                            "carriedLoot": [],
+                            "equippedItems": [
+                              { "name": "AK74", "type": 0, "value": 320, "slots": 1, "rarity": 2, "displayRarity": 3 },
+                              { "name": "Small Backpack", "type": 2, "value": 75, "slots": 2, "rarity": 2, "displayRarity": 3 }
+                            ],
+                            "logEntries": ["Raid started on server."]
+                          }
+                        }
+                        """).RootElement.Clone(),
+                    null,
                     null);
             }
         };
@@ -61,14 +82,46 @@ public sealed class RaidStartApiTests
             ResponseFactory = request =>
             {
                 Assert.Equal("start-random-raid", request.Action);
-                return new GameActionResponse(
-                    new PlayerSnapshot(
-                        Money: 500,
-                        MainStash: [],
-                        OnPersonItems: [],
-                        RandomCharacterAvailableAt: DateTimeOffset.MinValue,
-                        RandomCharacter: new RandomCharacterSnapshot("Ghost-101", [ItemCatalog.Create("Makarov")]),
-                        ActiveRaid: BuildRaidSnapshot("Loot", "Server loot", string.Empty, 0, 8, [ItemCatalog.Create("Makarov")])),
+                return new GameActionResult(
+                    "RaidStarted",
+                    null,
+                    JsonDocument.Parse("""
+                        {
+                          "luckRun": {
+                            "randomCharacterAvailableAt": "0001-01-01T00:00:00+00:00",
+                            "randomCharacter": {
+                              "name": "Ghost-101",
+                              "inventory": [
+                                { "name": "Makarov", "type": 0, "value": 60, "slots": 1, "rarity": 0, "displayRarity": 1 }
+                              ]
+                            }
+                          },
+                          "raid": {
+                            "health": 27,
+                            "backpackCapacity": 3,
+                            "ammo": 8,
+                            "weaponMalfunction": false,
+                            "medkits": 1,
+                            "lootSlots": 0,
+                            "extractProgress": 1,
+                            "extractRequired": 3,
+                            "encounterType": "Loot",
+                            "encounterTitle": "Server Encounter",
+                            "encounterDescription": "Server loot",
+                            "enemyName": "",
+                            "enemyHealth": 0,
+                            "lootContainer": "Dead Body",
+                            "awaitingDecision": false,
+                            "discoveredLoot": [],
+                            "carriedLoot": [],
+                            "equippedItems": [
+                              { "name": "Makarov", "type": 0, "value": 60, "slots": 1, "rarity": 0, "displayRarity": 1 }
+                            ],
+                            "logEntries": ["Raid started on server."]
+                          }
+                        }
+                        """).RootElement.Clone(),
+                    null,
                     null);
             }
         };
@@ -86,30 +139,6 @@ public sealed class RaidStartApiTests
         Assert.Equal(8, Assert.IsType<int>(GetField(home, "_ammo")));
         var raid = Assert.IsType<RaidState>(GetField(home, "_raid"));
         Assert.Equal("Makarov", raid.Inventory.EquippedWeapon?.Name);
-    }
-
-    private static RaidSnapshot BuildRaidSnapshot(string encounterType, string encounterDescription, string enemyName, int enemyHealth, int ammo, IReadOnlyList<Item>? equippedItems = null)
-    {
-        return new RaidSnapshot(
-            Health: 27,
-            BackpackCapacity: 3,
-            Ammo: ammo,
-            WeaponMalfunction: false,
-            Medkits: 1,
-            LootSlots: 0,
-            ExtractProgress: 1,
-            ExtractRequired: 3,
-            EncounterType: encounterType,
-            EncounterTitle: "Server Encounter",
-            EncounterDescription: encounterDescription,
-            EnemyName: enemyName,
-            EnemyHealth: enemyHealth,
-            LootContainer: "Dead Body",
-            AwaitingDecision: false,
-            DiscoveredLoot: [],
-            CarriedLoot: [],
-            EquippedItems: equippedItems ?? [ItemCatalog.Create("AK74"), ItemCatalog.Create("Small Backpack")],
-            LogEntries: ["Raid started on server."]);
     }
 
     private static Home CreateHome(FakeGameActionApiClient actionClient)
@@ -165,12 +194,12 @@ public sealed class RaidStartApiTests
     {
         public List<GameActionRequest> Requests { get; } = [];
 
-        public Func<GameActionRequest, GameActionResponse> ResponseFactory { get; set; } =
+        public Func<GameActionRequest, GameActionResult> ResponseFactory { get; set; } =
             _ => throw new InvalidOperationException("No response configured.");
 
-        public Task<GameActionResponse> SendAsync(string action, object payload, CancellationToken cancellationToken = default)
+        public Task<GameActionResult> SendAsync(string action, object payload, CancellationToken cancellationToken = default)
         {
-            var request = new GameActionRequest(action, System.Text.Json.JsonSerializer.SerializeToElement(payload));
+            var request = new GameActionRequest(action, JsonSerializer.SerializeToElement(payload));
             Requests.Add(request);
             return Task.FromResult(ResponseFactory(request));
         }

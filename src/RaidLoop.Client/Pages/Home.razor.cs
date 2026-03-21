@@ -228,12 +228,8 @@ public partial class Home : IDisposable
         _activeRaidId = Guid.NewGuid().ToString("N");
         GameEventLog.Clear();
         GameEventLog.SetRaidContext(_activeRaidId);
-        var response = await Actions.SendAsync("start-main-raid", new { });
-        ApplySnapshot(response.Snapshot);
-        if (!string.IsNullOrWhiteSpace(response.Message))
-        {
-            _resultMessage = response.Message;
-        }
+        var result = await Actions.SendAsync("start-main-raid", new { });
+        ApplyActionResult(result);
     }
 
     private async Task StartRandomRaidAsync()
@@ -246,12 +242,8 @@ public partial class Home : IDisposable
         _activeRaidId = Guid.NewGuid().ToString("N");
         GameEventLog.Clear();
         GameEventLog.SetRaidContext(_activeRaidId);
-        var response = await Actions.SendAsync("start-random-raid", new { });
-        ApplySnapshot(response.Snapshot);
-        if (!string.IsNullOrWhiteSpace(response.Message))
-        {
-            _resultMessage = response.Message;
-        }
+        var result = await Actions.SendAsync("start-random-raid", new { });
+        ApplyActionResult(result);
     }
 
     private async Task StoreLuckRunItemAsync(int luckIndex)
@@ -297,24 +289,16 @@ public partial class Home : IDisposable
 
     private async Task ExecuteProfileActionAsync(string action, object payload)
     {
-        var response = await Actions.SendAsync(action, payload);
-        ApplySnapshot(response.Snapshot);
+        var result = await Actions.SendAsync(action, payload);
+        ApplyActionResult(result);
         NormalizeEquippedSlots();
         EnsureMainCharacterHasWeaponFallback();
-        if (!string.IsNullOrWhiteSpace(response.Message))
-        {
-            _resultMessage = response.Message;
-        }
     }
 
     private async Task ExecuteRaidActionAsync(string action, object payload)
     {
-        var response = await Actions.SendAsync(action, payload);
-        ApplySnapshot(response.Snapshot);
-        if (!string.IsNullOrWhiteSpace(response.Message))
-        {
-            _resultMessage = response.Message;
-        }
+        var result = await Actions.SendAsync(action, payload);
+        ApplyActionResult(result);
     }
 
     private void ApplyActionResult(GameActionResult result)

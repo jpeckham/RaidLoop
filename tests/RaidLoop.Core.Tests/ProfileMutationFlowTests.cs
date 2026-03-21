@@ -508,14 +508,17 @@ public sealed class ProfileMutationFlowTests
         return home;
     }
 
-    private static GameActionResponse Response(
+    private static GameActionResult Response(
         int money,
         IReadOnlyList<Item> mainStash,
         IReadOnlyList<OnPersonSnapshot> onPersonItems,
         DateTimeOffset? randomCharacterAvailableAt = null,
         RandomCharacterSnapshot? randomCharacter = null)
     {
-        return new GameActionResponse(
+        return new GameActionResult(
+            "ProfileMutated",
+            null,
+            null,
             new PlayerSnapshot(
                 Money: money,
                 MainStash: mainStash,
@@ -578,10 +581,10 @@ public sealed class ProfileMutationFlowTests
     {
         public List<GameActionRequest> Requests { get; } = [];
 
-        public Func<GameActionRequest, GameActionResponse> ResponseFactory { get; set; } =
+        public Func<GameActionRequest, GameActionResult> ResponseFactory { get; set; } =
             _ => throw new InvalidOperationException("No response configured.");
 
-        public Task<GameActionResponse> SendAsync(string action, object payload, CancellationToken cancellationToken = default)
+        public Task<GameActionResult> SendAsync(string action, object payload, CancellationToken cancellationToken = default)
         {
             var jsonPayload = System.Text.Json.JsonSerializer.SerializeToElement(payload);
             var request = new GameActionRequest(action, jsonPayload);

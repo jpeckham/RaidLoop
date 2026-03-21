@@ -4,5 +4,5 @@ namespace RaidLoop.Client.Services;
 
 public interface IGameActionApiClient
 {
-    Task<GameActionResponse> SendAsync(string action, object payload, CancellationToken cancellationToken = default);
+    Task<GameActionResult> SendAsync(string action, object payload, CancellationToken cancellationToken = default);
 }

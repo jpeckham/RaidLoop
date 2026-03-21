@@ -44,22 +44,16 @@ public sealed class GameActionApiClient : IGameActionApiClient
 
         using var document = JsonDocument.Parse(json);
         var root = document.RootElement;
-        if (root.ValueKind == JsonValueKind.Object
-            && (root.TryGetProperty("eventType", out _)
-                || root.TryGetProperty("event", out _)
-                || root.TryGetProperty("projections", out _)))
+        if (root.ValueKind != JsonValueKind.Object
+            || (!root.TryGetProperty("eventType", out _)
+                && !root.TryGetProperty("event", out _)
+                && !root.TryGetProperty("projections", out _)))
         {
-            var result = JsonSerializer.Deserialize<GameActionResult>(json, JsonOptions);
-            return result ?? throw new InvalidOperationException("Game action returned no payload.");
+            throw new InvalidOperationException("Game action returned legacy snapshot payload.");
         }
 
-        var legacy = JsonSerializer.Deserialize<GameActionResponse>(json, JsonOptions);
-        if (legacy is null)
-        {
-            throw new InvalidOperationException("Game action returned no payload.");
-        }
-
-        return new GameActionResult("LegacySnapshot", null, null, legacy.Snapshot, legacy.Message);
+        var result = JsonSerializer.Deserialize<GameActionResult>(json, JsonOptions);
+        return result ?? throw new InvalidOperationException("Game action returned no payload.");
     }
 
     private async Task AuthorizeAsync(HttpRequestMessage request)

@@ -59,36 +59,6 @@ window.raidLoopStorage = {
     }
 
     try {
-      let authUserProbe = null;
-      if (isProfileBootstrap && authHeader && apikeyHeader) {
-        try {
-          const probeResponse = await originalFetch("https://dblgbpzlrglcdwqyagnx.supabase.co/auth/v1/user", {
-            method: "GET",
-            headers: {
-              authorization: authHeader,
-              apikey: apikeyHeader
-            }
-          });
-
-          let probeBodyText = null;
-          try {
-            probeBodyText = await probeResponse.text();
-          } catch {
-            probeBodyText = null;
-          }
-
-          authUserProbe = {
-            status: probeResponse.status,
-            statusText: probeResponse.statusText,
-            bodyText: probeBodyText
-          };
-        } catch (probeError) {
-          authUserProbe = {
-            error: probeError instanceof Error ? probeError.message : String(probeError)
-          };
-        }
-      }
-
       const response = await originalFetch(input, init);
       const cloned = response.clone();
       let bodyText = null;
@@ -114,8 +84,7 @@ window.raidLoopStorage = {
           status: response.status,
           statusText: response.statusText,
           bodyText: bodyText
-        },
-        authUserProbe: authUserProbe
+        }
       });
 
       return response;

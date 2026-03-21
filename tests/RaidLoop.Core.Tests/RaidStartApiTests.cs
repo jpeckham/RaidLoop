@@ -49,7 +49,6 @@ public sealed class RaidStartApiTests
                           }
                         }
                         """).RootElement.Clone(),
-                    null,
                     null);
             }
         };
@@ -121,7 +120,6 @@ public sealed class RaidStartApiTests
                           }
                         }
                         """).RootElement.Clone(),
-                    null,
                     null);
             }
         };

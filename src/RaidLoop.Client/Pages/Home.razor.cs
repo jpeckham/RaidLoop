@@ -297,7 +297,7 @@ public partial class Home : IDisposable
 
     private async Task ExecuteRaidActionAsync(string action, object payload)
     {
-        var result = await Actions.SendAsync(action, payload);
+        var result = await Actions.SendAsync(action, CreateRaidActionPayload(payload));
         ApplyActionResult(result);
     }
 
@@ -306,10 +306,6 @@ public partial class Home : IDisposable
         if (result.Projections is { ValueKind: JsonValueKind.Object } projections)
         {
             ApplyProjectedState(projections);
-        }
-        else if (result.Snapshot is not null)
-        {
-            ApplySnapshot(result.Snapshot);
         }
 
         if (!string.IsNullOrWhiteSpace(result.Message))
@@ -372,7 +368,14 @@ public partial class Home : IDisposable
 
         if (TryGetProjection(projections, "raid", out var raid))
         {
-            ApplyRaidProjection(raid);
+            if (raid.ValueKind == JsonValueKind.Null)
+            {
+                ClearRaidState();
+            }
+            else
+            {
+                ApplyRaidProjection(raid);
+            }
         }
 
         if (updatedStash || updatedLoadout)
@@ -515,7 +518,15 @@ public partial class Home : IDisposable
             hasRaidPatch = true;
         }
 
-        if (TryGetProjection(raid, "logEntries", out var logEntries))
+        if (TryGetProjection(raid, "logEntriesAdded", out var logEntriesAdded))
+        {
+            if (logEntriesAdded.ValueKind == JsonValueKind.Array)
+            {
+                _log.AddRange(ReadStringListFromProperty(raid, "logEntriesAdded"));
+                hasRaidPatch = true;
+            }
+        }
+        else if (TryGetProjection(raid, "logEntries", out var logEntries))
         {
             if (logEntries.ValueKind == JsonValueKind.Array)
             {
@@ -538,6 +549,40 @@ public partial class Home : IDisposable
         {
             _inRaid = true;
         }
+    }
+
+    private object CreateRaidActionPayload(object payload)
+    {
+        return payload switch
+        {
+            null => new { knownLogCount = _log.Count },
+            _ => JsonSerializer.Deserialize<Dictionary<string, object?>>(
+                JsonSerializer.Serialize(payload)) is { } values
+                ? AddKnownLogCount(values)
+                : new Dictionary<string, object?> { ["knownLogCount"] = _log.Count }
+        };
+    }
+
+    private Dictionary<string, object?> AddKnownLogCount(Dictionary<string, object?> values)
+    {
+        values["knownLogCount"] = _log.Count;
+        return values;
+    }
+
+    private void ClearRaidState()
+    {
+        _raid = null;
+        _inRaid = false;
+        _awaitingDecision = false;
+        _extractProgress = 0;
+        _ammo = 0;
+        _weaponMalfunction = false;
+        _encounterType = EncounterType.Neutral;
+        _encounterDescription = string.Empty;
+        _enemyName = string.Empty;
+        _enemyHealth = 0;
+        _lootContainer = string.Empty;
+        _log.Clear();
     }
 
     private static List<Item> ReadItemList(JsonElement items)

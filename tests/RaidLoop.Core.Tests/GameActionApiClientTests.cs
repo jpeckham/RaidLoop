@@ -10,33 +10,35 @@ namespace RaidLoop.Core.Tests;
 public sealed class GameActionApiClientTests
 {
     [Fact]
-    public async Task SendAsync_MapsLegacySnapshotResponseToGameActionResult()
+    public async Task SendAsync_RejectsLegacySnapshotResponse()
     {
         var handler = new FakeHandler(_ =>
         {
-            var response = new GameActionResponse(
-                new PlayerSnapshot(
-                    Money: 640,
-                    MainStash: [ItemCatalog.Create("Makarov")],
-                    OnPersonItems: [new OnPersonSnapshot(ItemCatalog.Create("Small Backpack"), true)],
-                    RandomCharacterAvailableAt: DateTimeOffset.MinValue,
-                    RandomCharacter: null,
-                    ActiveRaid: null),
-                Message: "Profile saved.");
+            const string payload = """
+                {
+                  "snapshot": {
+                    "money": 640,
+                    "mainStash": [],
+                    "onPersonItems": [],
+                    "randomCharacterAvailableAt": "0001-01-01T00:00:00+00:00",
+                    "randomCharacter": null,
+                    "activeRaid": null
+                  },
+                  "message": "Profile saved."
+                }
+                """;
 
-            return JsonResponse(HttpStatusCode.OK, response);
+            return new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(payload, Encoding.UTF8, "application/json")
+            };
         });
         var client = CreateClient(handler);
 
-        var result = await client.SendAsync("sell-stash-item", new { stashIndex = 0 });
+        var error = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            client.SendAsync("sell-stash-item", new { stashIndex = 0 }));
 
-        Assert.Equal("LegacySnapshot", result.EventType);
-        Assert.Null(result.Event);
-        Assert.Null(result.Projections);
-        Assert.NotNull(result.Snapshot);
-        Assert.Equal(640, result.Snapshot!.Money);
-        Assert.Equal("Small Backpack", Assert.Single(result.Snapshot.OnPersonItems).Item.Name);
-        Assert.Equal("Profile saved.", result.Message);
+        Assert.Equal("Game action returned legacy snapshot payload.", error.Message);
         Assert.Equal(HttpMethod.Post, handler.LastRequest!.Method);
         Assert.Equal("https://dblgbpzlrglcdwqyagnx.supabase.co/functions/v1/game-action", handler.LastRequest.RequestUri!.ToString());
         Assert.Equal("Bearer", handler.LastRequest.Headers.Authorization?.Scheme);
@@ -87,7 +89,6 @@ public sealed class GameActionApiClientTests
         Assert.Equal(640, result.Projections!.Value.GetProperty("economy").GetProperty("money").GetInt32());
         Assert.Equal(4, result.Projections.Value.GetProperty("raid").GetProperty("ammo").GetInt32());
         Assert.True(result.Projections.Value.GetProperty("raid").GetProperty("weaponMalfunction").GetBoolean());
-        Assert.Null(result.Snapshot);
         Assert.Equal("Action resolved.", result.Message);
     }
 
@@ -106,14 +107,6 @@ public sealed class GameActionApiClientTests
                 Url = "https://dblgbpzlrglcdwqyagnx.supabase.co",
                 PublishableKey = "publishable-key"
             });
-    }
-
-    private static HttpResponseMessage JsonResponse<T>(HttpStatusCode statusCode, T body)
-    {
-        return new HttpResponseMessage(statusCode)
-        {
-            Content = new StringContent(JsonSerializer.Serialize(body), Encoding.UTF8, "application/json")
-        };
     }
 
     private sealed class StubSessionProvider(string accessToken) : ISupabaseSessionProvider

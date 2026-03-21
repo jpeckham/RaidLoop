@@ -228,6 +228,65 @@ public sealed class ProfileMutationFlowTests
     }
 
     [Fact]
+    public void ApplyActionResult_PrefersProjectionsOverTransitionalSnapshot()
+    {
+        var home = CreateHome(new FakeGameActionApiClient());
+
+        InvokePrivateVoid(
+            home,
+            "ApplyActionResult",
+            new GameActionResult(
+                "ProfileMutated",
+                null,
+                System.Text.Json.JsonDocument.Parse("""
+                    {
+                      "economy": {
+                        "money": 910
+                      },
+                      "stash": {
+                        "mainStash": [
+                          { "Name": "Makarov", "Type": 0, "Value": 60, "Slots": 1, "Rarity": 0, "DisplayRarity": 1 }
+                        ]
+                      },
+                      "loadout": {
+                        "onPersonItems": [
+                          {
+                            "Item": { "Name": "Medkit", "Type": 3, "Value": 10, "Slots": 1, "Rarity": 0, "DisplayRarity": 1 },
+                            "IsEquipped": false
+                          }
+                        ]
+                      },
+                      "luckRun": {
+                        "randomCharacterAvailableAt": "2026-03-20T08:00:00Z",
+                        "randomCharacter": {
+                          "Name": "Ghost-303",
+                          "Inventory": [
+                            { "Name": "Bandage", "Type": 4, "Value": 15, "Slots": 1, "Rarity": 0, "DisplayRarity": 0 }
+                          ]
+                        }
+                      }
+                    }
+                    """).RootElement.Clone(),
+                new PlayerSnapshot(
+                    Money: 111,
+                    MainStash: [ItemCatalog.Create("AK74")],
+                    OnPersonItems: [new OnPersonSnapshot(ItemCatalog.Create("AK74"), true)],
+                    RandomCharacterAvailableAt: DateTimeOffset.Parse("2026-03-20T09:00:00Z"),
+                    RandomCharacter: new RandomCharacterSnapshot("Ghost-999", [ItemCatalog.Create("Bandage")]),
+                    ActiveRaid: null),
+                null));
+
+        Assert.Equal(910, Assert.IsType<int>(GetField(home, "_money")));
+        var mainGame = Assert.IsType<GameState>(GetField(home, "_mainGame"));
+        Assert.Equal(["Makarov"], mainGame.Stash.Select(item => item.Name).ToArray());
+        var onPersonItems = Assert.IsType<List<OnPersonEntry>>(GetField(home, "_onPersonItems"));
+        Assert.Single(onPersonItems);
+        Assert.Equal("Medkit", onPersonItems[0].Item.Name);
+        Assert.Equal(DateTimeOffset.Parse("2026-03-20T08:00:00Z"), Assert.IsType<DateTimeOffset>(GetField(home, "_randomCharacterAvailableAt")));
+        Assert.Equal("Ghost-303", Assert.IsType<RandomCharacterState>(GetField(home, "_randomCharacter")).Name);
+    }
+
+    [Fact]
     public void ApplyActionResult_FallsBackToSnapshotWhenProjectionsAreMissing()
     {
         var home = CreateHome(new FakeGameActionApiClient());

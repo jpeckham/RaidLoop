@@ -21,6 +21,39 @@ const PROFILE_MUTATION_ACTIONS = new Set([
   "sell-luck-run-item",
 ]);
 
+const RAID_START_ACTIONS = new Set([
+  "start-main-raid",
+  "start-random-raid",
+]);
+
+const COMBAT_ACTIONS = new Set([
+  "attack",
+  "burst-fire",
+  "reload",
+  "flee",
+  "use-medkit",
+]);
+
+const LOOT_ACTIONS = new Set([
+  "take-loot",
+  "drop-carried",
+  "drop-equipped",
+  "equip-from-discovered",
+  "equip-from-carried",
+]);
+
+const ENCOUNTER_ACTIONS = new Set([
+  "continue-searching",
+  "move-toward-extract",
+  "attempt-extract",
+]);
+
+const IN_RAID_ACTIONS = new Set([
+  ...COMBAT_ACTIONS,
+  ...LOOT_ACTIONS,
+  ...ENCOUNTER_ACTIONS,
+]);
+
 export function createGameActionHandler({
   dispatchAction,
 } = {}) {
@@ -55,27 +88,63 @@ export function createGameActionHandler({
 
     try {
       const snapshot = await dispatchAction(accessToken, body.action, body.payload);
-      return json(buildActionResponse(body.action, snapshot));
+      return json(buildActionResponse(body.action, body.payload, snapshot));
     } catch (error) {
       return serverError(error instanceof Error ? error.message : undefined);
     }
   };
 }
 
-function buildActionResponse(action, snapshot) {
-  if (!PROFILE_MUTATION_ACTIONS.has(action)) {
+function buildActionResponse(action, payload, snapshot) {
+  if (PROFILE_MUTATION_ACTIONS.has(action)) {
     return {
+      eventType: "ProfileMutated",
+      event: {
+        action,
+      },
+      projections: buildProfileMutationProjections(action, snapshot),
+      snapshot,
+      message: null,
+    };
+  }
+
+  if (RAID_START_ACTIONS.has(action)) {
+    return {
+      eventType: "RaidStarted",
+      event: {
+        action,
+      },
+      projections: buildRaidStartProjections(action, snapshot),
+      snapshot,
+      message: null,
+    };
+  }
+
+  if (IN_RAID_ACTIONS.has(action)) {
+    if (!snapshot?.activeRaid) {
+      return {
+        eventType: "RaidFinished",
+        event: {
+          action,
+        },
+        projections: buildRaidFinishedProjections(snapshot),
+        snapshot,
+        message: null,
+      };
+    }
+
+    return {
+      eventType: resolveRaidEventType(action),
+      event: {
+        action,
+      },
+      projections: buildInRaidProjections(snapshot, getKnownLogCount(payload)),
       snapshot,
       message: null,
     };
   }
 
   return {
-    eventType: "ProfileMutated",
-    event: {
-      action,
-    },
-    projections: buildProfileMutationProjections(action, snapshot),
     snapshot,
     message: null,
   };
@@ -142,4 +211,92 @@ function buildLuckRunProjection(snapshot) {
     randomCharacterAvailableAt: snapshot?.randomCharacterAvailableAt ?? null,
     randomCharacter: snapshot?.randomCharacter ?? null,
   };
+}
+
+function buildRaidStartProjections(action, snapshot) {
+  const projections = {
+    raid: buildRaidProjection(snapshot?.activeRaid),
+  };
+
+  if (action === "start-random-raid") {
+    projections.luckRun = buildLuckRunProjection(snapshot);
+  }
+
+  return projections;
+}
+
+function buildRaidProjection(activeRaid) {
+  return buildRaidProjectionWithLogOptions(activeRaid, {
+    includeFullLogEntries: true,
+    knownLogCount: 0,
+  });
+}
+
+function buildRaidProjectionWithLogOptions(activeRaid, { includeFullLogEntries, knownLogCount }) {
+  const logEntries = Array.isArray(activeRaid?.logEntries) ? activeRaid.logEntries : [];
+  const projection = {
+    health: activeRaid?.health ?? 0,
+    backpackCapacity: activeRaid?.backpackCapacity ?? 0,
+    ammo: activeRaid?.ammo ?? 0,
+    weaponMalfunction: activeRaid?.weaponMalfunction ?? false,
+    medkits: activeRaid?.medkits ?? 0,
+    lootSlots: activeRaid?.lootSlots ?? 0,
+    extractProgress: activeRaid?.extractProgress ?? 0,
+    extractRequired: activeRaid?.extractRequired ?? 0,
+    encounterType: activeRaid?.encounterType ?? "Neutral",
+    encounterTitle: activeRaid?.encounterTitle ?? "",
+    encounterDescription: activeRaid?.encounterDescription ?? "",
+    enemyName: activeRaid?.enemyName ?? "",
+    enemyHealth: activeRaid?.enemyHealth ?? 0,
+    lootContainer: activeRaid?.lootContainer ?? "",
+    awaitingDecision: activeRaid?.awaitingDecision ?? false,
+    discoveredLoot: activeRaid?.discoveredLoot ?? [],
+    carriedLoot: activeRaid?.carriedLoot ?? [],
+    equippedItems: activeRaid?.equippedItems ?? [],
+  };
+
+  if (includeFullLogEntries) {
+    projection.logEntries = logEntries;
+  } else {
+    projection.logEntriesAdded = logEntries.slice(Math.max(knownLogCount, 0));
+  }
+
+  return projection;
+}
+
+function buildInRaidProjections(snapshot, knownLogCount) {
+  return {
+    raid: buildRaidProjectionWithLogOptions(snapshot?.activeRaid, {
+      includeFullLogEntries: false,
+      knownLogCount,
+    }),
+  };
+}
+
+function buildRaidFinishedProjections(snapshot) {
+  return {
+    loadout: buildLoadoutProjection(snapshot),
+    luckRun: buildLuckRunProjection(snapshot),
+    raid: null,
+  };
+}
+
+function resolveRaidEventType(action) {
+  if (COMBAT_ACTIONS.has(action)) {
+    return "CombatResolved";
+  }
+
+  if (LOOT_ACTIONS.has(action)) {
+    return "LootResolved";
+  }
+
+  return "EncounterAdvanced";
+}
+
+function getKnownLogCount(payload) {
+  if (!payload || typeof payload !== "object") {
+    return 0;
+  }
+
+  return Number.isInteger(payload.knownLogCount) ? payload.knownLogCount : 0;
 }

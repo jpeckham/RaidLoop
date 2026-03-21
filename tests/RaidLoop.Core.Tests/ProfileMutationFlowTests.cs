@@ -447,6 +447,114 @@ public sealed class ProfileMutationFlowTests
     }
 
     [Fact]
+    public void ApplyActionResult_AppendsRaidLogEntriesAdded_WithoutClearingExistingHistory()
+    {
+        var home = CreateHome(new FakeGameActionApiClient());
+        var existingInventory = RaidInventory.FromItems(
+            [ItemCatalog.Create("AK74")],
+            [],
+            backpackCapacity: 3);
+
+        SetField(home, "_raid", new RaidState(26, existingInventory));
+        SetField(home, "_inRaid", true);
+        SetField(home, "_ammo", 8);
+        SetField(home, "_enemyHealth", 12);
+        SetField(home, "_log", new List<string> { "Raid started as Main Character." });
+
+        InvokePrivateVoid(
+            home,
+            "ApplyActionResult",
+            new GameActionResult(
+                "CombatResolved",
+                null,
+                System.Text.Json.JsonDocument.Parse("""
+                    {
+                      "raid": {
+                        "ammo": 7,
+                        "enemyHealth": 8,
+                        "logEntriesAdded": [
+                          "You hit Scav for 4.",
+                          "Scav hits you for 3."
+                        ]
+                      }
+                    }
+                    """).RootElement.Clone(),
+                null,
+                null));
+
+        Assert.Equal(7, Assert.IsType<int>(GetField(home, "_ammo")));
+        Assert.Equal(8, Assert.IsType<int>(GetField(home, "_enemyHealth")));
+        Assert.Equal(
+            ["Raid started as Main Character.", "You hit Scav for 4.", "Scav hits you for 3."],
+            Assert.IsType<List<string>>(GetField(home, "_log")));
+    }
+
+    [Fact]
+    public void ApplyActionResult_ClearsRaidState_WhenRaidProjectionIsNull()
+    {
+        var home = CreateHome(new FakeGameActionApiClient());
+        var existingInventory = RaidInventory.FromItems(
+            [ItemCatalog.Create("AK74")],
+            [ItemCatalog.Create("Bandage")],
+            backpackCapacity: 3);
+
+        SetField(home, "_raid", new RaidState(24, existingInventory));
+        SetField(home, "_inRaid", true);
+        SetField(home, "_awaitingDecision", true);
+        SetField(home, "_extractProgress", 2);
+        SetField(home, "_ammo", 5);
+        SetField(home, "_weaponMalfunction", true);
+        SetField(home, "_encounterType", EncounterType.Extraction);
+        SetField(home, "_encounterDescription", "Extraction route open.");
+        SetField(home, "_enemyName", "Final Guard");
+        SetField(home, "_enemyHealth", 10);
+        SetField(home, "_lootContainer", "Dead Body");
+        SetField(home, "_log", new List<string> { "Raid started as Main Character.", "Extraction completed." });
+
+        InvokePrivateVoid(
+            home,
+            "ApplyActionResult",
+            new GameActionResult(
+                "RaidFinished",
+                null,
+                System.Text.Json.JsonDocument.Parse("""
+                    {
+                      "raid": null,
+                      "loadout": {
+                        "onPersonItems": [
+                          {
+                            "Item": { "Name": "AK74", "Type": 0, "Value": 320, "Slots": 1, "Rarity": 2, "DisplayRarity": 3 },
+                            "IsEquipped": true
+                          },
+                          {
+                            "Item": { "Name": "Bandage", "Type": 4, "Value": 15, "Slots": 1, "Rarity": 0, "DisplayRarity": 0 },
+                            "IsEquipped": false
+                          }
+                        ]
+                      }
+                    }
+                    """).RootElement.Clone(),
+                null,
+                null));
+
+        Assert.Null(GetField(home, "_raid"));
+        Assert.False(Assert.IsType<bool>(GetField(home, "_inRaid")));
+        Assert.False(Assert.IsType<bool>(GetField(home, "_awaitingDecision")));
+        Assert.Equal(0, Assert.IsType<int>(GetField(home, "_extractProgress")));
+        Assert.Equal(0, Assert.IsType<int>(GetField(home, "_ammo")));
+        Assert.False(Assert.IsType<bool>(GetField(home, "_weaponMalfunction")));
+        Assert.Equal(EncounterType.Neutral, Assert.IsType<EncounterType>(GetField(home, "_encounterType")));
+        Assert.Equal(string.Empty, Assert.IsType<string>(GetField(home, "_encounterDescription")));
+        Assert.Equal(string.Empty, Assert.IsType<string>(GetField(home, "_enemyName")));
+        Assert.Equal(0, Assert.IsType<int>(GetField(home, "_enemyHealth")));
+        Assert.Equal(string.Empty, Assert.IsType<string>(GetField(home, "_lootContainer")));
+        Assert.Empty(Assert.IsType<List<string>>(GetField(home, "_log")));
+
+        var onPersonItems = Assert.IsType<List<OnPersonEntry>>(GetField(home, "_onPersonItems"));
+        Assert.Equal(["AK74", "Bandage"], onPersonItems.Select(entry => entry.Item.Name).ToArray());
+    }
+
+    [Fact]
     public void ApplyActionResult_SkipsMalformedInventoryEntries_WithoutCorruptingState()
     {
         var home = CreateHome(new FakeGameActionApiClient());

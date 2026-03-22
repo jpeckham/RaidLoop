@@ -419,3 +419,5 @@ FodyWeavers.xsd
 
 # Local git worktrees
 .worktrees/
+#secure shit
+.env

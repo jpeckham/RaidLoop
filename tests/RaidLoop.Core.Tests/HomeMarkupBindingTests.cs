@@ -10,6 +10,10 @@ public sealed class HomeMarkupBindingTests
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "RaidLoop.Client", "Program.cs"));
     private static readonly string ClientAppSettingsPath = Path.GetFullPath(
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "RaidLoop.Client", "wwwroot", "appsettings.json"));
+    private static readonly string ClientLocalAppSettingsPath = Path.GetFullPath(
+        Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "RaidLoop.Client", "wwwroot", "appsettings.Local.json"));
+    private static readonly string ClientTestAppSettingsPath = Path.GetFullPath(
+        Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "RaidLoop.Client", "wwwroot", "appsettings.Test.json"));
     private static readonly string SupabaseConfigPath = Path.GetFullPath(
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "config.toml"));
     private static readonly string InventoryMigrationPath = Path.GetFullPath(
@@ -30,6 +34,8 @@ public sealed class HomeMarkupBindingTests
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026032201_add_d20_hit_rolls.sql"));
     private static readonly string DexterityMigrationPath = Path.GetFullPath(
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026032202_add_dexterity_stats.sql"));
+    private static readonly string WeaponArmorPenetrationMigrationPath = Path.GetFullPath(
+        Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026032203_add_weapon_armor_penetration.sql"));
     private static readonly string SupabaseAuthServicePath = Path.GetFullPath(
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "RaidLoop.Client", "Services", "SupabaseAuthService.cs"));
     private static readonly string ClientTelemetryServicePath = Path.GetFullPath(
@@ -76,6 +82,10 @@ public sealed class HomeMarkupBindingTests
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", ".github", "workflows", "continuous-delivery-dotnet-blazor-github-pages.yml"));
     private static readonly string SupabaseDeployWorkflowPath = Path.GetFullPath(
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", ".github", "workflows", "supabase-deploy.yml"));
+    private static readonly string ReadmePath = Path.GetFullPath(
+        Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "README.md"));
+    private static readonly string LaunchSettingsPath = Path.GetFullPath(
+        Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "RaidLoop.Client", "Properties", "launchSettings.json"));
 
     [Fact]
     public void HomePassesDynamicStringParametersAsExpressions()
@@ -235,6 +245,41 @@ public sealed class HomeMarkupBindingTests
         Assert.Contains("\"ProjectKey\": \"phc_UfelMasDJpt4iUgbFqDg8i0PkbDGDXFpicrSg6SOojb\"", appSettings);
         Assert.Contains("\"Host\": \"https://us.i.posthog.com\"", appSettings);
         Assert.Contains("\"SessionReplayEnabled\": true", appSettings);
+    }
+
+    [Fact]
+    public void LocalAndTestAppSettingsSplitLocalSupabaseFromHostedSmokeTest()
+    {
+        var localSettings = File.ReadAllText(ClientLocalAppSettingsPath);
+        var testSettings = File.ReadAllText(ClientTestAppSettingsPath);
+
+        Assert.Contains("\"Url\": \"http://127.0.0.1:54321\"", localSettings);
+        Assert.Contains("\"PublishableKey\": \"sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH\"", localSettings);
+        Assert.Contains("\"ProjectKey\": \"phc_UfelMasDJpt4iUgbFqDg8i0PkbDGDXFpicrSg6SOojb\"", localSettings);
+        Assert.Contains("\"Url\": \"https://ekqtprsvgedvkxwmyfhd.supabase.co\"", testSettings);
+        Assert.Contains("\"PublishableKey\": \"sb_publishable_0zRQJLyEPvzPGq80UM5njg_tdS1xSOZ\"", testSettings);
+    }
+
+    [Fact]
+    public void LaunchSettingsUseLocalEnvironmentByDefault()
+    {
+        var launchSettings = File.ReadAllText(LaunchSettingsPath);
+
+        Assert.Contains("\"ASPNETCORE_ENVIRONMENT\": \"Local\"", launchSettings);
+        Assert.DoesNotContain("\"ASPNETCORE_ENVIRONMENT\": \"Development\"", launchSettings);
+    }
+
+    [Fact]
+    public void ReadmeDocumentsLocalSupabaseTddWorkflowInContributingSection()
+    {
+        var readme = File.ReadAllText(ReadmePath);
+
+        Assert.Contains("## Contributing", readme);
+        Assert.Contains("npx supabase start", readme);
+        Assert.Contains("npx supabase db reset", readme);
+        Assert.Contains("write the smallest failing test first", readme);
+        Assert.Contains("dotnet test RaidLoop.sln", readme);
+        Assert.Contains("hosted Supabase", readme);
     }
 
     [Fact]
@@ -410,6 +455,35 @@ public sealed class HomeMarkupBindingTests
         Assert.Contains("create or replace function game.roll_attack_d20(attack_bonus int default 0, defense int default 10)", migration);
         Assert.Contains("game.roll_attack_d20(game.ability_modifier(", migration);
         Assert.Contains("10 + game.ability_modifier(", migration);
+    }
+
+    [Fact]
+    public void WeaponArmorPenetrationMigrationAddsReusablePenetrationAndArmorMitigationHelpers()
+    {
+        var migration = File.ReadAllText(WeaponArmorPenetrationMigrationPath);
+
+        Assert.Contains("create or replace function game.weapon_armor_penetration", migration);
+        Assert.Contains("when weapon_name = 'Makarov' then", migration);
+        Assert.Contains("when weapon_name = 'AK47' then", migration);
+        Assert.Contains("when weapon_name = 'SVDS' then", migration);
+        Assert.Contains("create or replace function game.armor_damage_reduction", migration);
+        Assert.Contains("when armor_name = 'NFM THOR' then 6", migration);
+        Assert.Contains("when armor_name = '6B43 Zabralo-Sh body armor' then 5", migration);
+        Assert.Contains("when armor_name = 'FORT Defender-2' then 4", migration);
+        Assert.Contains("when armor_name = '6B13 assault armor' then 3", migration);
+        Assert.Contains("when armor_name = '6B2 body armor' then 1", migration);
+        Assert.Contains("create or replace function game.apply_armor_damage_reduction", migration);
+        Assert.Contains("greatest(0,", migration);
+        Assert.Contains("greatest(1,", migration);
+        Assert.Contains("equipped_weapon_name := coalesce(equipped_weapon->>'name', 'Rusty Knife');", migration);
+        Assert.Contains("enemy_armor_name := coalesce(game.raid_find_equipped_item(enemy_loadout, 1)->>'name', '');", migration);
+        Assert.Contains("enemy_weapon_name := coalesce(game.raid_find_equipped_item(enemy_loadout, 0)->>'name', 'Rusty Knife');", migration);
+        Assert.Contains("game.weapon_armor_penetration(equipped_weapon_name)", migration);
+        Assert.Contains("game.weapon_armor_penetration(enemy_weapon_name)", migration);
+        Assert.Contains("game.apply_armor_damage_reduction(damage, enemy_armor_name, game.weapon_armor_penetration(equipped_weapon_name))", migration);
+        Assert.Contains("game.apply_armor_damage_reduction(incoming, coalesce(equipped_armor->>'name', ''), game.weapon_armor_penetration(enemy_weapon_name))", migration);
+        Assert.DoesNotContain("reduced_damage := greatest(1, incoming - case", migration);
+        Assert.Contains("Burst Fire deals %s.", migration);
     }
 
     [Fact]

@@ -88,6 +88,8 @@ You prepare gear, run raids, fight or loot, and try to extract with profit.
 
 ### Prerequisites
 - .NET SDK 10.x
+- Docker Desktop
+- Node.js with local npm dependencies installed via `npm install`
 
 ### Run Locally
 ```bash
@@ -113,3 +115,66 @@ dotnet build RaidLoop.sln
 
 - `Continuous Delivery` workflow runs quality checks, coverage, Pages deploy, and release tagging in one pipeline.
 - Coverage reports are uploaded as workflow artifacts.
+
+## Contributing
+
+### Local Environment
+
+- Local development uses `ASPNETCORE_ENVIRONMENT=Local` from `src/RaidLoop.Client/Properties/launchSettings.json`.
+- `src/RaidLoop.Client/wwwroot/appsettings.Local.json` points the client at local Supabase on `http://127.0.0.1:54321`.
+- `src/RaidLoop.Client/wwwroot/appsettings.Test.json` is the hosted Supabase smoke-test configuration.
+- Keep hosted Supabase for later smoke testing. Day-to-day development should use the local Supabase CLI stack.
+
+### Local Supabase Workflow
+
+From the repo root:
+
+```bash
+npm install
+npx supabase start
+npx supabase db reset
+```
+
+Use `npx supabase db reset` whenever you need a clean local database rebuilt from migrations. Use `npx supabase db push --include-all` only for quick iteration when you do not need a full reset.
+
+### TDD Workflow
+
+1. Start from the smallest relevant failing test.
+2. write the smallest failing test first.
+3. Run the narrowest command that proves it fails.
+4. Make the minimum code or migration change to pass.
+5. Re-run the same narrow test until it is green.
+6. Run local integration checks against the local Supabase stack before committing.
+
+Typical narrow commands:
+
+```bash
+dotnet test tests/RaidLoop.Core.Tests/RaidLoop.Core.Tests.csproj --filter NameOfTest
+deno test supabase/functions/game-action/handler.test.mjs
+```
+
+For SQL or migration work, prefer:
+
+```bash
+npx supabase db reset
+dotnet test tests/RaidLoop.Core.Tests/RaidLoop.Core.Tests.csproj --filter "HomeMarkupBindingTests|RaidActionApiTests|ProfileMutationFlowTests"
+```
+
+### Pre-Push Verification
+
+Before pushing commits, run:
+
+```bash
+npx supabase db reset
+dotnet test tests/RaidLoop.Core.Tests/RaidLoop.Core.Tests.csproj --filter "HomeMarkupBindingTests|RaidActionApiTests|ProfileMutationFlowTests"
+dotnet test RaidLoop.sln
+```
+
+If you changed Edge Functions, also run:
+
+```bash
+deno test supabase/functions/profile-bootstrap/handler.test.mjs supabase/functions/profile-save/handler.test.mjs
+deno test supabase/functions/game-action/handler.test.mjs
+```
+
+Push only after local verification is green. Use the hosted Supabase environment after that for smoke testing of integration details such as auth-provider behavior.

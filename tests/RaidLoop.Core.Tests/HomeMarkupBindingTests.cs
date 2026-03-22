@@ -22,6 +22,8 @@ public sealed class HomeMarkupBindingTests
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026031814_normalize_profile_bootstrap.sql"));
     private static readonly string SellPriceRebalanceMigrationPath = Path.GetFullPath(
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026032010_rebalance_sell_prices.sql"));
+    private static readonly string LootRarityWeightsMigrationPath = Path.GetFullPath(
+        Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026032111_fix_loot_rarity_weights.sql"));
     private static readonly string SupabaseAuthServicePath = Path.GetFullPath(
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "RaidLoop.Client", "Services", "SupabaseAuthService.cs"));
     private static readonly string ProfileApiClientPath = Path.GetFullPath(
@@ -286,6 +288,23 @@ public sealed class HomeMarkupBindingTests
         Assert.Contains("when 'Medkit' then jsonb_build_object('name', 'Medkit', 'type', 3, 'value', 30", migration);
         Assert.Contains("when 'AK74' then jsonb_build_object('name', 'AK74', 'type', 0, 'value', 320", migration);
         Assert.Contains("when 'NFM THOR' then jsonb_build_object('name', 'NFM THOR', 'type', 1, 'value', 650", migration);
+    }
+
+    [Fact]
+    public void LootRarityWeightsMigrationReplacesFlatHighTierRaidLootRolls()
+    {
+        var migration = File.ReadAllText(LootRarityWeightsMigrationPath);
+
+        Assert.Contains("create or replace function game.random_enemy_loadout()", migration);
+        Assert.Contains("create or replace function game.random_loot_items_for_container(container_name text)", migration);
+        Assert.Contains("floor(random() * 70)::int", migration);
+        Assert.Contains("floor(random() * 63)::int", migration);
+        Assert.Contains("roll < 55", migration);
+        Assert.Contains("roll < 40", migration);
+        Assert.Contains("game.authored_item('SVDS')", migration);
+        Assert.Contains("game.authored_item('FORT Defender-2')", migration);
+        Assert.DoesNotContain("case floor(random() * 5)::int", migration);
+        Assert.DoesNotContain("case floor(random() * 4)::int", migration);
     }
 
     [Fact]

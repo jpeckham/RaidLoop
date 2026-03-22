@@ -363,6 +363,7 @@ public sealed class HomeMarkupBindingTests
 
         Assert.Contains("@inject IProfileApiClient Profiles", markup);
         Assert.Contains("@inject IGameActionApiClient Actions", markup);
+        Assert.Contains("@inject IClientTelemetryService Telemetry", markup);
         Assert.DoesNotContain("@inject StashStorage Storage", markup);
     }
 
@@ -381,7 +382,29 @@ public sealed class HomeMarkupBindingTests
         var codeBehind = File.ReadAllText(HomeCodeBehindPath);
 
         Assert.Contains("catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.Unauthorized)", codeBehind);
+        Assert.Contains("Telemetry.ReportErrorAsync", codeBehind);
         Assert.Contains("await AuthService.SignOutAsync()", codeBehind);
+    }
+
+    [Fact]
+    public void HomeReportsActionFailuresAndBootstrapFailuresThroughTelemetry()
+    {
+        var codeBehind = File.ReadAllText(HomeCodeBehindPath);
+
+        Assert.Contains("Telemetry.ReportErrorAsync", codeBehind);
+        Assert.Contains("ExecuteProfileActionAsync", codeBehind);
+        Assert.Contains("ExecuteRaidActionAsync", codeBehind);
+    }
+
+    [Fact]
+    public void SupabaseAuthServiceReportsSessionFailuresThroughTelemetry()
+    {
+        var authService = File.ReadAllText(SupabaseAuthServicePath);
+
+        Assert.Contains("IClientTelemetryService", authService);
+        Assert.Contains("Telemetry.ReportErrorAsync", authService);
+        Assert.Contains("RefreshSession", authService);
+        Assert.Contains("SignOutAsync", authService);
     }
 
     [Fact]

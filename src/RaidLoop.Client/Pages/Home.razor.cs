@@ -64,9 +64,15 @@ public partial class Home : IDisposable
         }
         catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.Unauthorized)
         {
+            await ReportHandledErrorAsync("Profile bootstrap failed due to unauthorized session.", "bootstrap", ex);
             await AuthService.SignOutAsync();
             _isLoading = false;
             return;
+        }
+        catch (Exception ex)
+        {
+            await ReportHandledErrorAsync("Profile bootstrap failed.", "bootstrap", ex);
+            throw;
         }
 
         _clockTimer = new System.Threading.Timer(async _ =>
@@ -228,8 +234,7 @@ public partial class Home : IDisposable
         _activeRaidId = Guid.NewGuid().ToString("N");
         GameEventLog.Clear();
         GameEventLog.SetRaidContext(_activeRaidId);
-        var result = await Actions.SendAsync("start-main-raid", new { });
-        ApplyActionResult(result);
+        await ExecuteRaidActionAsync("start-main-raid", new { });
     }
 
     private async Task StartRandomRaidAsync()
@@ -242,8 +247,7 @@ public partial class Home : IDisposable
         _activeRaidId = Guid.NewGuid().ToString("N");
         GameEventLog.Clear();
         GameEventLog.SetRaidContext(_activeRaidId);
-        var result = await Actions.SendAsync("start-random-raid", new { });
-        ApplyActionResult(result);
+        await ExecuteRaidActionAsync("start-random-raid", new { });
     }
 
     private async Task StoreLuckRunItemAsync(int luckIndex)
@@ -289,16 +293,34 @@ public partial class Home : IDisposable
 
     private async Task ExecuteProfileActionAsync(string action, object payload)
     {
-        var result = await Actions.SendAsync(action, payload);
-        ApplyActionResult(result);
-        NormalizeEquippedSlots();
-        EnsureMainCharacterHasWeaponFallback();
+        try
+        {
+            var result = await Actions.SendAsync(action, payload);
+            ApplyActionResult(result);
+            NormalizeEquippedSlots();
+            EnsureMainCharacterHasWeaponFallback();
+        }
+        catch (Exception ex)
+        {
+            await ReportHandledErrorAsync($"Profile action '{action}' failed.", "profile-action", ex, new { action, payload });
+            throw;
+        }
     }
 
     private async Task ExecuteRaidActionAsync(string action, object payload)
     {
-        var result = await Actions.SendAsync(action, CreateRaidActionPayload(payload));
-        ApplyActionResult(result);
+        var raidPayload = CreateRaidActionPayload(payload);
+
+        try
+        {
+            var result = await Actions.SendAsync(action, raidPayload);
+            ApplyActionResult(result);
+        }
+        catch (Exception ex)
+        {
+            await ReportHandledErrorAsync($"Raid action '{action}' failed.", "raid-action", ex, new { action, payload = raidPayload });
+            throw;
+        }
     }
 
     private void ApplyActionResult(GameActionResult result)
@@ -978,6 +1000,20 @@ public partial class Home : IDisposable
     private async Task MoveTowardExtract()
     {
         await ExecuteRaidActionAsync("move-toward-extract", new { });
+    }
+
+    private ValueTask ReportHandledErrorAsync(string message, string source, Exception exception, object? context = null)
+    {
+        return Telemetry.ReportErrorAsync(
+            message,
+            new
+            {
+                source,
+                exception = exception.GetType().FullName,
+                exceptionMessage = exception.Message,
+                stack = exception.ToString(),
+                context
+            });
     }
 
     private int GetLootSlotCount()

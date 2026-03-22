@@ -1,5 +1,10 @@
+using System.Net;
 using System.Reflection;
+using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.Options;
+using Microsoft.JSInterop;
 using RaidLoop.Client;
+using RaidLoop.Client.Configuration;
 using RaidLoop.Client.Pages;
 using RaidLoop.Client.Services;
 using RaidLoop.Core;
@@ -35,6 +40,41 @@ public sealed class ProfileMutationFlowTests
         Assert.Equal(999, Assert.IsType<int>(GetField(home, "_money")));
         var mainGame = Assert.IsType<GameState>(GetField(home, "_mainGame"));
         Assert.Equal(["Rusty Knife"], mainGame.Stash.Select(item => item.Name).ToArray());
+    }
+
+    [Fact]
+    public async Task OnInitializedAsync_ReportsUnauthorizedBootstrapFailuresAndSignsOut()
+    {
+        var telemetry = new RecordingTelemetryService();
+        var authService = CreateAuthService(telemetry);
+        var home = CreateHome(
+            profileApiClient: new ThrowingProfileApiClient(() => new HttpRequestException("Unauthorized", null, HttpStatusCode.Unauthorized)),
+            telemetry: telemetry,
+            authService: authService);
+
+        await InvokePrivateAsync(home, "OnInitializedAsync");
+
+        Assert.Single(telemetry.Errors);
+        Assert.Contains("bootstrap", telemetry.Errors[0].Message, StringComparison.OrdinalIgnoreCase);
+        Assert.False(authService.IsAuthenticated);
+        Assert.False(Assert.IsType<bool>(GetField(home, "_isLoading")));
+    }
+
+    [Fact]
+    public async Task SellStashItemAsync_ReportsActionFailuresThroughTelemetryAndRethrows()
+    {
+        var telemetry = new RecordingTelemetryService();
+        var home = CreateHome(
+            actionClient: new ThrowingGameActionApiClient(() => new InvalidOperationException("action failed")),
+            telemetry: telemetry);
+
+        SetField(home, "_mainGame", new GameState([ItemCatalog.Create("AK74")]));
+
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => InvokePrivateAsync(home, "SellStashItemAsync", 0));
+
+        Assert.Equal("action failed", ex.Message);
+        Assert.Single(telemetry.Errors);
+        Assert.Contains("sell-stash-item", telemetry.Errors[0].Message, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -650,6 +690,29 @@ public sealed class ProfileMutationFlowTests
         Assert.Equal(expectedCooldown, Assert.IsType<DateTimeOffset>(GetField(home, "_randomCharacterAvailableAt")));
     }
 
+    private static Home CreateHome(
+        IProfileApiClient? profileApiClient = null,
+        IGameActionApiClient? actionClient = null,
+        IClientTelemetryService? telemetry = null,
+        SupabaseAuthService? authService = null)
+    {
+        var home = new Home();
+        SetProperty(home, "Profiles", profileApiClient ?? new FakeProfileApiClient());
+        SetProperty(home, "Actions", actionClient ?? new FakeGameActionApiClient());
+
+        if (telemetry is not null)
+        {
+            SetProperty(home, "Telemetry", telemetry);
+        }
+
+        if (authService is not null)
+        {
+            SetProperty(home, "AuthService", authService);
+        }
+
+        return home;
+    }
+
     private static Home CreateHome(FakeGameActionApiClient actionClient)
     {
         var home = new Home();
@@ -734,6 +797,19 @@ public sealed class ProfileMutationFlowTests
         method!.Invoke(instance, args);
     }
 
+    private static SupabaseAuthService CreateAuthService(IClientTelemetryService telemetry)
+    {
+        return new SupabaseAuthService(
+            new FakeJsRuntime(),
+            new TestNavigationManager(),
+            telemetry,
+            Options.Create(new SupabaseOptions
+            {
+                Url = "https://dblgbpzlrglcdwqyagnx.supabase.co",
+                PublishableKey = "publishable-key"
+            }));
+    }
+
     private sealed class FakeProfileApiClient : IProfileApiClient
     {
         public Task<AuthBootstrapResponse> BootstrapAsync(CancellationToken cancellationToken = default)
@@ -742,6 +818,61 @@ public sealed class ProfileMutationFlowTests
                 true,
                 "player@example.com",
                 new PlayerSnapshot(500, [], [], DateTimeOffset.MinValue, null, null)));
+        }
+    }
+
+    private sealed class FakeJsRuntime : IJSRuntime
+    {
+        public ValueTask<TValue> InvokeAsync<TValue>(string identifier, object?[]? args)
+        {
+            return ValueTask.FromResult(default(TValue)!);
+        }
+
+        public ValueTask<TValue> InvokeAsync<TValue>(string identifier, CancellationToken cancellationToken, object?[]? args)
+        {
+            return InvokeAsync<TValue>(identifier, args);
+        }
+    }
+
+    private sealed class TestNavigationManager : NavigationManager
+    {
+        public TestNavigationManager()
+        {
+            Initialize("https://example.com/", "https://example.com/");
+        }
+
+        protected override void NavigateToCore(string uri, bool forceLoad)
+        {
+        }
+    }
+
+    private sealed class RecordingTelemetryService : IClientTelemetryService
+    {
+        public List<(string Message, object? Details)> Errors { get; } = [];
+
+        public ValueTask ReportErrorAsync(string message, object? details = null, CancellationToken cancellationToken = default)
+        {
+            Errors.Add((message, details));
+            return ValueTask.CompletedTask;
+        }
+    }
+
+    private sealed class ThrowingProfileApiClient(Func<Exception> exceptionFactory) : IProfileApiClient
+    {
+        public Task<AuthBootstrapResponse> BootstrapAsync(CancellationToken cancellationToken = default)
+        {
+            return Task.FromException<AuthBootstrapResponse>(exceptionFactory());
+        }
+    }
+
+    private sealed class ThrowingGameActionApiClient(Func<Exception> exceptionFactory) : IGameActionApiClient
+    {
+        public List<GameActionRequest> Requests { get; } = [];
+
+        public Task<GameActionResult> SendAsync(string action, object payload, CancellationToken cancellationToken = default)
+        {
+            Requests.Add(new GameActionRequest(action, System.Text.Json.JsonSerializer.SerializeToElement(payload)));
+            return Task.FromException<GameActionResult>(exceptionFactory());
         }
     }
 

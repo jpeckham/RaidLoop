@@ -14,6 +14,7 @@ public sealed class SupabaseAuthService : ISupabaseSessionProvider
 
     private readonly IJSRuntime _jsRuntime;
     private readonly NavigationManager _navigationManager;
+    private readonly IClientTelemetryService Telemetry;
     private readonly SupabaseOptions _options;
 
     private Supabase.Client? _client;
@@ -23,10 +24,12 @@ public sealed class SupabaseAuthService : ISupabaseSessionProvider
     public SupabaseAuthService(
         IJSRuntime jsRuntime,
         NavigationManager navigationManager,
+        IClientTelemetryService telemetry,
         IOptions<SupabaseOptions> options)
     {
         _jsRuntime = jsRuntime;
         _navigationManager = navigationManager;
+        Telemetry = telemetry;
         _options = options.Value;
     }
 
@@ -69,7 +72,15 @@ public sealed class SupabaseAuthService : ISupabaseSessionProvider
             var pkceVerifier = await LoadPkceVerifierAsync();
             if (!string.IsNullOrWhiteSpace(pkceVerifier))
             {
-                session = await _client.Auth.ExchangeCodeForSession(pkceVerifier, code);
+                try
+                {
+                    session = await _client.Auth.ExchangeCodeForSession(pkceVerifier, code);
+                }
+                catch (Exception ex)
+                {
+                    await ReportHandledErrorAsync("Supabase PKCE session exchange failed.", "auth-session", ex);
+                    throw;
+                }
             }
 
             if (session is not null)
@@ -89,8 +100,9 @@ public sealed class SupabaseAuthService : ISupabaseSessionProvider
                 {
                     await _client.Auth.SetSession(persisted.AccessToken, persisted.RefreshToken, false);
                 }
-                catch
+                catch (Exception ex)
                 {
+                    await ReportHandledErrorAsync("Supabase session restore failed.", "auth-session", ex);
                     await ClearPersistedSessionAsync();
                 }
             }
@@ -140,8 +152,9 @@ public sealed class SupabaseAuthService : ISupabaseSessionProvider
             {
                 await _client.Auth.SignOut();
             }
-            catch
+            catch (Exception ex)
             {
+                await ReportHandledErrorAsync("Supabase remote sign-out failed.", "auth-session", ex);
                 // Force a local sign-out path when the remote session is already invalid.
             }
         }
@@ -172,8 +185,9 @@ public sealed class SupabaseAuthService : ISupabaseSessionProvider
                 await _client.Auth.RefreshSession();
                 session = _client.Auth.CurrentSession;
             }
-            catch
+            catch (Exception ex)
             {
+                await ReportHandledErrorAsync("Supabase session refresh failed.", "auth-session", ex);
                 _isSignedOutLocally = true;
                 await ClearPersistedSessionAsync();
                 NotifyAuthStateChanged();
@@ -259,6 +273,19 @@ public sealed class SupabaseAuthService : ISupabaseSessionProvider
     private void NotifyAuthStateChanged()
     {
         AuthStateChanged?.Invoke();
+    }
+
+    private ValueTask ReportHandledErrorAsync(string message, string source, Exception? exception = null)
+    {
+        return Telemetry.ReportErrorAsync(
+            message,
+            new
+            {
+                source,
+                exception = exception?.GetType().FullName,
+                exceptionMessage = exception?.Message,
+                stack = exception?.ToString()
+            });
     }
 
     private string GetCurrentUriWithoutQueryOrFragment()

@@ -93,6 +93,19 @@ public sealed class HomeMarkupBindingTests
     }
 
     [Fact]
+    public void BlazorErrorUiUsesDarkReadableTheme()
+    {
+        var css = File.ReadAllText(Path.GetFullPath(
+            Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "RaidLoop.Client", "wwwroot", "css", "app.css")));
+
+        Assert.Contains("#blazor-error-ui", css);
+        Assert.Contains("background: #111827;", css);
+        Assert.Contains("color: #f8fafc;", css);
+        Assert.Contains("color: #93c5fd;", css);
+        Assert.DoesNotContain("background: #fef3c7;", css);
+    }
+
+    [Fact]
     public void RarityMarkupUsesDisplayRarityClasses()
     {
         AssertUsesDisplayRarityMarkup(LoadoutPanelPath);

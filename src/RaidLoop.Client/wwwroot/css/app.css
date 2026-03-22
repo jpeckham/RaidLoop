@@ -148,10 +148,11 @@ h2, h3 {
 }
 
 #blazor-error-ui {
-    color-scheme: light only;
-    background: #fef3c7;
+    color-scheme: dark;
+    background: #111827;
+    color: #f8fafc;
     bottom: 0;
-    box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.45);
     box-sizing: border-box;
     display: none;
     left: 0;
@@ -161,7 +162,12 @@ h2, h3 {
     z-index: 1000;
 }
 
+#blazor-error-ui a {
+    color: #93c5fd;
+}
+
 #blazor-error-ui .dismiss {
+    color: #f8fafc;
     cursor: pointer;
     position: absolute;
     right: 0.75rem;

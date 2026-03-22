@@ -28,6 +28,10 @@ public sealed class HomeMarkupBindingTests
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026032111_fix_loot_rarity_weights.sql"));
     private static readonly string SupabaseAuthServicePath = Path.GetFullPath(
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "RaidLoop.Client", "Services", "SupabaseAuthService.cs"));
+    private static readonly string ClientTelemetryServicePath = Path.GetFullPath(
+        Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "RaidLoop.Client", "Services", "ClientTelemetryService.cs"));
+    private static readonly string ClientTelemetryInterfacePath = Path.GetFullPath(
+        Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "RaidLoop.Client", "Services", "IClientTelemetryService.cs"));
     private static readonly string ProfileApiClientPath = Path.GetFullPath(
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "RaidLoop.Client", "Services", "ProfileApiClient.cs"));
     private static readonly string ProfileApiInterfacePath = Path.GetFullPath(
@@ -172,6 +176,19 @@ public sealed class HomeMarkupBindingTests
         var program = File.ReadAllText(ProgramPath);
 
         Assert.Contains("AddScoped<SupabaseAuthService>", program);
+    }
+
+    [Fact]
+    public void ProgramRegistersClientTelemetryService()
+    {
+        var program = File.ReadAllText(ProgramPath);
+        var telemetryService = File.ReadAllText(ClientTelemetryServicePath);
+        var telemetryInterface = File.ReadAllText(ClientTelemetryInterfacePath);
+
+        Assert.Contains("AddScoped<IClientTelemetryService, ClientTelemetryService>()", program);
+        Assert.Contains("IJSRuntime", telemetryService);
+        Assert.Contains("RaidLoopTelemetry.reportError", telemetryService);
+        Assert.Contains("ReportErrorAsync", telemetryInterface);
     }
 
     [Fact]

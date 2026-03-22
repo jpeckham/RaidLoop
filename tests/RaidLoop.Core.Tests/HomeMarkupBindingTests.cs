@@ -26,6 +26,8 @@ public sealed class HomeMarkupBindingTests
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026032010_rebalance_sell_prices.sql"));
     private static readonly string LootRarityWeightsMigrationPath = Path.GetFullPath(
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026032111_fix_loot_rarity_weights.sql"));
+    private static readonly string D20HitRollMigrationPath = Path.GetFullPath(
+        Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026032201_add_d20_hit_rolls.sql"));
     private static readonly string SupabaseAuthServicePath = Path.GetFullPath(
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "RaidLoop.Client", "Services", "SupabaseAuthService.cs"));
     private static readonly string ClientTelemetryServicePath = Path.GetFullPath(
@@ -362,6 +364,24 @@ public sealed class HomeMarkupBindingTests
         Assert.Contains("game.authored_item('FORT Defender-2')", migration);
         Assert.DoesNotContain("case floor(random() * 5)::int", migration);
         Assert.DoesNotContain("case floor(random() * 4)::int", migration);
+    }
+
+    [Fact]
+    public void D20HitRollMigrationAddsNaturalOneNaturalTwentyAndMissHandlingToLiveRaidCombat()
+    {
+        var migration = File.ReadAllText(D20HitRollMigrationPath);
+
+        Assert.Contains("create or replace function game.roll_attack_d20", migration);
+        Assert.Contains("floor(random() * 20)::int + 1", migration);
+        Assert.Contains("if roll = 1 then", migration);
+        Assert.Contains("if roll = 20 then", migration);
+        Assert.Contains("roll + coalesce(attack_bonus, 0) >= coalesce(defense, 10)", migration);
+        Assert.Contains("create or replace function game.perform_raid_action", migration);
+        Assert.Contains("game.roll_attack_d20(0, 10)", migration);
+        Assert.Contains("You miss", migration);
+        Assert.Contains(" misses you.", migration);
+        Assert.Contains("You hit", migration);
+        Assert.Contains(" hits you for ", migration);
     }
 
     [Fact]

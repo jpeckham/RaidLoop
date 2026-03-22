@@ -5,7 +5,12 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>RaidLoop</title>
-    <base href="/RaidLoop/" />
+    <script>
+        const basePath = window.location.pathname.startsWith('/RaidLoop/') ? '/RaidLoop/' : '/';
+        const baseElement = document.createElement('base');
+        baseElement.href = basePath;
+        document.head.appendChild(baseElement);
+    </script>
     <link rel="preload" id="webassembly" />
     <link rel="stylesheet" href="lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="css/app.css" />

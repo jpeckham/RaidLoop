@@ -571,21 +571,23 @@ public sealed class HomeMarkupBindingTests
     }
 
     [Fact]
-    public void PublishedServiceWorkerUsesGitHubPagesBasePath()
+    public void PublishedServiceWorkerDerivesBasePathFromServiceWorkerLocation()
     {
         var serviceWorker = File.ReadAllText(PublishedServiceWorkerPath);
 
-        Assert.Contains("const base = \"/RaidLoop/\";", serviceWorker);
+        Assert.Contains("const base = self.location.pathname.replace(/service-worker\\.js$/, '');", serviceWorker);
+        Assert.DoesNotContain("const base = \"/RaidLoop/\";", serviceWorker);
         Assert.DoesNotContain("const base = \"/\";", serviceWorker);
     }
 
     [Fact]
-    public void ClientIndexUsesGitHubPagesBasePath()
+    public void ClientIndexSetsBasePathFromCurrentLocation()
     {
         var index = File.ReadAllText(ClientIndexPath);
 
-        Assert.Contains("<base href=\"/RaidLoop/\" />", index);
-        Assert.DoesNotContain("<base href=\"/\" />", index);
+        Assert.Contains("const basePath = window.location.pathname.startsWith('/RaidLoop/') ? '/RaidLoop/' : '/';", index);
+        Assert.Contains("baseElement.href = basePath;", index);
+        Assert.DoesNotContain("<base href=\"/RaidLoop/\" />", index);
     }
 
     private static void AssertUsesDisplayRarityMarkup(string path)

@@ -36,10 +36,14 @@ public sealed class HomeMarkupBindingTests
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "functions", "profile-save", "handler.mjs"));
     private static readonly string HomeMarkupPath = Path.GetFullPath(
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "RaidLoop.Client", "Pages", "Home.razor"));
+    private static readonly string ClientIndexPath = Path.GetFullPath(
+        Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "RaidLoop.Client", "wwwroot", "index.html"));
     private static readonly string HomeCodeBehindPath = Path.GetFullPath(
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "RaidLoop.Client", "Pages", "Home.razor.cs"));
     private static readonly string StorageScriptPath = Path.GetFullPath(
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "RaidLoop.Client", "wwwroot", "js", "storage.js"));
+    private static readonly string TelemetryScriptPath = Path.GetFullPath(
+        Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "RaidLoop.Client", "wwwroot", "js", "telemetry.js"));
     private static readonly string LoadoutPanelPath = Path.GetFullPath(
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "RaidLoop.Client", "Components", "LoadoutPanel.razor"));
     private static readonly string StashPanelPath = Path.GetFullPath(
@@ -370,6 +374,21 @@ public sealed class HomeMarkupBindingTests
 
         Assert.DoesNotContain("/auth/v1/user", script);
         Assert.DoesNotContain("authUserProbe", script);
+    }
+
+    [Fact]
+    public void ClientIndexLoadsTelemetryScriptAndTelemetryScriptInstallsErrorHandlers()
+    {
+        var index = File.ReadAllText(ClientIndexPath);
+        var telemetry = File.ReadAllText(TelemetryScriptPath);
+
+        Assert.Contains("js/telemetry.js", index);
+        Assert.Contains("fetch(", telemetry);
+        Assert.Contains("appsettings.json", telemetry);
+        Assert.Contains("window.onerror", telemetry);
+        Assert.Contains("unhandledrejection", telemetry);
+        Assert.Contains("console.error", telemetry);
+        Assert.Contains("posthog", telemetry, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]

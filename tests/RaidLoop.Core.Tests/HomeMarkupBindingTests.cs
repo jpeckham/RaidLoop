@@ -64,6 +64,14 @@ public sealed class HomeMarkupBindingTests
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "RaidLoop.Client", "Components", "ShopPanel.razor"));
     private static readonly string ItemTypeIconPath = Path.GetFullPath(
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "RaidLoop.Client", "Components", "ItemTypeIcon.razor"));
+    private static readonly string CounterPagePath = Path.GetFullPath(
+        Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "RaidLoop.Client", "Pages", "Counter.razor"));
+    private static readonly string WeatherPagePath = Path.GetFullPath(
+        Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "RaidLoop.Client", "Pages", "Weather.razor"));
+    private static readonly string PublishedServiceWorkerPath = Path.GetFullPath(
+        Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "RaidLoop.Client", "wwwroot", "service-worker.published.js"));
+    private static readonly string WeatherSampleDataPath = Path.GetFullPath(
+        Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "RaidLoop.Client", "wwwroot", "sample-data", "weather.json"));
     private static readonly string ContinuousDeliveryWorkflowPath = Path.GetFullPath(
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", ".github", "workflows", "continuous-delivery-dotnet-blazor-github-pages.yml"));
     private static readonly string SupabaseDeployWorkflowPath = Path.GetFullPath(
@@ -540,6 +548,44 @@ public sealed class HomeMarkupBindingTests
         Assert.Contains("needs.deploy-supabase.result == 'skipped'", workflow);
         Assert.DoesNotContain("push:", supabaseWorkflow);
         Assert.Contains("workflow_dispatch:", supabaseWorkflow);
+    }
+
+    [Fact]
+    public void NavMenuDoesNotLinkToBlazorStarterPages()
+    {
+        var markup = File.ReadAllText(Path.GetFullPath(
+            Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "RaidLoop.Client", "Layout", "NavMenu.razor")));
+
+        Assert.DoesNotContain("href=\"counter\"", markup);
+        Assert.DoesNotContain("href=\"weather\"", markup);
+        Assert.DoesNotContain("> Counter", markup);
+        Assert.DoesNotContain("> Weather", markup);
+    }
+
+    [Fact]
+    public void BlazorStarterPagesAndWeatherSampleAreRemoved()
+    {
+        Assert.False(File.Exists(CounterPagePath));
+        Assert.False(File.Exists(WeatherPagePath));
+        Assert.False(File.Exists(WeatherSampleDataPath));
+    }
+
+    [Fact]
+    public void PublishedServiceWorkerUsesGitHubPagesBasePath()
+    {
+        var serviceWorker = File.ReadAllText(PublishedServiceWorkerPath);
+
+        Assert.Contains("const base = \"/RaidLoop/\";", serviceWorker);
+        Assert.DoesNotContain("const base = \"/\";", serviceWorker);
+    }
+
+    [Fact]
+    public void ClientIndexUsesGitHubPagesBasePath()
+    {
+        var index = File.ReadAllText(ClientIndexPath);
+
+        Assert.Contains("<base href=\"/RaidLoop/\" />", index);
+        Assert.DoesNotContain("<base href=\"/\" />", index);
     }
 
     private static void AssertUsesDisplayRarityMarkup(string path)

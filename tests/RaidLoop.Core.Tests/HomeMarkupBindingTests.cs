@@ -8,6 +8,8 @@ public sealed class HomeMarkupBindingTests
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "RaidLoop.Client", "App.razor"));
     private static readonly string ProgramPath = Path.GetFullPath(
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "RaidLoop.Client", "Program.cs"));
+    private static readonly string ClientAppSettingsPath = Path.GetFullPath(
+        Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "RaidLoop.Client", "wwwroot", "appsettings.json"));
     private static readonly string SupabaseConfigPath = Path.GetFullPath(
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "config.toml"));
     private static readonly string InventoryMigrationPath = Path.GetFullPath(
@@ -166,6 +168,17 @@ public sealed class HomeMarkupBindingTests
         var program = File.ReadAllText(ProgramPath);
 
         Assert.Contains("AddScoped<SupabaseAuthService>", program);
+    }
+
+    [Fact]
+    public void ClientAppSettingsIncludesPostHogConfiguration()
+    {
+        var appSettings = File.ReadAllText(ClientAppSettingsPath);
+
+        Assert.Contains("\"PostHog\"", appSettings);
+        Assert.Contains("\"ProjectKey\": \"phc_UfelMasDJpt4iUgbFqDg8i0PkbDGDXFpicrSg6SOojb\"", appSettings);
+        Assert.Contains("\"Host\": \"https://us.i.posthog.com\"", appSettings);
+        Assert.Contains("\"SessionReplayEnabled\": true", appSettings);
     }
 
     [Fact]

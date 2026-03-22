@@ -61,6 +61,80 @@ public class RaidEngineTests
     }
 
     [Theory]
+    [InlineData(10, 0)]
+    [InlineData(11, 0)]
+    [InlineData(12, 1)]
+    [InlineData(14, 2)]
+    public void CombatBalance_AbilityModifier_UsesD20Flooring(int score, int expected)
+    {
+        Assert.Equal(expected, CombatBalance.GetAbilityModifier(score));
+    }
+
+    [Fact]
+    public void CombatBalance_HigherDexterity_IncreasesRangedAttackBonus()
+    {
+        var lowDexBonus = CombatBalance.GetRangedAttackBonusFromDexterity(10);
+        var highDexBonus = CombatBalance.GetRangedAttackBonusFromDexterity(14);
+
+        Assert.Equal(0, lowDexBonus);
+        Assert.Equal(2, highDexBonus);
+        Assert.True(highDexBonus > lowDexBonus);
+    }
+
+    [Fact]
+    public void CombatBalance_HigherDexterity_IncreasesDefense()
+    {
+        var lowDexDefense = CombatBalance.GetDefenseFromDexterity(10);
+        var highDexDefense = CombatBalance.GetDefenseFromDexterity(14);
+
+        Assert.Equal(10, lowDexDefense);
+        Assert.Equal(12, highDexDefense);
+        Assert.True(highDexDefense > lowDexDefense);
+    }
+
+    [Fact]
+    public void CombatBalance_SameAttackRoll_CanMissLowDex_AndHitHighDex()
+    {
+        const int roll = 11;
+        const int defense = 13;
+
+        var lowDexHit = CombatBalance.ResolveAttackRoll(roll, CombatBalance.GetRangedAttackBonusFromDexterity(10), defense);
+        var highDexHit = CombatBalance.ResolveAttackRoll(roll, CombatBalance.GetRangedAttackBonusFromDexterity(14), defense);
+
+        Assert.False(lowDexHit);
+        Assert.True(highDexHit);
+    }
+
+    [Fact]
+    public void CombatBalance_SameEnemyAttackRoll_CanHitLowDex_AndMissHighDex()
+    {
+        const int roll = 11;
+        const int attackBonus = 0;
+
+        var lowDexHit = CombatBalance.ResolveAttackRoll(roll, attackBonus, CombatBalance.GetDefenseFromDexterity(10));
+        var highDexHit = CombatBalance.ResolveAttackRoll(roll, attackBonus, CombatBalance.GetDefenseFromDexterity(14));
+
+        Assert.True(lowDexHit);
+        Assert.False(highDexHit);
+    }
+
+    [Fact]
+    public void CombatBalance_NaturalOne_AlwaysMisses()
+    {
+        var hit = CombatBalance.ResolveAttackRoll(1, 100, 1);
+
+        Assert.False(hit);
+    }
+
+    [Fact]
+    public void CombatBalance_NaturalTwenty_AlwaysHits()
+    {
+        var hit = CombatBalance.ResolveAttackRoll(20, -100, 999);
+
+        Assert.True(hit);
+    }
+
+    [Theory]
     [InlineData("Makarov", 240)]
     [InlineData("PPSH", 650)]
     [InlineData("AK74", 1250)]

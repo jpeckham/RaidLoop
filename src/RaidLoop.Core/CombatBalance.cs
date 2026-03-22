@@ -30,6 +30,36 @@ public readonly record struct DamageRange(int Min, int Max);
 
 public static class CombatBalance
 {
+    public static int GetAbilityModifier(int score)
+    {
+        return (int)Math.Floor((score - 10) / 2.0);
+    }
+
+    public static int GetRangedAttackBonusFromDexterity(int dexterity)
+    {
+        return GetAbilityModifier(dexterity);
+    }
+
+    public static int GetDefenseFromDexterity(int dexterity)
+    {
+        return 10 + GetAbilityModifier(dexterity);
+    }
+
+    public static bool ResolveAttackRoll(int roll, int attackBonus, int defense)
+    {
+        if (roll == 1)
+        {
+            return false;
+        }
+
+        if (roll == 20)
+        {
+            return true;
+        }
+
+        return roll + attackBonus >= defense;
+    }
+
     public static DamageRange GetDamageRange(string weaponName, AttackMode mode)
     {
         return (NormalizeWeaponName(weaponName), mode) switch

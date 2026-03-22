@@ -28,6 +28,8 @@ public sealed class HomeMarkupBindingTests
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026032111_fix_loot_rarity_weights.sql"));
     private static readonly string D20HitRollMigrationPath = Path.GetFullPath(
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026032201_add_d20_hit_rolls.sql"));
+    private static readonly string DexterityMigrationPath = Path.GetFullPath(
+        Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026032202_add_dexterity_stats.sql"));
     private static readonly string SupabaseAuthServicePath = Path.GetFullPath(
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "RaidLoop.Client", "Services", "SupabaseAuthService.cs"));
     private static readonly string ClientTelemetryServicePath = Path.GetFullPath(
@@ -382,6 +384,24 @@ public sealed class HomeMarkupBindingTests
         Assert.Contains(" misses you.", migration);
         Assert.Contains("You hit", migration);
         Assert.Contains(" hits you for ", migration);
+    }
+
+    [Fact]
+    public void DexterityMigrationBackfillsPlayerDexterityAndWiresDexToLiveCombat()
+    {
+        var migration = File.ReadAllText(DexterityMigrationPath);
+
+        Assert.Contains("create or replace function game.normalize_save_payload(payload jsonb)", migration);
+        Assert.Contains("'playerDexterity', coalesce((payload->>'playerDexterity')::int, (payload->>'PlayerDexterity')::int, 10)", migration);
+        Assert.Contains("create or replace function game.default_save_payload()", migration);
+        Assert.Contains("'playerDexterity', 10", migration);
+        Assert.Contains("create or replace function game.build_raid_snapshot(loadout jsonb, raider_name text)", migration);
+        Assert.Contains("'enemyDexterity',", migration);
+        Assert.Contains("create or replace function game.ability_modifier(score int)", migration);
+        Assert.Contains("return floor((score - 10) / 2.0)::int", migration);
+        Assert.Contains("create or replace function game.roll_attack_d20(attack_bonus int default 0, defense int default 10)", migration);
+        Assert.Contains("game.roll_attack_d20(game.ability_modifier(", migration);
+        Assert.Contains("10 + game.ability_modifier(", migration);
     }
 
     [Fact]

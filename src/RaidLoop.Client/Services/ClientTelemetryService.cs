@@ -11,12 +11,19 @@ public sealed class ClientTelemetryService : IClientTelemetryService
         _jsRuntime = jsRuntime;
     }
 
-    public ValueTask ReportErrorAsync(string message, object? details = null, CancellationToken cancellationToken = default)
+    public async ValueTask ReportErrorAsync(string message, object? details = null, CancellationToken cancellationToken = default)
     {
-        return _jsRuntime.InvokeVoidAsync(
-            "RaidLoopTelemetry.reportError",
-            cancellationToken,
-            message,
-            details);
+        try
+        {
+            await _jsRuntime.InvokeVoidAsync(
+                "RaidLoopTelemetry.reportError",
+                cancellationToken,
+                message,
+                details);
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"RaidLoop telemetry reporting failed: {ex}");
+        }
     }
 }

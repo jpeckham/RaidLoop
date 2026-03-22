@@ -2,7 +2,8 @@
   const telemetryState = {
     initPromise: null,
     posthog: null,
-    config: null
+    config: null,
+    lastBlazorFatalSignature: null
   };
 
   function resolveAppSettingsUrl() {
@@ -146,6 +147,64 @@
     });
   }
 
+  function isElementVisible(element) {
+    if (!element) {
+      return false;
+    }
+
+    const computedStyle = window.getComputedStyle(element);
+    return computedStyle.display !== "none"
+      && computedStyle.visibility !== "hidden"
+      && computedStyle.opacity !== "0";
+  }
+
+  function reportBlazorFatalUi() {
+    const errorUi = document.getElementById("blazor-error-ui");
+    if (!isElementVisible(errorUi)) {
+      return;
+    }
+
+    const signature = `${errorUi.textContent ?? ""}|${window.location.href}`;
+    if (telemetryState.lastBlazorFatalSignature === signature) {
+      return;
+    }
+
+    telemetryState.lastBlazorFatalSignature = signature;
+    capture("client_blazor_fatal", {
+      source: "blazor-fatal",
+      severity: "fatal",
+      message: (errorUi.textContent ?? "Blazor fatal error UI displayed.").trim(),
+      stack: "",
+      url: window.location.href,
+      userAgent: navigator.userAgent,
+      timestamp: new Date().toISOString(),
+      appVersion: telemetryState.config?.appVersion ?? "",
+      context: {
+        elementId: "blazor-error-ui"
+      }
+    });
+  }
+
+  function installBlazorFatalObserver() {
+    const errorUi = document.getElementById("blazor-error-ui");
+    if (!errorUi) {
+      return;
+    }
+
+    const observer = new MutationObserver(() => {
+      reportBlazorFatalUi();
+    });
+
+    observer.observe(errorUi, {
+      attributes: true,
+      attributeFilter: ["style", "class", "hidden"],
+      childList: true,
+      subtree: true
+    });
+
+    reportBlazorFatalUi();
+  }
+
   window.onerror = (message, source, lineno, colno, error) => {
     const normalizedError = error instanceof Error ? error : null;
     reportGlobalError("client_unhandled_error", {
@@ -181,6 +240,12 @@
       });
     }
   };
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", installBlazorFatalObserver, { once: true });
+  } else {
+    installBlazorFatalObserver();
+  }
 
   void initialize();
 })();

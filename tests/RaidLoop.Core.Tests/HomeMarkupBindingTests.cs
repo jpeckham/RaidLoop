@@ -205,6 +205,16 @@ public sealed class HomeMarkupBindingTests
     }
 
     [Fact]
+    public void ClientTelemetryServiceDoesNotThrowWhenJsReportingFails()
+    {
+        var telemetryService = File.ReadAllText(ClientTelemetryServicePath);
+
+        Assert.Contains("try", telemetryService);
+        Assert.Contains("catch", telemetryService);
+        Assert.Contains("Console.Error.WriteLine", telemetryService);
+    }
+
+    [Fact]
     public void ClientAppSettingsIncludesPostHogConfiguration()
     {
         var appSettings = File.ReadAllText(ClientAppSettingsPath);
@@ -442,6 +452,16 @@ public sealed class HomeMarkupBindingTests
         Assert.Contains("unhandledrejection", telemetry);
         Assert.Contains("console.error", telemetry);
         Assert.Contains("posthog", telemetry, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void TelemetryScriptCapturesBlazorFatalBannerState()
+    {
+        var telemetry = File.ReadAllText(TelemetryScriptPath);
+
+        Assert.Contains("client_blazor_fatal", telemetry);
+        Assert.Contains("MutationObserver", telemetry);
+        Assert.Contains("blazor-error-ui", telemetry);
     }
 
     [Fact]

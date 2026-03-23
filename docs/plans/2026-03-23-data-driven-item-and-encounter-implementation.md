@@ -44,7 +44,8 @@ Use the latest runtime definitions, not historical duplicates:
 
 - `game.authored_item` lives in [2026032010_rebalance_sell_prices.sql](C:/Users/james/source/repos/extractor-shooter-light/supabase/migrations/2026032010_rebalance_sell_prices.sql)
 - `game.weapon_magazine_capacity` and `game.backpack_capacity` live in [2026031807_game_raid_start_functions.sql](C:/Users/james/source/repos/extractor-shooter-light/supabase/migrations/2026031807_game_raid_start_functions.sql)
-- `game.random_enemy_loadout`, `game.random_loot_items_for_container`, and `game.generate_raid_encounter` live in [2026031809_game_raid_action_functions.sql](C:/Users/james/source/repos/extractor-shooter-light/supabase/migrations/2026031809_game_raid_action_functions.sql)
+- `game.random_enemy_loadout` and `game.random_loot_items_for_container` live in [2026032111_fix_loot_rarity_weights.sql](C:/Users/james/source/repos/extractor-shooter-light/supabase/migrations/2026032111_fix_loot_rarity_weights.sql)
+- `game.generate_raid_encounter` lives in [2026031809_game_raid_action_functions.sql](C:/Users/james/source/repos/extractor-shooter-light/supabase/migrations/2026031809_game_raid_action_functions.sql)
 - `game.weapon_armor_penetration`, `game.armor_damage_reduction`, `game.weapon_supports_*`, `game.weapon_burst_attack_penalty`, and `game.roll_weapon_damage_d20` live in [2026032205_remove_gun_malfunctions_and_clear_jams.sql](C:/Users/james/source/repos/extractor-shooter-light/supabase/migrations/2026032205_remove_gun_malfunctions_and_clear_jams.sql)
 
 **Compact Current Inventory**
@@ -297,6 +298,20 @@ Add a short verification note to this plan or a follow-up handoff doc describing
 - any default behaviors changed
 - any values required special fallback handling
 - any callers should later be simplified to query `item_defs` directly
+
+**Verification Notes**
+
+- `game.item_defs` was added in [2026032301_add_item_defs_table.sql](C:/Users/james/source/repos/extractor-shooter-light/.worktrees/data-driven-authoring/supabase/migrations/2026032301_add_item_defs_table.sql) with 22 seeded rows and parity-oriented fallback defaults.
+- `game.authored_item`, `game.weapon_magazine_capacity`, `game.backpack_capacity`, `game.weapon_armor_penetration`, `game.armor_damage_reduction`, `game.weapon_supports_*`, `game.weapon_burst_attack_penalty`, and `game.roll_weapon_damage_d20` were redefined in the same migration to read from `game.item_defs`.
+- Table-backed lookup functions that were previously marked `immutable` were downgraded to `stable` because they now depend on persisted row data.
+- Current callers remain untouched and continue to use the same function names. This kept phase 1 isolated to schema and lookup logic.
+- SQL text verification was completed with `rg` and `git diff`; no local Supabase SQL execution or migration application was run in this branch, so runtime validation is still pending.
+
+**Phase 2 Notes**
+
+- Authored loot, enemy loadout, and encounter tables were added in [2026032302_add_authored_loot_and_encounter_tables.sql](C:/Users/james/source/repos/extractor-shooter-light/.worktrees/data-driven-authoring/supabase/migrations/2026032302_add_authored_loot_and_encounter_tables.sql).
+- `game.random_enemy_loadout`, `game.random_loot_items_for_container`, and `game.generate_raid_encounter` were redefined there to query seeded weighted tables instead of hard-coded content branches.
+- `Dead Body` loot remains intentionally modeled as a data-backed delegation to enemy loadout generation so the old behavior is preserved without duplicating the loadout catalog.
 
 **Step 4: Commit**
 

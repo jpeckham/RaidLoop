@@ -64,8 +64,7 @@ public sealed class GameActionApiClientTests
                       "money": 640
                     },
                     "raid": {
-                      "ammo": 4,
-                      "weaponMalfunction": true
+                      "ammo": 4
                     }
                   },
                   "message": "Action resolved."
@@ -88,7 +87,6 @@ public sealed class GameActionApiClientTests
         Assert.NotNull(result.Projections);
         Assert.Equal(640, result.Projections!.Value.GetProperty("economy").GetProperty("money").GetInt32());
         Assert.Equal(4, result.Projections.Value.GetProperty("raid").GetProperty("ammo").GetInt32());
-        Assert.True(result.Projections.Value.GetProperty("raid").GetProperty("weaponMalfunction").GetBoolean());
         Assert.Equal("Action resolved.", result.Message);
     }
 

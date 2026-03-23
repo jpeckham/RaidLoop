@@ -4,7 +4,6 @@
     <div class="hud">
         <span>Health: @Raid.Health / @MaxHealth</span>
         <span>@AmmoHudText</span>
-        <span>Weapon: @(WeaponMalfunction ? "Malfunctioned" : "Operational")</span>
         <span>Medkits: @Medkits</span>
         <span>Loot Slots: @LootSlots / @Raid.BackpackCapacity</span>
         <span>Extract Progress: @ExtractProgress / @ExtractRequired</span>
@@ -30,7 +29,10 @@
                 {
                     <button class="action" @onclick="() => OnFullAuto.InvokeAsync()">Use Skill: Full Auto</button>
                 }
-                <button class="action" @onclick="() => OnReload.InvokeAsync()">@(WeaponMalfunction ? "Fix Malfunction" : "Reload")</button>
+                @if (CanReload)
+                {
+                    <button class="action" @onclick="() => OnReload.InvokeAsync()">Reload</button>
+                }
                 <button class="action" @onclick="() => OnFlee.InvokeAsync()">Flee</button>
             </div>
         }
@@ -133,6 +135,10 @@
         }
 
         <div class="actions top-gap">
+            @if (CanReload)
+            {
+                <button class="action" @onclick="() => OnReload.InvokeAsync()">Reload</button>
+            }
             <button class="action" disabled="@(!CanUseMedkit)" @onclick="() => OnUseMedkit.InvokeAsync()">Use Medkit</button>
         </div>
     </div>
@@ -150,7 +156,6 @@
     [Parameter, EditorRequired] public RaidState Raid { get; set; } = default!;
     [Parameter, EditorRequired] public int MaxHealth { get; set; }
     [Parameter, EditorRequired] public string AmmoHudText { get; set; } = string.Empty;
-    [Parameter, EditorRequired] public bool WeaponMalfunction { get; set; }
     [Parameter, EditorRequired] public int Medkits { get; set; }
     [Parameter, EditorRequired] public int LootSlots { get; set; }
     [Parameter, EditorRequired] public int ExtractProgress { get; set; }
@@ -169,6 +174,7 @@
     [Parameter, EditorRequired] public bool CanAttack { get; set; }
     [Parameter, EditorRequired] public bool CanBurstFire { get; set; }
     [Parameter, EditorRequired] public bool CanFullAuto { get; set; }
+    [Parameter, EditorRequired] public bool CanReload { get; set; }
     [Parameter, EditorRequired] public bool CanUseMedkit { get; set; }
     [Parameter, EditorRequired] public Func<Item, bool> CanLootItem { get; set; } = _ => false;
     [Parameter, EditorRequired] public Func<Item, bool> CanEquipItem { get; set; } = _ => false;

@@ -668,3 +668,24 @@ as $$
         else game.apply_profile_action(action, payload, auth.uid())
     end;
 $$;
+
+update public.raid_sessions
+set payload = case
+        when payload ? 'weaponMalfunction' then payload #- '{weaponMalfunction}'
+        else payload
+    end,
+    updated_at = timezone('utc', now())
+where payload ? 'weaponMalfunction';
+
+update public.game_saves
+set payload = case
+        when payload ? 'activeRaid'
+            and jsonb_typeof(payload->'activeRaid') = 'object'
+            and (payload->'activeRaid') ? 'weaponMalfunction'
+            then payload #- '{activeRaid,weaponMalfunction}'
+        else payload
+    end,
+    updated_at = timezone('utc', now())
+where payload ? 'activeRaid'
+  and jsonb_typeof(payload->'activeRaid') = 'object'
+  and (payload->'activeRaid') ? 'weaponMalfunction';

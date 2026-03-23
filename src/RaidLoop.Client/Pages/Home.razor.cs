@@ -47,7 +47,6 @@ public partial class Home : IDisposable
     private static readonly List<Item> EmptyItems = [];
 
     private int _ammo;
-    private bool _weaponMalfunction;
     private int _extractProgress;
     private string _resultMessage = string.Empty;
     private string _activeRaidId = string.Empty;
@@ -104,9 +103,10 @@ public partial class Home : IDisposable
     private bool EquippedWeaponSupportsSingleShot => CombatBalance.SupportsSingleShot(GetEquippedWeaponName());
     private bool EquippedWeaponSupportsBurstFire => CombatBalance.SupportsBurstFire(GetEquippedWeaponName());
     private bool EquippedWeaponSupportsFullAuto => CombatBalance.SupportsFullAuto(GetEquippedWeaponName());
-    private bool CanAttack => EquippedWeaponSupportsSingleShot && (!EquippedWeaponUsesAmmo || _ammo > 0) && !_weaponMalfunction;
-    private bool CanBurstFire => EquippedWeaponSupportsBurstFire && EquippedWeaponUsesAmmo && _ammo >= 3 && !_weaponMalfunction;
-    private bool CanFullAuto => EquippedWeaponSupportsFullAuto && EquippedWeaponUsesAmmo && _ammo >= 10 && !_weaponMalfunction;
+    private bool CanAttack => EquippedWeaponSupportsSingleShot && (!EquippedWeaponUsesAmmo || _ammo > 0);
+    private bool CanBurstFire => EquippedWeaponSupportsBurstFire && EquippedWeaponUsesAmmo && _ammo >= 3;
+    private bool CanFullAuto => EquippedWeaponSupportsFullAuto && EquippedWeaponUsesAmmo && _ammo >= 10;
+    private bool CanReload => _raid is not null && EquippedWeaponUsesAmmo && CurrentMagazineCapacity > 0 && _ammo < CurrentMagazineCapacity;
     private bool CanUseMedkit => CurrentMedkits > 0;
     private int CurrentMedkits => _raid?.Inventory.MedkitCount ?? 0;
     private List<Item> CurrentDiscoveredLoot => _raid?.Inventory.DiscoveredLoot ?? EmptyItems;
@@ -425,7 +425,6 @@ public partial class Home : IDisposable
             _awaitingDecision = false;
             _extractProgress = 0;
             _ammo = 0;
-            _weaponMalfunction = false;
             _encounterDescription = string.Empty;
             _enemyName = string.Empty;
             _enemyHealth = 0;
@@ -492,12 +491,6 @@ public partial class Home : IDisposable
         if (TryGetInt32(raid, "ammo", out var ammo))
         {
             _ammo = ammo;
-            hasRaidPatch = true;
-        }
-
-        if (TryGetBool(raid, "weaponMalfunction", out var weaponMalfunction))
-        {
-            _weaponMalfunction = weaponMalfunction;
             hasRaidPatch = true;
         }
 
@@ -602,7 +595,6 @@ public partial class Home : IDisposable
         _awaitingDecision = false;
         _extractProgress = 0;
         _ammo = 0;
-        _weaponMalfunction = false;
         _encounterType = EncounterType.Neutral;
         _encounterDescription = string.Empty;
         _enemyName = string.Empty;
@@ -912,7 +904,7 @@ public partial class Home : IDisposable
 
     private async Task ReloadAsync()
     {
-        if (_encounterType != EncounterType.Combat)
+        if (!CanReload)
         {
             return;
         }
@@ -1152,7 +1144,6 @@ public partial class Home : IDisposable
         _awaitingDecision = snapshot.AwaitingDecision;
         _extractProgress = snapshot.ExtractProgress;
         _ammo = snapshot.Ammo;
-        _weaponMalfunction = snapshot.WeaponMalfunction;
         _encounterDescription = snapshot.EncounterDescription;
         _enemyName = snapshot.EnemyName;
         _enemyHealth = snapshot.EnemyHealth;

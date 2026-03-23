@@ -37,7 +37,7 @@ public sealed class HomeMarkupBindingTests
     private static readonly string WeaponArmorPenetrationMigrationPath = Path.GetFullPath(
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026032203_add_weapon_armor_penetration.sql"));
     private static readonly string D20GunDamageMigrationPath = Path.GetFullPath(
-        Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026032204_add_d20_gun_damage_and_full_auto.sql"));
+        Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026032205_remove_gun_malfunctions_and_clear_jams.sql"));
     private static readonly string SupabaseAuthServicePath = Path.GetFullPath(
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "RaidLoop.Client", "Services", "SupabaseAuthService.cs"));
     private static readonly string ClientTelemetryServicePath = Path.GetFullPath(
@@ -213,6 +213,16 @@ public sealed class HomeMarkupBindingTests
         Assert.Contains("@if (CanFullAuto)", markup);
         Assert.Contains("public bool CanFullAuto", markup);
         Assert.Contains("public EventCallback OnFullAuto", markup);
+    }
+
+    [Fact]
+    public void RaidHudNoLongerShowsMalfunctionStatusOrFixCopy()
+    {
+        var markup = File.ReadAllText(RaidHudPath);
+
+        Assert.DoesNotContain("Malfunctioned", markup);
+        Assert.DoesNotContain("Operational", markup);
+        Assert.DoesNotContain("Fix Malfunction", markup);
     }
 
     [Fact]
@@ -593,6 +603,14 @@ public sealed class HomeMarkupBindingTests
         Assert.Contains("else 2", migration);
         Assert.Contains("game.weapon_burst_attack_penalty(equipped_weapon_name)", migration);
         Assert.Contains("game.roll_attack_d20(game.ability_modifier(player_dexterity) - 4", migration);
+        Assert.Contains("elsif action = 'reload' then", migration);
+        Assert.DoesNotContain("weapon_malfunction", migration);
+        Assert.DoesNotContain("Weapon malfunctioned", migration);
+        Assert.DoesNotContain("Weapon is malfunctioned", migration);
+        Assert.Contains("update public.raid_sessions", migration);
+        Assert.Contains("payload #- '{weaponMalfunction}'", migration);
+        Assert.Contains("update public.game_saves", migration);
+        Assert.Contains("payload #- '{activeRaid,weaponMalfunction}'", migration);
     }
 
     [Fact]

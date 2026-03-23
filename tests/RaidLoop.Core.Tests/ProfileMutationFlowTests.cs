@@ -168,6 +168,43 @@ public sealed class ProfileMutationFlowTests
     }
 
     [Fact]
+    public async Task ReloadAsync_DelegatesToRaidActionOutsideCombat_WhenWeaponUsesAmmo()
+    {
+        var actionClient = new FakeGameActionApiClient
+        {
+            ResponseFactory = request =>
+            {
+                Assert.Equal("reload", request.Action);
+                return new GameActionResult("RaidUpdated", null, null, null);
+            }
+        };
+        var home = CreateHome(actionClient);
+        var inventory = RaidInventory.FromItems([ItemCatalog.Create("AK74")], [], backpackCapacity: 3);
+
+        SetField(home, "_raid", new RaidState(24, inventory));
+        SetField(home, "_encounterType", EncounterType.Neutral);
+
+        await InvokePrivateAsync(home, "ReloadAsync");
+
+        Assert.Single(actionClient.Requests);
+        Assert.Equal("reload", actionClient.Requests[0].Action);
+    }
+
+    [Fact]
+    public void CombatAvailability_IgnoresWeaponMalfunctionState()
+    {
+        var home = CreateHome(new FakeGameActionApiClient());
+        var inventory = RaidInventory.FromItems([ItemCatalog.Create("AK74")], [], backpackCapacity: 3);
+
+        SetField(home, "_raid", new RaidState(24, inventory));
+        SetField(home, "_ammo", 30);
+
+        Assert.True(GetPrivateProperty<bool>(home, "CanAttack"));
+        Assert.True(GetPrivateProperty<bool>(home, "CanBurstFire"));
+        Assert.True(GetPrivateProperty<bool>(home, "CanFullAuto"));
+    }
+
+    [Fact]
     public void ApplyActionResult_AppliesEconomyStashLoadoutLuckRunAndRaidProjections()
     {
         var home = CreateHome(new FakeGameActionApiClient());
@@ -258,7 +295,6 @@ public sealed class ProfileMutationFlowTests
         Assert.Equal(21, raid.Health);
         Assert.Equal(6, raid.BackpackCapacity);
         Assert.Equal(4, Assert.IsType<int>(GetField(home, "_ammo")));
-        Assert.True(Assert.IsType<bool>(GetField(home, "_weaponMalfunction")));
         Assert.Equal(2, Assert.IsType<int>(GetField(home, "_extractProgress")));
         Assert.Equal("Scav", Assert.IsType<string>(GetField(home, "_enemyName")));
         Assert.Equal(6, Assert.IsType<int>(GetField(home, "_enemyHealth")));
@@ -362,7 +398,6 @@ public sealed class ProfileMutationFlowTests
         SetField(home, "_awaitingDecision", true);
         SetField(home, "_extractProgress", 1);
         SetField(home, "_ammo", 5);
-        SetField(home, "_weaponMalfunction", false);
         SetField(home, "_encounterType", EncounterType.Loot);
         SetField(home, "_encounterDescription", "A searchable container appears.");
         SetField(home, "_enemyName", "Patrol Guard");
@@ -403,7 +438,6 @@ public sealed class ProfileMutationFlowTests
         Assert.Equal("Bandage", Assert.Single(raid.Inventory.DiscoveredLoot).Name);
         Assert.False(raid.IsDead);
         Assert.Equal(3, Assert.IsType<int>(GetField(home, "_ammo")));
-        Assert.True(Assert.IsType<bool>(GetField(home, "_weaponMalfunction")));
         Assert.True(Assert.IsType<bool>(GetField(home, "_awaitingDecision")));
         Assert.Equal(1, Assert.IsType<int>(GetField(home, "_extractProgress")));
         Assert.Equal(EncounterType.Loot, Assert.IsType<EncounterType>(GetField(home, "_encounterType")));
@@ -423,7 +457,6 @@ public sealed class ProfileMutationFlowTests
         SetField(home, "_awaitingDecision", true);
         SetField(home, "_extractProgress", 2);
         SetField(home, "_ammo", 7);
-        SetField(home, "_weaponMalfunction", true);
         SetField(home, "_encounterType", EncounterType.Combat);
         SetField(home, "_encounterDescription", "stale encounter");
         SetField(home, "_enemyName", "Old Guard");
@@ -463,7 +496,6 @@ public sealed class ProfileMutationFlowTests
         Assert.False(Assert.IsType<bool>(GetField(home, "_awaitingDecision")));
         Assert.Equal(0, Assert.IsType<int>(GetField(home, "_extractProgress")));
         Assert.Equal(0, Assert.IsType<int>(GetField(home, "_ammo")));
-        Assert.False(Assert.IsType<bool>(GetField(home, "_weaponMalfunction")));
         Assert.Equal(EncounterType.Neutral, Assert.IsType<EncounterType>(GetField(home, "_encounterType")));
         Assert.Equal(string.Empty, Assert.IsType<string>(GetField(home, "_encounterDescription")));
         Assert.Equal(string.Empty, Assert.IsType<string>(GetField(home, "_enemyName")));
@@ -528,7 +560,6 @@ public sealed class ProfileMutationFlowTests
         SetField(home, "_awaitingDecision", true);
         SetField(home, "_extractProgress", 2);
         SetField(home, "_ammo", 5);
-        SetField(home, "_weaponMalfunction", true);
         SetField(home, "_encounterType", EncounterType.Extraction);
         SetField(home, "_encounterDescription", "Extraction route open.");
         SetField(home, "_enemyName", "Final Guard");
@@ -566,7 +597,6 @@ public sealed class ProfileMutationFlowTests
         Assert.False(Assert.IsType<bool>(GetField(home, "_awaitingDecision")));
         Assert.Equal(0, Assert.IsType<int>(GetField(home, "_extractProgress")));
         Assert.Equal(0, Assert.IsType<int>(GetField(home, "_ammo")));
-        Assert.False(Assert.IsType<bool>(GetField(home, "_weaponMalfunction")));
         Assert.Equal(EncounterType.Neutral, Assert.IsType<EncounterType>(GetField(home, "_encounterType")));
         Assert.Equal(string.Empty, Assert.IsType<string>(GetField(home, "_encounterDescription")));
         Assert.Equal(string.Empty, Assert.IsType<string>(GetField(home, "_enemyName")));
@@ -779,6 +809,13 @@ public sealed class ProfileMutationFlowTests
         var field = instance.GetType().GetField(fieldName, BindingFlags.Instance | BindingFlags.NonPublic);
         Assert.NotNull(field);
         return field!.GetValue(instance);
+    }
+
+    private static T GetPrivateProperty<T>(object instance, string propertyName)
+    {
+        var property = instance.GetType().GetProperty(propertyName, BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.NotNull(property);
+        return Assert.IsType<T>(property!.GetValue(instance));
     }
 
     private static async Task InvokePrivateAsync(object instance, string methodName, params object[] args)

@@ -307,12 +307,6 @@ Add a short verification note to this plan or a follow-up handoff doc describing
 - Current callers remain untouched and continue to use the same function names. This kept phase 1 isolated to schema and lookup logic.
 - SQL text verification was completed with `rg` and `git diff`; no local Supabase SQL execution or migration application was run in this branch, so runtime validation is still pending.
 
-**Phase 2 Notes**
-
-- Authored loot, enemy loadout, and encounter tables were added in [2026032302_add_authored_loot_and_encounter_tables.sql](C:/Users/james/source/repos/extractor-shooter-light/.worktrees/data-driven-authoring/supabase/migrations/2026032302_add_authored_loot_and_encounter_tables.sql).
-- `game.random_enemy_loadout`, `game.random_loot_items_for_container`, and `game.generate_raid_encounter` were redefined there to query seeded weighted tables instead of hard-coded content branches.
-- `Dead Body` loot remains intentionally modeled as a data-backed delegation to enemy loadout generation so the old behavior is preserved without duplicating the loadout catalog.
-
 **Step 4: Commit**
 
 ```bash

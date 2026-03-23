@@ -267,7 +267,6 @@ declare
     die_size int;
     die_count int;
     roll int := 0;
-    current_die int;
 begin
     select coalesce(item_defs.damage_die_size, 6)
     into die_size
@@ -284,7 +283,7 @@ begin
         else 2
     end;
 
-    for current_die in 1..die_count loop
+    for die_index in 1..die_count loop
         roll := roll + floor(random() * die_size)::int + 1;
     end loop;
 

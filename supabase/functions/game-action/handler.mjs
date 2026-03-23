@@ -29,6 +29,7 @@ const RAID_START_ACTIONS = new Set([
 const COMBAT_ACTIONS = new Set([
   "attack",
   "burst-fire",
+  "full-auto",
   "reload",
   "flee",
   "use-medkit",

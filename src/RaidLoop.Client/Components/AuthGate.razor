@@ -1,4 +1,5 @@
 @inject RaidLoop.Client.Services.SupabaseAuthService AuthService
+@inject Microsoft.AspNetCore.Components.WebAssembly.Hosting.IWebAssemblyHostEnvironment HostEnvironment
 @implements IDisposable
 
 @if (AuthService.IsLoading)
@@ -10,7 +11,24 @@ else if (!AuthService.IsAuthenticated)
     <section class="panel">
         <h2>Login Required</h2>
         <p>Sign in to load your account and play.</p>
-        <button class="action" @onclick="SignInWithGoogleAsync">Sign in with Google</button>
+        @if (HostEnvironment.Environment == "Local")
+        {
+            <button class="action" @onclick="SignInWithGoogleAsync">Sign in with Google</button>
+            <input @bind="_email" type="email" placeholder="Email" />
+            <input @bind="_password" type="password" placeholder="Password" />
+            <div class="actions">
+                <button class="action" @onclick="SignInWithEmailPasswordAsync">Sign in</button>
+                <button class="action" @onclick="SignUpWithEmailPasswordAsync">Sign up</button>
+            </div>
+        }
+        else
+        {
+            <button class="action" @onclick="SignInWithGoogleAsync">Sign in with Google</button>
+        }
+        @if (!string.IsNullOrWhiteSpace(_authErrorMessage))
+        {
+            <p>@_authErrorMessage</p>
+        }
     </section>
 }
 else
@@ -29,6 +47,10 @@ else
 @code {
     [Parameter] public RenderFragment? ChildContent { get; set; }
 
+    private string _email = string.Empty;
+    private string _password = string.Empty;
+    private string? _authErrorMessage;
+
     protected override async Task OnInitializedAsync()
     {
         AuthService.AuthStateChanged += HandleAuthStateChanged;
@@ -37,7 +59,34 @@ else
 
     private async Task SignInWithGoogleAsync()
     {
+        _authErrorMessage = null;
         await AuthService.SignInWithGoogleAsync();
+    }
+
+    private async Task SignInWithEmailPasswordAsync()
+    {
+        try
+        {
+            _authErrorMessage = null;
+            await AuthService.SignInWithEmailPasswordAsync(_email, _password);
+        }
+        catch (Exception ex)
+        {
+            _authErrorMessage = ex.Message;
+        }
+    }
+
+    private async Task SignUpWithEmailPasswordAsync()
+    {
+        try
+        {
+            _authErrorMessage = null;
+            await AuthService.SignUpWithEmailPasswordAsync(_email, _password);
+        }
+        catch (Exception ex)
+        {
+            _authErrorMessage = ex.Message;
+        }
     }
 
     private async Task SignOutAsync()

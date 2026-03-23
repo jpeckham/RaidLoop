@@ -8,12 +8,12 @@ public sealed class HomeMarkupBindingTests
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "RaidLoop.Client", "App.razor"));
     private static readonly string ProgramPath = Path.GetFullPath(
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "RaidLoop.Client", "Program.cs"));
+    private static readonly string ClientProjectPath = Path.GetFullPath(
+        Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "RaidLoop.Client", "RaidLoop.Client.csproj"));
     private static readonly string ClientAppSettingsPath = Path.GetFullPath(
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "RaidLoop.Client", "wwwroot", "appsettings.json"));
     private static readonly string ClientLocalAppSettingsPath = Path.GetFullPath(
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "RaidLoop.Client", "wwwroot", "appsettings.Local.json"));
-    private static readonly string ClientTestAppSettingsPath = Path.GetFullPath(
-        Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "RaidLoop.Client", "wwwroot", "appsettings.Test.json"));
     private static readonly string SupabaseConfigPath = Path.GetFullPath(
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "config.toml"));
     private static readonly string InventoryMigrationPath = Path.GetFullPath(
@@ -36,6 +36,8 @@ public sealed class HomeMarkupBindingTests
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026032202_add_dexterity_stats.sql"));
     private static readonly string WeaponArmorPenetrationMigrationPath = Path.GetFullPath(
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026032203_add_weapon_armor_penetration.sql"));
+    private static readonly string D20GunDamageMigrationPath = Path.GetFullPath(
+        Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026032204_add_d20_gun_damage_and_full_auto.sql"));
     private static readonly string SupabaseAuthServicePath = Path.GetFullPath(
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "RaidLoop.Client", "Services", "SupabaseAuthService.cs"));
     private static readonly string ClientTelemetryServicePath = Path.GetFullPath(
@@ -58,6 +60,8 @@ public sealed class HomeMarkupBindingTests
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "RaidLoop.Client", "wwwroot", "js", "storage.js"));
     private static readonly string TelemetryScriptPath = Path.GetFullPath(
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "RaidLoop.Client", "wwwroot", "js", "telemetry.js"));
+    private static readonly string AuthGatePath = Path.GetFullPath(
+        Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "RaidLoop.Client", "Components", "AuthGate.razor"));
     private static readonly string LoadoutPanelPath = Path.GetFullPath(
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "RaidLoop.Client", "Components", "LoadoutPanel.razor"));
     private static readonly string StashPanelPath = Path.GetFullPath(
@@ -197,12 +201,68 @@ public sealed class HomeMarkupBindingTests
     }
 
     [Fact]
+    public void RaidHudDefinesIndependentAttackBurstAndFullAutoActions()
+    {
+        var markup = File.ReadAllText(RaidHudPath);
+
+        Assert.Contains(">Attack</button>", markup);
+        Assert.Contains("Use Skill: Burst Fire", markup);
+        Assert.Contains("Use Skill: Full Auto", markup);
+        Assert.Contains("@if (CanAttack)", markup);
+        Assert.Contains("@if (CanBurstFire)", markup);
+        Assert.Contains("@if (CanFullAuto)", markup);
+        Assert.Contains("public bool CanFullAuto", markup);
+        Assert.Contains("public EventCallback OnFullAuto", markup);
+    }
+
+    [Fact]
+    public void HomePassesIndependentCombatActionsToRaidHud()
+    {
+        var markup = File.ReadAllText(HomeMarkupPath);
+
+        Assert.Contains("CanAttack=\"CanAttack\"", markup);
+        Assert.Contains("CanBurstFire=\"CanBurstFire\"", markup);
+        Assert.Contains("CanFullAuto=\"CanFullAuto\"", markup);
+        Assert.Contains("OnAttack=\"AttackAsync\"", markup);
+        Assert.Contains("OnBurstFire=\"BurstFireAsync\"", markup);
+        Assert.Contains("OnFullAuto=\"FullAutoAsync\"", markup);
+    }
+
+    [Fact]
+    public void HomeWiresFullAutoToRaidAction()
+    {
+        var codeBehind = File.ReadAllText(HomeCodeBehindPath);
+
+        Assert.Contains("private async Task FullAutoAsync()", codeBehind);
+        Assert.Contains("ExecuteRaidActionAsync(\"full-auto\"", codeBehind);
+    }
+
+    [Fact]
     public void AppUsesAuthGateForGoogleLogin()
     {
         var markup = File.ReadAllText(AppMarkupPath);
 
         Assert.Contains("<AuthGate>", markup);
         Assert.Contains("</AuthGate>", markup);
+    }
+
+    [Fact]
+    public void AuthGateSupportsLocalEmailPasswordAuthAndKeepsGoogleForNonLocal()
+    {
+        var markup = File.ReadAllText(AuthGatePath);
+        var localBranchStart = markup.IndexOf("@if (HostEnvironment.Environment == \"Local\")", StringComparison.Ordinal);
+        var localBranchEnd = markup.IndexOf("else", localBranchStart, StringComparison.Ordinal);
+        var localBranch = markup.Substring(localBranchStart, localBranchEnd - localBranchStart);
+
+        Assert.Contains("@inject Microsoft.AspNetCore.Components.WebAssembly.Hosting.IWebAssemblyHostEnvironment HostEnvironment", markup);
+        Assert.Contains("HostEnvironment.Environment == \"Local\"", markup);
+        Assert.Contains("SignInWithGoogleAsync", localBranch);
+        Assert.Contains("Sign in with Google", localBranch);
+        Assert.Contains("type=\"email\"", markup);
+        Assert.Contains("type=\"password\"", markup);
+        Assert.Contains(">Sign in</button>", markup);
+        Assert.Contains(">Sign up</button>", markup);
+        Assert.Contains("_authErrorMessage", markup);
     }
 
     [Fact]
@@ -248,16 +308,15 @@ public sealed class HomeMarkupBindingTests
     }
 
     [Fact]
-    public void LocalAndTestAppSettingsSplitLocalSupabaseFromHostedSmokeTest()
+    public void LocalAppSettingsPointToLocalSupabaseAndTestAppSettingsAreRemoved()
     {
         var localSettings = File.ReadAllText(ClientLocalAppSettingsPath);
-        var testSettings = File.ReadAllText(ClientTestAppSettingsPath);
 
         Assert.Contains("\"Url\": \"http://127.0.0.1:54321\"", localSettings);
         Assert.Contains("\"PublishableKey\": \"sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH\"", localSettings);
         Assert.Contains("\"ProjectKey\": \"phc_UfelMasDJpt4iUgbFqDg8i0PkbDGDXFpicrSg6SOojb\"", localSettings);
-        Assert.Contains("\"Url\": \"https://ekqtprsvgedvkxwmyfhd.supabase.co\"", testSettings);
-        Assert.Contains("\"PublishableKey\": \"sb_publishable_0zRQJLyEPvzPGq80UM5njg_tdS1xSOZ\"", testSettings);
+        Assert.False(File.Exists(Path.GetFullPath(
+            Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "RaidLoop.Client", "wwwroot", "appsettings.Test.json"))));
     }
 
     [Fact]
@@ -267,6 +326,17 @@ public sealed class HomeMarkupBindingTests
 
         Assert.Contains("\"ASPNETCORE_ENVIRONMENT\": \"Local\"", launchSettings);
         Assert.DoesNotContain("\"ASPNETCORE_ENVIRONMENT\": \"Development\"", launchSettings);
+    }
+
+    [Fact]
+    public void ClientProjectPinsStandaloneWasmEnvironmentToLocalForDebugAndProductionForRelease()
+    {
+        var project = File.ReadAllText(ClientProjectPath);
+
+        Assert.Contains("<PropertyGroup Condition=\"'$(Configuration)' == 'Debug'\">", project);
+        Assert.Contains("<WasmApplicationEnvironmentName>Local</WasmApplicationEnvironmentName>", project);
+        Assert.Contains("<PropertyGroup Condition=\"'$(Configuration)' == 'Release'\">", project);
+        Assert.Contains("<WasmApplicationEnvironmentName>Production</WasmApplicationEnvironmentName>", project);
     }
 
     [Fact]
@@ -293,6 +363,18 @@ public sealed class HomeMarkupBindingTests
         Assert.Contains("RedirectTo = GetCurrentUriWithoutQueryOrFragment()", authService);
         Assert.Contains("_navigationManager.NavigateTo(GetCurrentPathWithoutQueryOrFragment(), replace: true);", authService);
         Assert.DoesNotContain("RedirectTo = _navigationManager.BaseUri", authService);
+    }
+
+    [Fact]
+    public void SupabaseAuthServiceSupportsEmailPasswordSignInAndSignUp()
+    {
+        var authService = File.ReadAllText(SupabaseAuthServicePath);
+
+        Assert.Contains("public async Task SignInWithEmailPasswordAsync(string email, string password)", authService);
+        Assert.Contains("public async Task SignUpWithEmailPasswordAsync(string email, string password)", authService);
+        Assert.Contains("SignIn(email, password)", authService);
+        Assert.Contains("SignUp(email, password", authService);
+        Assert.Contains("await PersistSessionAsync", authService);
     }
 
     [Fact]
@@ -484,6 +566,33 @@ public sealed class HomeMarkupBindingTests
         Assert.Contains("game.apply_armor_damage_reduction(incoming, coalesce(equipped_armor->>'name', ''), game.weapon_armor_penetration(enemy_weapon_name))", migration);
         Assert.DoesNotContain("reduced_damage := greatest(1, incoming - case", migration);
         Assert.Contains("Burst Fire deals %s.", migration);
+    }
+
+    [Fact]
+    public void D20GunDamageMigrationAddsFireModeHelpersAndFullAutoRaidAction()
+    {
+        var migration = File.ReadAllText(D20GunDamageMigrationPath);
+
+        Assert.Contains("create or replace function public.game_action(action text, payload jsonb)", migration);
+        Assert.Contains("create or replace function game.weapon_supports_single_shot", migration);
+        Assert.Contains("create or replace function game.weapon_supports_burst_fire", migration);
+        Assert.Contains("create or replace function game.weapon_supports_full_auto", migration);
+        Assert.Contains("create or replace function game.weapon_burst_attack_penalty", migration);
+        Assert.Contains("create or replace function game.roll_weapon_damage_d20", migration);
+        Assert.Contains("when 'Makarov' then 6", migration);
+        Assert.Contains("when 'PPSH' then 4", migration);
+        Assert.Contains("when 'AK74' then 8", migration);
+        Assert.Contains("when 'AK47' then 10", migration);
+        Assert.Contains("when 'SVDS' then 12", migration);
+        Assert.Contains("when 'PKP' then 12", migration);
+        Assert.Contains("action in ('attack', 'burst-fire', 'full-auto')", migration);
+        Assert.Contains("ammo < 3", migration);
+        Assert.Contains("ammo < 10", migration);
+        Assert.Contains("'full-auto'", migration);
+        Assert.Contains("when 'Makarov' then 3", migration);
+        Assert.Contains("else 2", migration);
+        Assert.Contains("game.weapon_burst_attack_penalty(equipped_weapon_name)", migration);
+        Assert.Contains("game.roll_attack_d20(game.ability_modifier(player_dexterity) - 4", migration);
     }
 
     [Fact]

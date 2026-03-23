@@ -101,8 +101,12 @@ public partial class Home : IDisposable
     private bool CanStashOnPersonItem => _mainGame.Stash.Count < MainStashCap;
     private bool EquippedWeaponUsesAmmo => CombatBalance.WeaponUsesAmmo(GetEquippedWeaponName());
     private int CurrentMagazineCapacity => CombatBalance.GetMagazineCapacity(GetEquippedWeaponName());
-    private bool CanAttack => (!EquippedWeaponUsesAmmo || _ammo > 0) && !_weaponMalfunction;
-    private bool CanBurstFire => EquippedWeaponUsesAmmo && _ammo >= 2 && !_weaponMalfunction;
+    private bool EquippedWeaponSupportsSingleShot => CombatBalance.SupportsSingleShot(GetEquippedWeaponName());
+    private bool EquippedWeaponSupportsBurstFire => CombatBalance.SupportsBurstFire(GetEquippedWeaponName());
+    private bool EquippedWeaponSupportsFullAuto => CombatBalance.SupportsFullAuto(GetEquippedWeaponName());
+    private bool CanAttack => EquippedWeaponSupportsSingleShot && (!EquippedWeaponUsesAmmo || _ammo > 0) && !_weaponMalfunction;
+    private bool CanBurstFire => EquippedWeaponSupportsBurstFire && EquippedWeaponUsesAmmo && _ammo >= 3 && !_weaponMalfunction;
+    private bool CanFullAuto => EquippedWeaponSupportsFullAuto && EquippedWeaponUsesAmmo && _ammo >= 10 && !_weaponMalfunction;
     private bool CanUseMedkit => CurrentMedkits > 0;
     private int CurrentMedkits => _raid?.Inventory.MedkitCount ?? 0;
     private List<Item> CurrentDiscoveredLoot => _raid?.Inventory.DiscoveredLoot ?? EmptyItems;
@@ -885,6 +889,16 @@ public partial class Home : IDisposable
             return;
         }
         await ExecuteRaidActionAsync("burst-fire", new { target = "enemy" });
+    }
+
+    private async Task FullAutoAsync()
+    {
+        if (_raid is null || _encounterType != EncounterType.Combat)
+        {
+            return;
+        }
+
+        await ExecuteRaidActionAsync("full-auto", new { target = "enemy" });
     }
 
     private async Task UseMedkitAsync()

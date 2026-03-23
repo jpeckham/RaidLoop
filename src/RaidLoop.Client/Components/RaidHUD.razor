@@ -18,8 +18,18 @@
         {
             <p>Enemy: @EnemyName (HP: @EnemyHealth)</p>
             <div class="actions">
-                <button class="action" disabled="@(!CanAttack)" @onclick="() => OnAttack.InvokeAsync()">Attack</button>
-                <button class="action" disabled="@(!CanBurstFire)" @onclick="() => OnBurstFire.InvokeAsync()">Use Skill: Burst Fire</button>
+                @if (CanAttack)
+                {
+                    <button class="action" @onclick="() => OnAttack.InvokeAsync()">Attack</button>
+                }
+                @if (CanBurstFire)
+                {
+                    <button class="action" @onclick="() => OnBurstFire.InvokeAsync()">Use Skill: Burst Fire</button>
+                }
+                @if (CanFullAuto)
+                {
+                    <button class="action" @onclick="() => OnFullAuto.InvokeAsync()">Use Skill: Full Auto</button>
+                }
                 <button class="action" @onclick="() => OnReload.InvokeAsync()">@(WeaponMalfunction ? "Fix Malfunction" : "Reload")</button>
                 <button class="action" @onclick="() => OnFlee.InvokeAsync()">Flee</button>
             </div>
@@ -158,11 +168,13 @@
     [Parameter, EditorRequired] public bool AwaitingDecision { get; set; }
     [Parameter, EditorRequired] public bool CanAttack { get; set; }
     [Parameter, EditorRequired] public bool CanBurstFire { get; set; }
+    [Parameter, EditorRequired] public bool CanFullAuto { get; set; }
     [Parameter, EditorRequired] public bool CanUseMedkit { get; set; }
     [Parameter, EditorRequired] public Func<Item, bool> CanLootItem { get; set; } = _ => false;
     [Parameter, EditorRequired] public Func<Item, bool> CanEquipItem { get; set; } = _ => false;
     [Parameter, EditorRequired] public EventCallback OnAttack { get; set; }
     [Parameter, EditorRequired] public EventCallback OnBurstFire { get; set; }
+    [Parameter, EditorRequired] public EventCallback OnFullAuto { get; set; }
     [Parameter, EditorRequired] public EventCallback OnReload { get; set; }
     [Parameter, EditorRequired] public EventCallback OnFlee { get; set; }
     [Parameter, EditorRequired] public EventCallback OnUseMedkit { get; set; }

@@ -396,6 +396,69 @@ test("game-action returns combat-resolved projections with appended log entries"
   assert.equal(body.projections.raid.logEntries, undefined);
 });
 
+test("game-action treats full-auto as a combat action", async () => {
+  const handler = createGameActionHandler({
+    dispatchAction: async (accessToken, action, payload) => {
+      assert.equal(accessToken, "token-123");
+      assert.equal(action, "full-auto");
+      assert.equal(payload.target, "enemy");
+      assert.equal(payload.knownLogCount, 1);
+      return {
+        money: 500,
+        mainStash: [],
+        onPersonItems: [],
+        randomCharacterAvailableAt: "0001-01-01T00:00:00+00:00",
+        randomCharacter: null,
+        activeRaid: {
+          health: 24,
+          backpackCapacity: 3,
+          ammo: 20,
+          weaponMalfunction: false,
+          medkits: 1,
+          lootSlots: 0,
+          extractProgress: 1,
+          extractRequired: 3,
+          encounterType: "Combat",
+          encounterTitle: "Combat Encounter",
+          encounterDescription: "Enemy contact on your position.",
+          enemyName: "Scav",
+          enemyHealth: 8,
+          lootContainer: "",
+          awaitingDecision: false,
+          discoveredLoot: [],
+          carriedLoot: [],
+          equippedItems: [
+            { name: "AK74", type: 0, value: 320, slots: 1, rarity: 2, displayRarity: 3 },
+          ],
+          logEntries: [
+            "Raid started as Main Character.",
+            "Not enough ammo for Full Auto.",
+          ],
+        },
+      };
+    },
+  });
+
+  const response = await handler(new Request("https://example.test/game-action", {
+    method: "POST",
+    headers: {
+      Authorization: "Bearer token-123",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      action: "full-auto",
+      payload: { target: "enemy", knownLogCount: 1 },
+    }),
+  }));
+
+  const body = await response.json();
+  assert.equal(body.eventType, "CombatResolved");
+  assert.deepEqual(body.event, { action: "full-auto" });
+  assert.equal(body.projections.raid.ammo, 20);
+  assert.deepEqual(body.projections.raid.logEntriesAdded, ["Not enough ammo for Full Auto."]);
+  assert.equal(body.snapshot, undefined);
+});
+
 test("game-action returns loot-resolved projections for take-loot", async () => {
   const handler = createGameActionHandler({
     dispatchAction: async (accessToken, action, payload) => {

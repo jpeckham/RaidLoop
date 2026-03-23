@@ -144,6 +144,42 @@ public sealed class SupabaseAuthService : ISupabaseSessionProvider
         _navigationManager.NavigateTo(providerState.Uri.ToString(), forceLoad: true);
     }
 
+    public async Task SignInWithEmailPasswordAsync(string email, string password)
+    {
+        if (_client is null)
+        {
+            await InitializeAsync();
+        }
+
+        var session = await _client!.Auth.SignIn(email, password);
+        _isSignedOutLocally = false;
+
+        if (session is not null)
+        {
+            await PersistSessionAsync(session);
+        }
+
+        NotifyAuthStateChanged();
+    }
+
+    public async Task SignUpWithEmailPasswordAsync(string email, string password)
+    {
+        if (_client is null)
+        {
+            await InitializeAsync();
+        }
+
+        var session = await _client!.Auth.SignUp(email, password, new SignUpOptions());
+        _isSignedOutLocally = false;
+
+        if (session is not null)
+        {
+            await PersistSessionAsync(session);
+        }
+
+        NotifyAuthStateChanged();
+    }
+
     public async Task SignOutAsync()
     {
         if (_client?.Auth is not null)

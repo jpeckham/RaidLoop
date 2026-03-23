@@ -3,7 +3,8 @@ namespace RaidLoop.Core;
 public enum AttackMode
 {
     Standard,
-    Burst
+    Burst,
+    FullAuto
 }
 
 public interface IRng
@@ -62,27 +63,74 @@ public static class CombatBalance
 
     public static DamageRange GetDamageRange(string weaponName, AttackMode mode)
     {
-        return (NormalizeWeaponName(weaponName), mode) switch
-        {
-            ("PPSH", AttackMode.Standard) => new DamageRange(6, 10),
-            ("AK74", AttackMode.Standard) => new DamageRange(8, 12),
-            ("SVDS", AttackMode.Standard) => new DamageRange(11, 16),
-            ("AK47", AttackMode.Standard) => new DamageRange(9, 14),
-            ("PKP", AttackMode.Standard) => new DamageRange(12, 18),
-            ("Makarov", AttackMode.Burst) => new DamageRange(8, 12),
-            ("PPSH", AttackMode.Burst) => new DamageRange(10, 15),
-            ("AK74", AttackMode.Burst) => new DamageRange(12, 17),
-            ("SVDS", AttackMode.Burst) => new DamageRange(15, 21),
-            ("AK47", AttackMode.Burst) => new DamageRange(13, 19),
-            ("PKP", AttackMode.Burst) => new DamageRange(16, 24),
-            _ => new DamageRange(5, 8)
-        };
+        var normalizedWeapon = NormalizeWeaponName(weaponName);
+        var dieCount = GetDamageDieCount(mode);
+        var dieSize = GetDamageDieSize(normalizedWeapon);
+
+        return new DamageRange(dieCount, dieCount * dieSize);
     }
 
     public static int RollDamage(string weaponName, AttackMode mode, IRng rng)
     {
-        var range = GetDamageRange(weaponName, mode);
-        return rng.Next(range.Min, range.Max + 1);
+        var dieCount = GetDamageDieCount(mode);
+        var dieSize = GetDamageDieSize(NormalizeWeaponName(weaponName));
+        var total = 0;
+
+        for (var currentDie = 0; currentDie < dieCount; currentDie++)
+        {
+            total += rng.Next(1, dieSize + 1);
+        }
+
+        return total;
+    }
+
+    public static bool SupportsSingleShot(string weaponName)
+    {
+        return NormalizeWeaponName(weaponName) switch
+        {
+            "PKP" => false,
+            _ => true
+        };
+    }
+
+    public static bool SupportsBurstFire(string weaponName)
+    {
+        return NormalizeWeaponName(weaponName) switch
+        {
+            "Makarov" => true,
+            "PPSH" => true,
+            "AK74" => true,
+            "AK47" => true,
+            "SVDS" => true,
+            "PKP" => true,
+            "Rusty Knife" => false,
+            _ => false
+        };
+    }
+
+    public static bool SupportsFullAuto(string weaponName)
+    {
+        return NormalizeWeaponName(weaponName) switch
+        {
+            "Makarov" => false,
+            "SVDS" => false,
+            "Rusty Knife" => false,
+            _ => true
+        };
+    }
+
+    public static int GetBurstAttackPenalty(string weaponName)
+    {
+        return NormalizeWeaponName(weaponName) switch
+        {
+            "Makarov" => 3,
+            "PPSH" => 2,
+            "AK74" => 2,
+            "AK47" => 2,
+            "SVDS" => 2,
+            "PKP" => 2,
+            _ => 3
+        };
     }
 
     public static int GetArmorReduction(string armorName)
@@ -187,6 +235,32 @@ public static class CombatBalance
             "Soft Vest" => "6B2 body armor",
             "Plate Carrier" => "6B13 assault armor",
             _ => armorName
+        };
+    }
+
+    private static int GetDamageDieCount(AttackMode mode)
+    {
+        return mode switch
+        {
+            AttackMode.Standard => 2,
+            AttackMode.Burst => 3,
+            AttackMode.FullAuto => 4,
+            _ => 2
+        };
+    }
+
+    private static int GetDamageDieSize(string weaponName)
+    {
+        return NormalizeWeaponName(weaponName) switch
+        {
+            "PPSH" => 4,
+            "AK74" => 8,
+            "SVDS" => 12,
+            "AK47" => 10,
+            "PKP" => 12,
+            "Makarov" => 6,
+            "Rusty Knife" => 6,
+            _ => 6
         };
     }
 }

@@ -5,18 +5,20 @@ namespace RaidLoop.Core.Tests;
 public class RaidEngineTests
 {
     [Theory]
-    [InlineData("Makarov", AttackMode.Standard, 5, 8)]
-    [InlineData("PPSH", AttackMode.Standard, 6, 10)]
-    [InlineData("AK74", AttackMode.Standard, 8, 12)]
-    [InlineData("SVDS", AttackMode.Standard, 11, 16)]
-    [InlineData("AK47", AttackMode.Standard, 9, 14)]
-    [InlineData("PKP", AttackMode.Standard, 12, 18)]
-    [InlineData("Makarov", AttackMode.Burst, 8, 12)]
-    [InlineData("PPSH", AttackMode.Burst, 10, 15)]
-    [InlineData("AK74", AttackMode.Burst, 12, 17)]
-    [InlineData("SVDS", AttackMode.Burst, 15, 21)]
-    [InlineData("AK47", AttackMode.Burst, 13, 19)]
-    [InlineData("PKP", AttackMode.Burst, 16, 24)]
+    [InlineData("Makarov", AttackMode.Standard, 2, 12)]
+    [InlineData("PPSH", AttackMode.Standard, 2, 8)]
+    [InlineData("AK74", AttackMode.Standard, 2, 16)]
+    [InlineData("SVDS", AttackMode.Standard, 2, 24)]
+    [InlineData("AK47", AttackMode.Standard, 2, 20)]
+    [InlineData("PPSH", AttackMode.Burst, 3, 12)]
+    [InlineData("AK74", AttackMode.Burst, 3, 24)]
+    [InlineData("SVDS", AttackMode.Burst, 3, 36)]
+    [InlineData("AK47", AttackMode.Burst, 3, 30)]
+    [InlineData("PKP", AttackMode.Burst, 3, 36)]
+    [InlineData("PPSH", AttackMode.FullAuto, 4, 16)]
+    [InlineData("AK74", AttackMode.FullAuto, 4, 32)]
+    [InlineData("AK47", AttackMode.FullAuto, 4, 40)]
+    [InlineData("PKP", AttackMode.FullAuto, 4, 48)]
     public void CombatBalance_WeaponDamageProfiles_AreConfigured(string weapon, AttackMode mode, int min, int max)
     {
         var range = CombatBalance.GetDamageRange(weapon, mode);
@@ -40,13 +42,41 @@ public class RaidEngineTests
     [Fact]
     public void CombatBalance_RollDamage_UsesInjectableRng()
     {
-        var rng = new SequenceRng([0, 3]);
+        var rng = new SequenceRng([0, 1, 0, 1, 2, 3]);
 
         var makarov = CombatBalance.RollDamage("Makarov", AttackMode.Standard, rng);
-        var ak47 = CombatBalance.RollDamage("AK47", AttackMode.Burst, rng);
+        var ak47 = CombatBalance.RollDamage("AK47", AttackMode.FullAuto, rng);
 
-        Assert.Equal(5, makarov);
-        Assert.Equal(16, ak47);
+        Assert.Equal(3, makarov);
+        Assert.Equal(10, ak47);
+    }
+
+    [Theory]
+    [InlineData("Makarov", true, true, false)]
+    [InlineData("PPSH", true, true, true)]
+    [InlineData("AK74", true, true, true)]
+    [InlineData("AK47", true, true, true)]
+    [InlineData("SVDS", true, true, false)]
+    [InlineData("PKP", false, true, true)]
+    [InlineData("Rusty Knife", true, false, false)]
+    public void CombatBalance_WeaponFireModes_AreConfigured(string weapon, bool supportsSingle, bool supportsBurst, bool supportsFullAuto)
+    {
+        Assert.Equal(supportsSingle, CombatBalance.SupportsSingleShot(weapon));
+        Assert.Equal(supportsBurst, CombatBalance.SupportsBurstFire(weapon));
+        Assert.Equal(supportsFullAuto, CombatBalance.SupportsFullAuto(weapon));
+    }
+
+    [Theory]
+    [InlineData("Makarov", 3)]
+    [InlineData("PPSH", 2)]
+    [InlineData("AK74", 2)]
+    [InlineData("AK47", 2)]
+    [InlineData("SVDS", 2)]
+    [InlineData("PKP", 2)]
+    [InlineData("Rusty Knife", 3)]
+    public void CombatBalance_BurstAttackPenalty_IsConfiguredPerWeapon(string weapon, int expectedPenalty)
+    {
+        Assert.Equal(expectedPenalty, CombatBalance.GetBurstAttackPenalty(weapon));
     }
 
     [Theory]

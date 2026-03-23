@@ -71,16 +71,11 @@ Current non-item rule values to preserve:
 
 Current content-generation weights/outcomes to preserve:
 
-- `game.random_enemy_loadout`: 5 equal outcomes
-- Bucket 0: Makarov
-- Bucket 1: PPSH + Bandage
-- Bucket 2: AK74 + 6B2 body armor
-- Bucket 3: SVDS
-- Bucket 4: AK47 + FORT Defender-2
-- `game.random_loot_items_for_container('Weapons Crate')`: 4 equal outcomes, with Makarov + Ammo Box, PPSH, AK74, or SVDS
-- `game.random_loot_items_for_container('Medical Container')`: 3 equal outcomes, with Medkit + Bandage, Bandage + Ammo Box, or Medkit
+- `game.random_enemy_loadout`: weights are equivalent to `110` Makarov, `110` Bandage + 6B2 body armor, `110` 6B2 body armor, `60` PPSH + Bandage, `6` AK74 + 6B2 body armor, `6` AK47 + Bandage, `6` 6B13 assault armor, `3` SVDS, `3` FORT Defender-2, `3` PKP, `3` NFM THOR
+- `game.random_loot_items_for_container('Weapons Crate')`: weights are equivalent to `40` Makarov + Ammo Box, `12` PPSH, `3` AK74, `3` AK47, `3` SVDS, `2` PKP
+- `game.random_loot_items_for_container('Medical Container')`: weights are `4` Medkit + Bandage, `3` Bandage + Ammo Box, `2` Medkit, `1` Medkit + Ammo Box
 - `game.random_loot_items_for_container('Dead Body')`: delegates to `game.random_enemy_loadout()`
-- `game.random_loot_items_for_container(other)`: 4 equal outcomes, with Bandage + Ammo Box, Scrap Metal + Rare Scope, Medkit, or Makarov
+- `game.random_loot_items_for_container(other)`: weights are equivalent to `40` split evenly across Bandage + Ammo Box, Scrap Metal, and Medkit, then `36` PPSH, `9` Rare Scope, `9` AK74, `9` SVDS, `6` Legendary Trigger Group
 - `game.generate_raid_encounter`: extraction-route check first, then `roll < 50` combat, `roll < 80` loot, else neutral
 - `game.generate_raid_encounter` combat enemy name weighting: Scav `65%`, Patrol Guard `35%`
 - `game.generate_raid_encounter` combat HP range: `12 + floor(random() * 9)` so `12` through `20`

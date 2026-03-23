@@ -102,3 +102,203 @@ set name = excluded.name,
     notes = excluded.notes;
 
 revoke all on table game.item_defs from public;
+
+create or replace function game.authored_item(item_name text)
+returns jsonb
+language sql
+stable
+as $$
+    select jsonb_build_object(
+        'name', item_defs.name,
+        'type', item_defs.item_type,
+        'value', item_defs.value,
+        'slots', item_defs.slots,
+        'rarity', item_defs.rarity,
+        'displayRarity', item_defs.display_rarity
+    )
+    from game.item_defs
+    where item_defs.name = item_name
+      and item_defs.enabled
+    limit 1;
+$$;
+
+create or replace function game.weapon_magazine_capacity(weapon_name text)
+returns int
+language sql
+stable
+as $$
+    select coalesce(
+        (
+            select item_defs.magazine_capacity
+            from game.item_defs
+            where item_defs.name = weapon_name
+              and item_defs.enabled
+            limit 1
+        ),
+        8
+    );
+$$;
+
+create or replace function game.backpack_capacity(backpack_name text)
+returns int
+language sql
+stable
+as $$
+    select coalesce(
+        (
+            select item_defs.backpack_capacity
+            from game.item_defs
+            where item_defs.name = backpack_name
+              and item_defs.enabled
+            limit 1
+        ),
+        2
+    );
+$$;
+
+create or replace function game.weapon_armor_penetration(weapon_name text)
+returns int
+language sql
+stable
+as $$
+    select coalesce(
+        (
+            select item_defs.armor_penetration
+            from game.item_defs
+            where item_defs.name = weapon_name
+              and item_defs.enabled
+            limit 1
+        ),
+        0
+    );
+$$;
+
+create or replace function game.armor_damage_reduction(armor_name text)
+returns int
+language sql
+stable
+as $$
+    select coalesce(
+        (
+            select item_defs.armor_damage_reduction
+            from game.item_defs
+            where item_defs.name = armor_name
+              and item_defs.enabled
+            limit 1
+        ),
+        0
+    );
+$$;
+
+create or replace function game.weapon_supports_single_shot(weapon_name text)
+returns boolean
+language sql
+stable
+as $$
+    select coalesce(
+        (
+            select item_defs.supports_single_shot
+            from game.item_defs
+            where item_defs.name = weapon_name
+              and item_defs.enabled
+            limit 1
+        ),
+        true
+    );
+$$;
+
+create or replace function game.weapon_supports_burst_fire(weapon_name text)
+returns boolean
+language sql
+stable
+as $$
+    select coalesce(
+        (
+            select item_defs.supports_burst_fire
+            from game.item_defs
+            where item_defs.name = weapon_name
+              and item_defs.enabled
+            limit 1
+        ),
+        false
+    );
+$$;
+
+create or replace function game.weapon_supports_full_auto(weapon_name text)
+returns boolean
+language sql
+stable
+as $$
+    select coalesce(
+        (
+            select item_defs.supports_full_auto
+            from game.item_defs
+            where item_defs.name = weapon_name
+              and item_defs.enabled
+            limit 1
+        ),
+        false
+    );
+$$;
+
+create or replace function game.weapon_burst_attack_penalty(weapon_name text)
+returns int
+language sql
+stable
+as $$
+    select coalesce(
+        (
+            select item_defs.burst_attack_penalty
+            from game.item_defs
+            where item_defs.name = weapon_name
+              and item_defs.enabled
+            limit 1
+        ),
+        3
+    );
+$$;
+
+create or replace function game.roll_weapon_damage_d20(weapon_name text, attack_mode text)
+returns int
+language plpgsql
+volatile
+as $$
+declare
+    die_size int;
+    die_count int;
+    roll int := 0;
+    current_die int;
+begin
+    select coalesce(item_defs.damage_die_size, 6)
+    into die_size
+    from game.item_defs
+    where item_defs.name = weapon_name
+      and item_defs.enabled
+    limit 1;
+
+    die_size := coalesce(die_size, 6);
+
+    die_count := case coalesce(attack_mode, 'attack')
+        when 'burst-fire' then 3
+        when 'full-auto' then 4
+        else 2
+    end;
+
+    for current_die in 1..die_count loop
+        roll := roll + floor(random() * die_size)::int + 1;
+    end loop;
+
+    return roll;
+end;
+$$;
+
+revoke all on function game.authored_item(text) from public;
+revoke all on function game.weapon_magazine_capacity(text) from public;
+revoke all on function game.backpack_capacity(text) from public;
+revoke all on function game.weapon_armor_penetration(text) from public;
+revoke all on function game.armor_damage_reduction(text) from public;
+revoke all on function game.weapon_supports_single_shot(text) from public;
+revoke all on function game.weapon_supports_burst_fire(text) from public;
+revoke all on function game.weapon_supports_full_auto(text) from public;
+revoke all on function game.weapon_burst_attack_penalty(text) from public;
+revoke all on function game.roll_weapon_damage_d20(text, text) from public;

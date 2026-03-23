@@ -208,11 +208,29 @@ public sealed class HomeMarkupBindingTests
         Assert.Contains(">Attack</button>", markup);
         Assert.Contains("Use Skill: Burst Fire", markup);
         Assert.Contains("Use Skill: Full Auto", markup);
-        Assert.Contains("@if (CanAttack)", markup);
-        Assert.Contains("@if (CanBurstFire)", markup);
-        Assert.Contains("@if (CanFullAuto)", markup);
+        Assert.Contains("disabled=\"@(!CanAttackEnabled)\"", markup);
+        Assert.Contains("disabled=\"@(!CanBurstFireEnabled)\"", markup);
+        Assert.Contains("disabled=\"@(!CanFullAutoEnabled)\"", markup);
+        Assert.Contains("public bool CanAttackEnabled", markup);
+        Assert.Contains("public bool CanBurstFireEnabled", markup);
         Assert.Contains("public bool CanFullAuto", markup);
+        Assert.Contains("public bool CanFullAutoEnabled", markup);
         Assert.Contains("public EventCallback OnFullAuto", markup);
+    }
+
+    [Fact]
+    public void RaidHudPlacesAttemptExtractionAfterContinueSearching()
+    {
+        var markup = File.ReadAllText(RaidHudPath);
+        var extractionBlockStart = markup.IndexOf("else if (EncounterType == EncounterType.Extraction)", StringComparison.Ordinal);
+        var extractionBlockEnd = markup.IndexOf("else if (EncounterType == EncounterType.Neutral)", extractionBlockStart, StringComparison.Ordinal);
+        var extractionBlock = markup.Substring(extractionBlockStart, extractionBlockEnd - extractionBlockStart);
+        var continueIndex = extractionBlock.IndexOf("OnContinueSearching.InvokeAsync()", StringComparison.Ordinal);
+        var attemptIndex = extractionBlock.IndexOf("OnAttemptExtract.InvokeAsync()", StringComparison.Ordinal);
+
+        Assert.True(extractionBlockStart >= 0);
+        Assert.True(continueIndex >= 0);
+        Assert.True(attemptIndex > continueIndex);
     }
 
     [Fact]
@@ -231,8 +249,11 @@ public sealed class HomeMarkupBindingTests
         var markup = File.ReadAllText(HomeMarkupPath);
 
         Assert.Contains("CanAttack=\"CanAttack\"", markup);
+        Assert.Contains("CanAttackEnabled=\"CanAttackEnabled\"", markup);
         Assert.Contains("CanBurstFire=\"CanBurstFire\"", markup);
+        Assert.Contains("CanBurstFireEnabled=\"CanBurstFireEnabled\"", markup);
         Assert.Contains("CanFullAuto=\"CanFullAuto\"", markup);
+        Assert.Contains("CanFullAutoEnabled=\"CanFullAutoEnabled\"", markup);
         Assert.Contains("OnAttack=\"AttackAsync\"", markup);
         Assert.Contains("OnBurstFire=\"BurstFireAsync\"", markup);
         Assert.Contains("OnFullAuto=\"FullAutoAsync\"", markup);

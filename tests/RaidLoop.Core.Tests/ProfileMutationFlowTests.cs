@@ -205,6 +205,38 @@ public sealed class ProfileMutationFlowTests
     }
 
     [Fact]
+    public void CombatActionVisibility_StaysTrueWhileEnabledStateTracksAmmoThresholds()
+    {
+        var home = CreateHome(new FakeGameActionApiClient());
+        var inventory = RaidInventory.FromItems([ItemCatalog.Create("AK74")], [], backpackCapacity: 3);
+
+        SetField(home, "_raid", new RaidState(24, inventory));
+        SetField(home, "_ammo", 0);
+
+        Assert.True(GetPrivateProperty<bool>(home, "CanAttack"));
+        Assert.True(GetPrivateProperty<bool>(home, "CanBurstFire"));
+        Assert.True(GetPrivateProperty<bool>(home, "CanFullAuto"));
+        Assert.False(GetPrivateProperty<bool>(home, "CanAttackEnabled"));
+        Assert.False(GetPrivateProperty<bool>(home, "CanBurstFireEnabled"));
+        Assert.False(GetPrivateProperty<bool>(home, "CanFullAutoEnabled"));
+
+        SetField(home, "_ammo", 2);
+
+        Assert.True(GetPrivateProperty<bool>(home, "CanAttackEnabled"));
+        Assert.False(GetPrivateProperty<bool>(home, "CanBurstFireEnabled"));
+        Assert.False(GetPrivateProperty<bool>(home, "CanFullAutoEnabled"));
+
+        SetField(home, "_ammo", 3);
+
+        Assert.True(GetPrivateProperty<bool>(home, "CanBurstFireEnabled"));
+        Assert.False(GetPrivateProperty<bool>(home, "CanFullAutoEnabled"));
+
+        SetField(home, "_ammo", 10);
+
+        Assert.True(GetPrivateProperty<bool>(home, "CanFullAutoEnabled"));
+    }
+
+    [Fact]
     public void ApplyActionResult_AppliesEconomyStashLoadoutLuckRunAndRaidProjections()
     {
         var home = CreateHome(new FakeGameActionApiClient());

@@ -19,15 +19,15 @@
             <div class="actions">
                 @if (CanAttack)
                 {
-                    <button class="action" @onclick="() => OnAttack.InvokeAsync()">Attack</button>
+                    <button class="action" disabled="@(!CanAttackEnabled)" @onclick="() => OnAttack.InvokeAsync()">Attack</button>
                 }
                 @if (CanBurstFire)
                 {
-                    <button class="action" @onclick="() => OnBurstFire.InvokeAsync()">Use Skill: Burst Fire</button>
+                    <button class="action" disabled="@(!CanBurstFireEnabled)" @onclick="() => OnBurstFire.InvokeAsync()">Use Skill: Burst Fire</button>
                 }
                 @if (CanFullAuto)
                 {
-                    <button class="action" @onclick="() => OnFullAuto.InvokeAsync()">Use Skill: Full Auto</button>
+                    <button class="action" disabled="@(!CanFullAutoEnabled)" @onclick="() => OnFullAuto.InvokeAsync()">Use Skill: Full Auto</button>
                 }
                 @if (CanReload)
                 {
@@ -114,8 +114,8 @@
         else if (EncounterType == EncounterType.Extraction)
         {
             <div class="actions">
-                <button class="action" @onclick="() => OnAttemptExtract.InvokeAsync()">Attempt Extraction</button>
                 <button class="action" @onclick="() => OnContinueSearching.InvokeAsync()">Continue Searching</button>
+                <button class="action" @onclick="() => OnAttemptExtract.InvokeAsync()">Attempt Extraction</button>
             </div>
         }
         else if (EncounterType == EncounterType.Neutral)
@@ -172,8 +172,11 @@
     [Parameter, EditorRequired] public IReadOnlyList<string> LogEntries { get; set; } = [];
     [Parameter, EditorRequired] public bool AwaitingDecision { get; set; }
     [Parameter, EditorRequired] public bool CanAttack { get; set; }
+    [Parameter, EditorRequired] public bool CanAttackEnabled { get; set; }
     [Parameter, EditorRequired] public bool CanBurstFire { get; set; }
+    [Parameter, EditorRequired] public bool CanBurstFireEnabled { get; set; }
     [Parameter, EditorRequired] public bool CanFullAuto { get; set; }
+    [Parameter, EditorRequired] public bool CanFullAutoEnabled { get; set; }
     [Parameter, EditorRequired] public bool CanReload { get; set; }
     [Parameter, EditorRequired] public bool CanUseMedkit { get; set; }
     [Parameter, EditorRequired] public Func<Item, bool> CanLootItem { get; set; } = _ => false;

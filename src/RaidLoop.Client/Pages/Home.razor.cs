@@ -103,9 +103,12 @@ public partial class Home : IDisposable
     private bool EquippedWeaponSupportsSingleShot => CombatBalance.SupportsSingleShot(GetEquippedWeaponName());
     private bool EquippedWeaponSupportsBurstFire => CombatBalance.SupportsBurstFire(GetEquippedWeaponName());
     private bool EquippedWeaponSupportsFullAuto => CombatBalance.SupportsFullAuto(GetEquippedWeaponName());
-    private bool CanAttack => EquippedWeaponSupportsSingleShot && (!EquippedWeaponUsesAmmo || _ammo > 0);
-    private bool CanBurstFire => EquippedWeaponSupportsBurstFire && EquippedWeaponUsesAmmo && _ammo >= 3;
-    private bool CanFullAuto => EquippedWeaponSupportsFullAuto && EquippedWeaponUsesAmmo && _ammo >= 10;
+    private bool CanAttack => EquippedWeaponSupportsSingleShot;
+    private bool CanAttackEnabled => !EquippedWeaponUsesAmmo || _ammo > 0;
+    private bool CanBurstFire => EquippedWeaponSupportsBurstFire;
+    private bool CanBurstFireEnabled => EquippedWeaponUsesAmmo && _ammo >= 3;
+    private bool CanFullAuto => EquippedWeaponSupportsFullAuto;
+    private bool CanFullAutoEnabled => EquippedWeaponUsesAmmo && _ammo >= 10;
     private bool CanReload => _raid is not null && EquippedWeaponUsesAmmo && CurrentMagazineCapacity > 0 && _ammo < CurrentMagazineCapacity;
     private bool CanUseMedkit => CurrentMedkits > 0;
     private int CurrentMedkits => _raid?.Inventory.MedkitCount ?? 0;

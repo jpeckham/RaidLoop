@@ -334,7 +334,7 @@ git commit -m "refactor: reduce repeated action lookups with canonical item help
 Run:
 
 ```bash
-. .\env.ps1
+. .\env.local.ps1
 npx supabase db reset --local --no-seed
 ```
 
@@ -356,7 +356,7 @@ Expected: helpers execute and return valid rows/payloads.
 Run:
 
 ```bash
-. .\env.ps1
+. .\env.local.ps1
 npx supabase db lint
 ```
 

@@ -130,12 +130,14 @@ dotnet build RaidLoop.sln
 From the repo root:
 
 ```bash
+. .\env.local.ps1
 npm install
 npx supabase start
 npx supabase db reset
 ```
 
 Use `npx supabase db reset` whenever you need a clean local database rebuilt from migrations. Use `npx supabase db push --include-all` only for quick iteration when you do not need a full reset.
+`env.local.ps1` only loads local-safe values from `.env` and refuses hosted Supabase refs, hosted URLs, and remote deploy credentials.
 
 ### TDD Workflow
 

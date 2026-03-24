@@ -18,17 +18,27 @@ GitHub Actions production deploy expects:
 
 The project id is the Supabase project ref, for example `dblgbpzlrglcdwqyagnx`, not the project display name.
 
-## Manual CLI Deploy
+These values belong in GitHub repository variables and secrets only. Do not put remote project refs, remote database passwords, or access tokens in the repo-root `.env`.
+
+## Local CLI Workflow
 
 From the repo root:
 
 ```bash
-supabase link --project-ref "$SUPABASE_PROJECT_ID" --password "$SUPABASE_DB_PASSWORD"
-supabase db push --linked --include-all --password "$SUPABASE_DB_PASSWORD"
-supabase functions deploy profile-bootstrap --project-ref "$SUPABASE_PROJECT_ID"
-supabase functions deploy profile-save --project-ref "$SUPABASE_PROJECT_ID"
-supabase functions deploy game-action --project-ref "$SUPABASE_PROJECT_ID"
+. .\env.local.ps1
+npx supabase start
+npx supabase db reset
 ```
+
+`env.local.ps1` rejects hosted Supabase project refs, hosted Supabase URLs, and remote deploy credentials so a local shell cannot be used accidentally against production.
+
+## Remote Deploy Workflow
+
+Remote Supabase changes are CI-only:
+
+- database migrations run from GitHub Actions using repository variables and secrets
+- Edge Functions deploy from GitHub Actions using repository variables and secrets
+- local developer shells must not run `supabase link` against hosted projects
 
 ## Function Tests
 

@@ -723,6 +723,8 @@ public sealed class ProfileMutationFlowTests
                 Money: 500,
                 MainStash: [],
                 OnPersonItems: [],
+                PlayerConstitution: 10,
+                PlayerMaxHealth: 30,
                 RandomCharacterAvailableAt: DateTimeOffset.MinValue,
                 RandomCharacter: new RandomCharacterSnapshot("Ghost-101", []),
                 ActiveRaid: null));
@@ -744,6 +746,8 @@ public sealed class ProfileMutationFlowTests
                 Money: 500,
                 MainStash: [],
                 OnPersonItems: [],
+                PlayerConstitution: 10,
+                PlayerMaxHealth: 30,
                 RandomCharacterAvailableAt: expectedCooldown,
                 RandomCharacter: new RandomCharacterSnapshot("Ghost-101", []),
                 ActiveRaid: null));
@@ -886,7 +890,7 @@ public sealed class ProfileMutationFlowTests
             return Task.FromResult(new AuthBootstrapResponse(
                 true,
                 "player@example.com",
-                new PlayerSnapshot(500, [], [], DateTimeOffset.MinValue, null, null)));
+                new PlayerSnapshot(500, [], [], 10, 30, DateTimeOffset.MinValue, null, null)));
         }
     }
 

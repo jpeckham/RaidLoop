@@ -46,6 +46,11 @@ public static class CombatBalance
         return 10 + GetAbilityModifier(dexterity);
     }
 
+    public static int GetMaxHealthFromConstitution(int constitution)
+    {
+        return 10 + (2 * Math.Max(0, constitution));
+    }
+
     public static bool ResolveAttackRoll(int roll, int attackBonus, int defense)
     {
         if (roll == 1)

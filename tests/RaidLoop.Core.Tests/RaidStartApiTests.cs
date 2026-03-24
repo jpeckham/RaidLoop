@@ -53,6 +53,10 @@ public sealed class RaidStartApiTests
             }
         };
         var home = CreateHome(actionClient);
+        InvokePrivateVoid(
+            home,
+            "ApplySnapshot",
+            new PlayerSnapshot(500, [], [], 12, 34, DateTimeOffset.MinValue, null, null));
 
         SetField(home, "_onPersonItems", new List<OnPersonEntry>
         {
@@ -67,6 +71,7 @@ public sealed class RaidStartApiTests
         Assert.Equal(9, Assert.IsType<int>(GetField(home, "_ammo")));
         Assert.Equal("Server Scav", Assert.IsType<string>(GetField(home, "_enemyName")));
         Assert.Equal(17, Assert.IsType<int>(GetField(home, "_enemyHealth")));
+        Assert.Equal(34, Assert.IsType<int>(GetField(home, "_maxHealth")));
         Assert.Equal(EncounterType.Combat, Assert.IsType<EncounterType>(GetField(home, "_encounterType")));
         var raid = Assert.IsType<RaidState>(GetField(home, "_raid"));
         Assert.Equal("AK74", raid.Inventory.EquippedWeapon?.Name);
@@ -124,6 +129,10 @@ public sealed class RaidStartApiTests
             }
         };
         var home = CreateHome(actionClient);
+        InvokePrivateVoid(
+            home,
+            "ApplySnapshot",
+            new PlayerSnapshot(500, [], [], 12, 34, DateTimeOffset.MinValue, null, null));
 
         SetField(home, "_randomCharacterAvailableAt", DateTimeOffset.MinValue);
         SetField(home, "_randomCharacter", null);
@@ -135,6 +144,7 @@ public sealed class RaidStartApiTests
         Assert.Equal(EncounterType.Loot, Assert.IsType<EncounterType>(GetField(home, "_encounterType")));
         Assert.Equal("Server loot", Assert.IsType<string>(GetField(home, "_encounterDescription")));
         Assert.Equal(8, Assert.IsType<int>(GetField(home, "_ammo")));
+        Assert.Equal(34, Assert.IsType<int>(GetField(home, "_maxHealth")));
         var raid = Assert.IsType<RaidState>(GetField(home, "_raid"));
         Assert.Equal("Makarov", raid.Inventory.EquippedWeapon?.Name);
     }
@@ -177,6 +187,13 @@ public sealed class RaidStartApiTests
         await task!;
     }
 
+    private static void InvokePrivateVoid(object instance, string methodName, params object[] args)
+    {
+        var method = instance.GetType().GetMethod(methodName, BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.NotNull(method);
+        method!.Invoke(instance, args);
+    }
+
     private sealed class FakeProfileApiClient : IProfileApiClient
     {
         public Task<AuthBootstrapResponse> BootstrapAsync(CancellationToken cancellationToken = default)
@@ -184,7 +201,7 @@ public sealed class RaidStartApiTests
             return Task.FromResult(new AuthBootstrapResponse(
                 true,
                 "player@example.com",
-                new PlayerSnapshot(500, [], [], DateTimeOffset.MinValue, null, null)));
+                new PlayerSnapshot(500, [], [], 12, 34, DateTimeOffset.MinValue, null, null)));
         }
     }
 

@@ -15,6 +15,8 @@ public sealed class ContractsTests
                 Money: 500,
                 MainStash: [ItemCatalog.Create("Makarov")],
                 OnPersonItems: [new OnPersonSnapshot(ItemCatalog.Create("Small Backpack"), true)],
+                PlayerConstitution: 10,
+                PlayerMaxHealth: 30,
                 RandomCharacterAvailableAt: DateTimeOffset.Parse("2026-03-18T00:00:00Z"),
                 RandomCharacter: new RandomCharacterSnapshot("Ghost-101", [ItemCatalog.Create("Bandage")]),
                 ActiveRaid: new RaidSnapshot(
@@ -46,6 +48,8 @@ public sealed class ContractsTests
         Assert.Equal("player@example.com", roundTrip.UserEmail);
         Assert.Equal(500, roundTrip.Snapshot.Money);
         Assert.Equal("Makarov", Assert.Single(roundTrip.Snapshot.MainStash).Name);
+        Assert.Equal(10, roundTrip.Snapshot.PlayerConstitution);
+        Assert.Equal(30, roundTrip.Snapshot.PlayerMaxHealth);
         Assert.Equal("Neutral", roundTrip.Snapshot.ActiveRaid!.EncounterType);
     }
 

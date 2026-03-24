@@ -34,6 +34,8 @@ public sealed class HomeMarkupBindingTests
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026032201_add_d20_hit_rolls.sql"));
     private static readonly string DexterityMigrationPath = Path.GetFullPath(
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026032202_add_dexterity_stats.sql"));
+    private static readonly string ConstitutionMigrationPath = Path.GetFullPath(
+        Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026032301_add_constitution_and_health.sql"));
     private static readonly string WeaponArmorPenetrationMigrationPath = Path.GetFullPath(
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026032203_add_weapon_armor_penetration.sql"));
     private static readonly string D20GunDamageMigrationPath = Path.GetFullPath(
@@ -568,6 +570,34 @@ public sealed class HomeMarkupBindingTests
         Assert.Contains("create or replace function game.roll_attack_d20(attack_bonus int default 0, defense int default 10)", migration);
         Assert.Contains("game.roll_attack_d20(game.ability_modifier(", migration);
         Assert.Contains("10 + game.ability_modifier(", migration);
+    }
+
+    [Fact]
+    public void ConstitutionMigrationBackfillsPlayerConstitutionAndDerivedMaxHealth()
+    {
+        var migration = File.ReadAllText(ConstitutionMigrationPath);
+
+        Assert.Contains("create or replace function game.normalize_save_payload(payload jsonb)", migration);
+        Assert.Contains("'playerConstitution', coalesce((payload->>'playerConstitution')::int, (payload->>'PlayerConstitution')::int, 10)", migration);
+        Assert.Contains("'playerMaxHealth', coalesce((payload->>'playerMaxHealth')::int, (payload->>'PlayerMaxHealth')::int,", migration);
+        Assert.Contains("10 + (2 * coalesce((payload->>'playerConstitution')::int, (payload->>'PlayerConstitution')::int, 10))", migration);
+        Assert.Contains("create or replace function game.default_save_payload()", migration);
+        Assert.Contains("'playerConstitution', 10", migration);
+        Assert.Contains("'playerMaxHealth', 30", migration);
+    }
+
+    [Fact]
+    public void RaidSqlUsesPersistedPlayerMaxHealthInsteadOfHardCodedThirty()
+    {
+        var raidStartMigration = File.ReadAllText(Path.GetFullPath(
+            Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026031807_game_raid_start_functions.sql")));
+        var raidActionMigration = File.ReadAllText(RaidActionMigrationPath);
+
+        Assert.Contains("player_max_health", raidStartMigration);
+        Assert.DoesNotContain("'health', 30", raidStartMigration);
+        Assert.Contains("player_max_health", raidActionMigration);
+        Assert.DoesNotContain("health := greatest(coalesce((raid_payload->>'health')::int, 30), 0);", raidActionMigration);
+        Assert.DoesNotContain("health := least(30, health + 10);", raidActionMigration);
     }
 
     [Fact]

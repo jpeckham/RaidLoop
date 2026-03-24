@@ -9,9 +9,10 @@ namespace RaidLoop.Client.Pages;
 public partial class Home : IDisposable
 {
     private const string FallbackKnifeName = "Rusty Knife";
-    private const int MaxHealth = 30;
     private const int ExtractRequired = 3;
     private const int MainStashCap = 30;
+    private int _playerConstitution = 10;
+    private int _maxHealth = 30;
 #if DEBUG
     private static readonly TimeSpan LuckRunCooldown = TimeSpan.FromSeconds(5);
 #else
@@ -423,7 +424,7 @@ public partial class Home : IDisposable
         var freshRaid = _raid is null;
         if (freshRaid)
         {
-            _raid = new RaidState(MaxHealth, new RaidInventory());
+            _raid = new RaidState(_maxHealth, new RaidInventory());
             _inRaid = true;
             _awaitingDecision = false;
             _extractProgress = 0;
@@ -1118,6 +1119,8 @@ public partial class Home : IDisposable
         }
 
         _money = snapshot.Money;
+        _playerConstitution = snapshot.PlayerConstitution;
+        _maxHealth = snapshot.PlayerMaxHealth;
         _onPersonItems = snapshot.OnPersonItems
             .Select(entry => new OnPersonEntry(entry.Item, entry.IsEquipped))
             .ToList();

@@ -10,6 +10,8 @@ public sealed record PlayerSnapshot(
     int Money,
     IReadOnlyList<Item> MainStash,
     IReadOnlyList<OnPersonSnapshot> OnPersonItems,
+    int PlayerConstitution,
+    int PlayerMaxHealth,
     [property: JsonConverter(typeof(FlexibleDateTimeOffsetJsonConverter))]
     DateTimeOffset RandomCharacterAvailableAt,
     RandomCharacterSnapshot? RandomCharacter,

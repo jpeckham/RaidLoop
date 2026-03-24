@@ -86,7 +86,7 @@ as $$
     end;
 $$;
 
-create or replace function game.build_raid_snapshot(loadout jsonb, raider_name text)
+create or replace function game.build_raid_snapshot(loadout jsonb, raider_name text, player_max_health int)
 returns jsonb
 language plpgsql
 volatile
@@ -140,7 +140,7 @@ begin
     end if;
 
     return jsonb_build_object(
-        'health', 30,
+        'health', greatest(coalesce(player_max_health, 30), 1),
         'backpackCapacity', game.backpack_capacity(equipped_backpack_name),
         'ammo', game.weapon_magazine_capacity(equipped_weapon_name),
         'weaponMalfunction', false,
@@ -176,6 +176,7 @@ declare
     loadout jsonb := '[]'::jsonb;
     raid_snapshot jsonb;
     raider_name text := 'Main Character';
+    player_max_health int;
     idx int;
     entry jsonb;
 begin
@@ -186,6 +187,7 @@ begin
     save_payload := game.normalize_save_payload(game.bootstrap_player(target_user_id));
     on_person_items := coalesce(save_payload->'onPersonItems', '[]'::jsonb);
     random_character := save_payload->'randomCharacter';
+    player_max_health := greatest(coalesce((save_payload->>'playerMaxHealth')::int, 30), 1);
 
     if action = 'start-main-raid' then
         if random_character is not null and jsonb_array_length(coalesce(random_character->'inventory', '[]'::jsonb)) > 0 then
@@ -217,7 +219,7 @@ begin
             loadout := loadout || jsonb_build_array(game.normalize_item(entry));
         end loop;
 
-        raid_snapshot := game.build_raid_snapshot(loadout, raider_name);
+        raid_snapshot := game.build_raid_snapshot(loadout, raider_name, player_max_health);
 
         insert into public.raid_sessions (user_id, profile, payload)
         values (target_user_id, 'main', raid_snapshot)
@@ -249,7 +251,7 @@ begin
         );
         raider_name := random_character->>'name';
         loadout := coalesce(random_character->'inventory', '[]'::jsonb);
-        raid_snapshot := game.build_raid_snapshot(loadout, raider_name);
+        raid_snapshot := game.build_raid_snapshot(loadout, raider_name, player_max_health);
 
         insert into public.raid_sessions (user_id, profile, payload)
         values (target_user_id, 'random', raid_snapshot)
@@ -292,5 +294,5 @@ revoke all on function game.random_raider_name() from public;
 revoke all on function game.random_luck_run_loadout() from public;
 revoke all on function game.random_container_name() from public;
 revoke all on function game.random_loot_items() from public;
-revoke all on function game.build_raid_snapshot(jsonb, text) from public;
+revoke all on function game.build_raid_snapshot(jsonb, text, int) from public;
 revoke all on function game.start_raid_action(text, jsonb, uuid) from public;

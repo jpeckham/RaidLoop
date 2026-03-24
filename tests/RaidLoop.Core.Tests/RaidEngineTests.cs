@@ -100,6 +100,15 @@ public class RaidEngineTests
         Assert.Equal(expected, CombatBalance.GetAbilityModifier(score));
     }
 
+    [Theory]
+    [InlineData(0, 10)]
+    [InlineData(10, 30)]
+    [InlineData(12, 34)]
+    public void CombatBalance_MaxHealth_UsesConstitutionRule(int constitution, int expectedMaxHealth)
+    {
+        Assert.Equal(expectedMaxHealth, CombatBalance.GetMaxHealthFromConstitution(constitution));
+    }
+
     [Fact]
     public void CombatBalance_HigherDexterity_IncreasesRangedAttackBonus()
     {

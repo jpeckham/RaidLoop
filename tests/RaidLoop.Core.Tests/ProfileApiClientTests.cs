@@ -22,6 +22,8 @@ public sealed class ProfileApiClientTests
                     Money: 640,
                     MainStash: [ItemCatalog.Create("Makarov")],
                     OnPersonItems: [new OnPersonSnapshot(ItemCatalog.Create("Small Backpack"), true)],
+                    PlayerConstitution: 10,
+                    PlayerMaxHealth: 30,
                     RandomCharacterAvailableAt: DateTimeOffset.MinValue,
                     RandomCharacter: null,
                     ActiveRaid: null));

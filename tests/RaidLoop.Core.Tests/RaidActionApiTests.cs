@@ -48,6 +48,7 @@ public sealed class RaidActionApiTests
         Assert.Equal(7, Assert.IsType<int>(GetField(home, "_ammo")));
         Assert.Equal(11, Assert.IsType<int>(GetField(home, "_enemyHealth")));
         Assert.Equal("Scav", Assert.IsType<string>(GetField(home, "_enemyName")));
+        Assert.Equal(34, Assert.IsType<int>(GetField(home, "_maxHealth")));
     }
 
     [Fact]
@@ -178,6 +179,7 @@ public sealed class RaidActionApiTests
     private static void SeedRaid(Home home)
     {
         SetField(home, "_inRaid", true);
+        SetField(home, "_maxHealth", 34);
         SetField(home, "_raid", new RaidState(
             30,
             RaidInventory.FromItems([ItemCatalog.Create("AK74"), ItemCatalog.Create("Small Backpack")], [], 3)));
@@ -252,7 +254,7 @@ public sealed class RaidActionApiTests
             return Task.FromResult(new AuthBootstrapResponse(
                 true,
                 "player@example.com",
-                new PlayerSnapshot(500, [], [], DateTimeOffset.MinValue, null, null)));
+                new PlayerSnapshot(500, [], [], 12, 34, DateTimeOffset.MinValue, null, null)));
         }
     }
 

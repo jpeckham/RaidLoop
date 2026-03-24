@@ -36,6 +36,8 @@ public sealed class HomeMarkupBindingTests
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026032202_add_dexterity_stats.sql"));
     private static readonly string ConstitutionMigrationPath = Path.GetFullPath(
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026032301_add_constitution_and_health.sql"));
+    private static readonly string MaxHealthHotfixMigrationPath = Path.GetFullPath(
+        Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026032401_fix_zero_player_max_health.sql"));
     private static readonly string WeaponArmorPenetrationMigrationPath = Path.GetFullPath(
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026032203_add_weapon_armor_penetration.sql"));
     private static readonly string D20GunDamageMigrationPath = Path.GetFullPath(
@@ -598,6 +600,21 @@ public sealed class HomeMarkupBindingTests
         Assert.Contains("player_max_health", raidActionMigration);
         Assert.DoesNotContain("health := greatest(coalesce((raid_payload->>'health')::int, 30), 0);", raidActionMigration);
         Assert.DoesNotContain("health := least(30, health + 10);", raidActionMigration);
+    }
+
+    [Fact]
+    public void MaxHealthHotfixMigrationRepairsNonPositiveSavedMaxHealthValues()
+    {
+        var migration = File.ReadAllText(MaxHealthHotfixMigrationPath);
+
+        Assert.Contains("create or replace function game.normalize_save_payload(payload jsonb)", migration);
+        Assert.Contains("normalized_player_constitution int", migration);
+        Assert.Contains("derived_player_max_health int", migration);
+        Assert.Contains("normalized_player_max_health int", migration);
+        Assert.Contains("coalesce(nullif(greatest(coalesce((payload->>'playerMaxHealth')::int, (payload->>'PlayerMaxHealth')::int, 0), 0), 0), derived_player_max_health)", migration);
+        Assert.Contains("update public.game_saves", migration);
+        Assert.Contains("payload = game.normalize_save_payload(payload)", migration);
+        Assert.Contains("payload is distinct from game.normalize_save_payload(payload)", migration);
     }
 
     [Fact]

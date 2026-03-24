@@ -8,6 +8,28 @@
 
 **Tech Stack:** Supabase SQL migrations, PostgreSQL PL/pgSQL, SQL helper functions, JSONB payload helpers, local Supabase CLI verification
 
+## Task 1 Inventory Notes
+
+### Duplicate-Pattern Checklist
+
+- repeated `select ... from game.item_defs where name = ... and enabled` in `game.authored_item` and the item stat helpers currently redefined in `supabase/migrations/2026032301_add_item_defs_table.sql`
+- repeated weighted running-sum selection CTEs in `game.random_enemy_loadout_from_table`, `game.random_loot_items_from_table`, and both extraction/default encounter branches in `game.generate_raid_encounter` from `supabase/migrations/2026032302_add_authored_loot_and_encounter_tables.sql`
+- repeated joins from authored variant item tables back to `game.item_defs` in enemy-loadout and loot-table JSON generation in `supabase/migrations/2026032302_add_authored_loot_and_encounter_tables.sql`
+- repeated name-based stat lookups in combat/action code, with the latest effective `game.perform_raid_action` definition still in `supabase/migrations/2026032205_remove_gun_malfunctions_and_clear_jams.sql`
+
+### Latest Effective Runtime Files
+
+`rg -n "create or replace function game\.(authored_item|weapon_magazine_capacity|backpack_capacity|weapon_armor_penetration|armor_damage_reduction|weapon_supports_single_shot|weapon_supports_burst_fire|weapon_supports_full_auto|weapon_burst_attack_penalty|roll_weapon_damage_d20|random_enemy_loadout_from_table|random_loot_items_from_table|generate_raid_encounter|perform_raid_action)" supabase/migrations` currently resolves the latest definitions to:
+
+- `supabase/migrations/2026032301_add_item_defs_table.sql` for `game.authored_item` and the item stat helper layer
+- `supabase/migrations/2026032302_add_authored_loot_and_encounter_tables.sql` for authored weighted selection and encounter generation
+- `supabase/migrations/2026032205_remove_gun_malfunctions_and_clear_jams.sql` for the latest effective `game.perform_raid_action`
+
+### Intended Helper Boundaries
+
+- one canonical item-definition fetch path for enabled item rows by `name` and by `item_key`
+- one narrowly shared weighted-entry selection layer for authored enemy loadouts, authored loot variants, and encounter entries
+- no public RPC payload shape changes in this increment; helper refactors stay internal unless a payload adds a backward-compatible `itemKey`
 ---
 
 ### Task 1: Inventory Current Duplicate Lookup Patterns

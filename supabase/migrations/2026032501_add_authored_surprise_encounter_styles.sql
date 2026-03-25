@@ -7,6 +7,7 @@ begin
         select 1
         from pg_constraint
         where conname = 'encounter_table_entries_contact_state_check'
+          and conrelid = 'game.encounter_table_entries'::regclass
     ) then
         alter table game.encounter_table_entries
             add constraint encounter_table_entries_contact_state_check

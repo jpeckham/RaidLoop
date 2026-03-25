@@ -21,9 +21,10 @@ Combat encounters currently begin as a flat contact state. The game has no conce
 
 **Approved Model**
 
-Combat starts with an `opening phase` before normal combat resolution:
+Combat starts with an authored `opening phase` before normal combat resolution:
 
-- Encounter generation assigns a `contact state`.
+- Encounter context chooses a combat family.
+- A weighted authored combat row inside that family supplies the exact `contact state`, title, and description.
 - `Contact state` determines whether either side begins with `surprise`.
 - If one side has surprise, that side gets the opening action window.
 - If neither side has surprise, both sides resolve `initiative` and the winner gets opening control.
@@ -31,27 +32,37 @@ Combat starts with an `opening phase` before normal combat resolution:
 
 This keeps the d20 feel of ambush and quick-draw advantage without requiring a full initiative ladder across the entire fight.
 
+The first implemented authored families are:
+
+- `default_raid_travel`
+- `loot_interruption`
+- `extract_approach`
+
+Each family uses an effectively even split across:
+
+- `PlayerAmbush` `33%`
+- `EnemyAmbush` `33%`
+- `MutualContact` `34%`
+
 **Contact States**
 
-The first increment should keep contact states simple and authored by encounter context:
+The implemented contact states are:
 
 - `MutualContact`
-- `PlayerAdvantaged`
-- `EnemyAdvantaged`
 - `PlayerAmbush`
 - `EnemyAmbush`
 
-These are intentionally descriptive rather than mechanical. The resolver converts them into opening-phase effects.
+These are authored on combat encounter rows in the SQL encounter tables. The backend resolver converts them into opening-phase effects.
 
 **Opening Phase Rules**
 
-- `No surprise`: resolve initiative to determine opening control.
-- `Player surprise`: the player receives the opening action window.
-- `Enemy surprise`: the enemy receives the opening action window.
+- `PlayerAmbush`: player surprise, `openingActionsRemaining = 1`, `initiativeWinner = None`
+- `EnemyAmbush`: enemy surprise, `openingActionsRemaining = 1`, `initiativeWinner = None`
+- `MutualContact`: no surprise, roll initiative immediately, `openingActionsRemaining = 0`
 - Surprise normally expires after the opening action window is consumed.
-- Initiative is only used when surprise is absent, or later when both sides are fully engaged.
+- Initiative happens after surprise, not instead of surprise.
 
-For the first increment, `opening control` should mean the acting side resolves the first attack opportunity before the normal exchange proceeds. This is the clearest player-facing effect and the easiest rule to extend later.
+For the first increment, `opening control` means the acting side resolves the first attack opportunity before the normal exchange proceeds. `MutualContact` is the only state that rolls initiative immediately at encounter creation.
 
 **Future Extension Hooks**
 
@@ -70,7 +81,7 @@ This avoids hard-coding “suppressor equals extra round” while supporting the
 
 **Data Model Direction**
 
-The raid/combat payload should gain a small opening-phase projection rather than overloading encounter description text alone. The core resolver should also accept a structured opening-phase context so future modifier values can be carried without changing the method shape again. A minimal future-proof shape is:
+The raid/combat payload should gain a small opening-phase projection rather than overloading encounter description text alone. Combat encounter rows should also carry an authored `contact_state`, and the core resolver should accept a structured opening-phase context so future modifier values can be carried without changing the method shape again. A minimal future-proof shape is:
 
 - `ContactState`
 - `SurpriseSide`
@@ -94,7 +105,7 @@ The UI should communicate the opening state as encounter flavor and log text, no
 
 **Approach**
 
-Implement the mechanic as an opening-phase layer around existing combat resolution. Start with context-authored contact states, resolve surprise or initiative into a one-step opening advantage, then continue through the current combat path. Do not introduce full encounter-round sequencing in this increment.
+Implement the mechanic as an opening-phase layer around existing combat resolution. Context selects an authored combat family, the backend chooses a weighted encounter row from that family, then the resolver turns its `contact_state` into surprise or initiative state and continues through the current combat path. Do not introduce full encounter-round sequencing in this increment.
 
 **Testing Strategy**
 

@@ -242,6 +242,11 @@ function buildRaidProjectionWithLogOptions(activeRaid, { includeFullLogEntries, 
     encounterType: activeRaid?.encounterType ?? "Neutral",
     encounterTitle: activeRaid?.encounterTitle ?? "",
     encounterDescription: activeRaid?.encounterDescription ?? "",
+    contactState: normalizeOpeningStateText(activeRaid?.contactState),
+    surpriseSide: normalizeOpeningStateText(activeRaid?.surpriseSide),
+    initiativeWinner: normalizeOpeningStateText(activeRaid?.initiativeWinner),
+    openingActionsRemaining: normalizeOpeningActionsRemaining(activeRaid?.openingActionsRemaining),
+    surprisePersistenceEligible: activeRaid?.surprisePersistenceEligible ?? false,
     enemyName: activeRaid?.enemyName ?? "",
     enemyHealth: activeRaid?.enemyHealth ?? 0,
     lootContainer: activeRaid?.lootContainer ?? "",
@@ -295,4 +300,12 @@ function getKnownLogCount(payload) {
   }
 
   return Number.isInteger(payload.knownLogCount) ? payload.knownLogCount : 0;
+}
+
+function normalizeOpeningStateText(value) {
+  return typeof value === "string" && value.trim().length > 0 ? value : "None";
+}
+
+function normalizeOpeningActionsRemaining(value) {
+  return Number.isInteger(value) && value >= 0 ? value : 0;
 }

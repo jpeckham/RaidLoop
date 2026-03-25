@@ -526,6 +526,36 @@ public partial class Home : IDisposable
             hasRaidPatch = true;
         }
 
+        if (TryGetString(raid, "contactState", out var contactState))
+        {
+            _contactState = string.IsNullOrWhiteSpace(contactState) ? string.Empty : contactState;
+            hasRaidPatch = true;
+        }
+
+        if (TryGetString(raid, "surpriseSide", out var surpriseSide))
+        {
+            _surpriseSide = string.IsNullOrWhiteSpace(surpriseSide) ? string.Empty : surpriseSide;
+            hasRaidPatch = true;
+        }
+
+        if (TryGetString(raid, "initiativeWinner", out var initiativeWinner))
+        {
+            _initiativeWinner = string.IsNullOrWhiteSpace(initiativeWinner) ? string.Empty : initiativeWinner;
+            hasRaidPatch = true;
+        }
+
+        if (TryGetInt32(raid, "openingActionsRemaining", out var openingActionsRemaining))
+        {
+            _openingActionsRemaining = openingActionsRemaining;
+            hasRaidPatch = true;
+        }
+
+        if (TryGetBool(raid, "surprisePersistenceEligible", out var surprisePersistenceEligible))
+        {
+            _surprisePersistenceEligible = surprisePersistenceEligible;
+            hasRaidPatch = true;
+        }
+
         if (TryGetString(raid, "enemyName", out var enemyName))
         {
             _enemyName = enemyName;

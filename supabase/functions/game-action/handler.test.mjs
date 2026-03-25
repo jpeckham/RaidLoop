@@ -259,6 +259,11 @@ test("game-action returns raid-started projections for start-main-raid", async (
   assert.deepEqual(body.event, { action: "start-main-raid" });
   assert.equal(body.projections.raid.health, 27);
   assert.equal(body.projections.raid.ammo, 9);
+  assert.equal(body.projections.raid.contactState, "None");
+  assert.equal(body.projections.raid.surpriseSide, "None");
+  assert.equal(body.projections.raid.initiativeWinner, "None");
+  assert.equal(body.projections.raid.openingActionsRemaining, 0);
+  assert.equal(body.projections.raid.surprisePersistenceEligible, false);
   assert.equal(body.projections.raid.equippedItems[0].name, "AK74");
   assert.equal(body.snapshot, undefined);
 });
@@ -324,6 +329,11 @@ test("game-action returns raid-started projections for start-random-raid", async
   assert.deepEqual(body.event, { action: "start-random-raid" });
   assert.equal(body.projections.luckRun.randomCharacter.name, "Ghost-101");
   assert.equal(body.projections.raid.encounterType, "Loot");
+  assert.equal(body.projections.raid.contactState, "None");
+  assert.equal(body.projections.raid.surpriseSide, "None");
+  assert.equal(body.projections.raid.initiativeWinner, "None");
+  assert.equal(body.projections.raid.openingActionsRemaining, 0);
+  assert.equal(body.projections.raid.surprisePersistenceEligible, false);
   assert.equal(body.projections.raid.logEntries[0], "Raid started as Ghost-101.");
 });
 
@@ -352,6 +362,11 @@ test("game-action returns combat-resolved projections with appended log entries"
           encounterType: "Combat",
           encounterTitle: "Combat Encounter",
           encounterDescription: "Enemy contact on your position.",
+          contactState: "PlayerAmbush",
+          surpriseSide: "Player",
+          initiativeWinner: "None",
+          openingActionsRemaining: 1,
+          surprisePersistenceEligible: true,
           enemyName: "Scav",
           enemyHealth: 8,
           lootContainer: "",
@@ -389,6 +404,11 @@ test("game-action returns combat-resolved projections with appended log entries"
   assert.equal(body.projections.raid.health, 24);
   assert.equal(body.projections.raid.enemyHealth, 8);
   assert.equal(body.projections.raid.ammo, 7);
+  assert.equal(body.projections.raid.contactState, "PlayerAmbush");
+  assert.equal(body.projections.raid.surpriseSide, "Player");
+  assert.equal(body.projections.raid.initiativeWinner, "None");
+  assert.equal(body.projections.raid.openingActionsRemaining, 1);
+  assert.equal(body.projections.raid.surprisePersistenceEligible, true);
   assert.deepEqual(body.projections.raid.logEntriesAdded, [
     "You hit Scav for 4.",
     "Scav hits you for 3.",

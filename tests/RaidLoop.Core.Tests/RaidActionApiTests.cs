@@ -24,6 +24,11 @@ public sealed class RaidActionApiTests
                     "weaponMalfunction": false,
                     "encounterType": "Combat",
                     "encounterDescription": "Server combat",
+                    "contactState": "PlayerAmbush",
+                    "surpriseSide": "Player",
+                    "initiativeWinner": "None",
+                    "openingActionsRemaining": 1,
+                    "surprisePersistenceEligible": true,
                     "enemyName": "Scav",
                     "enemyHealth": 11,
                     "lootContainer": "Dead Body",
@@ -49,6 +54,7 @@ public sealed class RaidActionApiTests
         Assert.Equal(11, Assert.IsType<int>(GetField(home, "_enemyHealth")));
         Assert.Equal("Scav", Assert.IsType<string>(GetField(home, "_enemyName")));
         Assert.Equal(34, Assert.IsType<int>(GetField(home, "_maxHealth")));
+        AssertOpeningPhaseFields(home, "PlayerAmbush", "Player", "None", 1, true);
     }
 
     [Fact]
@@ -65,6 +71,11 @@ public sealed class RaidActionApiTests
                     "weaponMalfunction": false,
                     "encounterType": "Loot",
                     "encounterDescription": "Server loot",
+                    "contactState": "None",
+                    "surpriseSide": "None",
+                    "initiativeWinner": "None",
+                    "openingActionsRemaining": 0,
+                    "surprisePersistenceEligible": false,
                     "enemyName": "",
                     "enemyHealth": 0,
                     "lootContainer": "Dead Body",
@@ -91,6 +102,7 @@ public sealed class RaidActionApiTests
         var raid = Assert.IsType<RaidState>(GetField(home, "_raid"));
         Assert.Equal("Bandage", Assert.Single(raid.Inventory.CarriedItems).Name);
         Assert.Empty(raid.Inventory.DiscoveredLoot);
+        AssertOpeningPhaseFields(home, "None", "None", "None", 0, false);
     }
 
     [Fact]
@@ -105,6 +117,11 @@ public sealed class RaidActionApiTests
                     "weaponMalfunction": false,
                     "encounterType": "Loot",
                     "encounterDescription": "Server loot",
+                    "contactState": "None",
+                    "surpriseSide": "None",
+                    "initiativeWinner": "None",
+                    "openingActionsRemaining": 0,
+                    "surprisePersistenceEligible": false,
                     "enemyName": "",
                     "enemyHealth": 0,
                     "lootContainer": "Dead Body",
@@ -130,6 +147,7 @@ public sealed class RaidActionApiTests
         Assert.Equal(EncounterType.Loot, Assert.IsType<EncounterType>(GetField(home, "_encounterType")));
         var raid = Assert.IsType<RaidState>(GetField(home, "_raid"));
         Assert.Equal("Scrap Metal", Assert.Single(raid.Inventory.DiscoveredLoot).Name);
+        AssertOpeningPhaseFields(home, "None", "None", "None", 0, false);
     }
 
     [Fact]
@@ -144,6 +162,11 @@ public sealed class RaidActionApiTests
                     "weaponMalfunction": false,
                     "encounterType": "Extraction",
                     "encounterDescription": "Server extraction",
+                    "contactState": "None",
+                    "surpriseSide": "None",
+                    "initiativeWinner": "None",
+                    "openingActionsRemaining": 0,
+                    "surprisePersistenceEligible": false,
                     "enemyName": "",
                     "enemyHealth": 0,
                     "lootContainer": "Dead Body",
@@ -166,6 +189,7 @@ public sealed class RaidActionApiTests
         Assert.Single(actionClient.Requests);
         Assert.Equal(EncounterType.Extraction, Assert.IsType<EncounterType>(GetField(home, "_encounterType")));
         Assert.Equal("Server extraction", Assert.IsType<string>(GetField(home, "_encounterDescription")));
+        AssertOpeningPhaseFields(home, "None", "None", "None", 0, false);
     }
 
     private static Home CreateHome(FakeGameActionApiClient actionClient)
@@ -184,6 +208,11 @@ public sealed class RaidActionApiTests
             30,
             RaidInventory.FromItems([ItemCatalog.Create("AK74"), ItemCatalog.Create("Small Backpack")], [], 3)));
         SetField(home, "_encounterType", EncounterType.Combat);
+        SetField(home, "_contactState", "PlayerAmbush");
+        SetField(home, "_surpriseSide", "Player");
+        SetField(home, "_initiativeWinner", "None");
+        SetField(home, "_openingActionsRemaining", 1);
+        SetField(home, "_surprisePersistenceEligible", true);
         SetField(home, "_enemyName", "Old Scav");
         SetField(home, "_enemyHealth", 15);
         SetField(home, "_ammo", 8);
@@ -229,6 +258,21 @@ public sealed class RaidActionApiTests
         var field = instance.GetType().GetField(fieldName, BindingFlags.Instance | BindingFlags.NonPublic);
         Assert.NotNull(field);
         return field!.GetValue(instance);
+    }
+
+    private static void AssertOpeningPhaseFields(
+        Home home,
+        string contactState,
+        string surpriseSide,
+        string initiativeWinner,
+        int openingActionsRemaining,
+        bool surprisePersistenceEligible)
+    {
+        Assert.Equal(contactState, Assert.IsType<string>(GetField(home, "_contactState")));
+        Assert.Equal(surpriseSide, Assert.IsType<string>(GetField(home, "_surpriseSide")));
+        Assert.Equal(initiativeWinner, Assert.IsType<string>(GetField(home, "_initiativeWinner")));
+        Assert.Equal(openingActionsRemaining, Assert.IsType<int>(GetField(home, "_openingActionsRemaining")));
+        Assert.Equal(surprisePersistenceEligible, Assert.IsType<bool>(GetField(home, "_surprisePersistenceEligible")));
     }
 
     private static async Task InvokePrivateAsync(object instance, string methodName, params object[] args)

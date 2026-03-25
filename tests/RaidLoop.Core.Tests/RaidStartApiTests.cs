@@ -35,6 +35,11 @@ public sealed class RaidStartApiTests
                             "encounterType": "Combat",
                             "encounterTitle": "Server Encounter",
                             "encounterDescription": "Server combat",
+                            "contactState": "PlayerAmbush",
+                            "surpriseSide": "Player",
+                            "initiativeWinner": "None",
+                            "openingActionsRemaining": 1,
+                            "surprisePersistenceEligible": true,
                             "enemyName": "Server Scav",
                             "enemyHealth": 17,
                             "lootContainer": "Dead Body",
@@ -73,6 +78,11 @@ public sealed class RaidStartApiTests
         Assert.Equal(17, Assert.IsType<int>(GetField(home, "_enemyHealth")));
         Assert.Equal(34, Assert.IsType<int>(GetField(home, "_maxHealth")));
         Assert.Equal(EncounterType.Combat, Assert.IsType<EncounterType>(GetField(home, "_encounterType")));
+        Assert.Equal("PlayerAmbush", Assert.IsType<string>(GetField(home, "_contactState")));
+        Assert.Equal("Player", Assert.IsType<string>(GetField(home, "_surpriseSide")));
+        Assert.Equal("None", Assert.IsType<string>(GetField(home, "_initiativeWinner")));
+        Assert.Equal(1, Assert.IsType<int>(GetField(home, "_openingActionsRemaining")));
+        Assert.True(Assert.IsType<bool>(GetField(home, "_surprisePersistenceEligible")));
         var raid = Assert.IsType<RaidState>(GetField(home, "_raid"));
         Assert.Equal("AK74", raid.Inventory.EquippedWeapon?.Name);
         Assert.Equal("Small Backpack", raid.Inventory.EquippedBackpack?.Name);
@@ -112,6 +122,11 @@ public sealed class RaidStartApiTests
                             "encounterType": "Loot",
                             "encounterTitle": "Server Encounter",
                             "encounterDescription": "Server loot",
+                            "contactState": "None",
+                            "surpriseSide": "None",
+                            "initiativeWinner": "None",
+                            "openingActionsRemaining": 0,
+                            "surprisePersistenceEligible": false,
                             "enemyName": "",
                             "enemyHealth": 0,
                             "lootContainer": "Dead Body",
@@ -145,6 +160,11 @@ public sealed class RaidStartApiTests
         Assert.Equal("Server loot", Assert.IsType<string>(GetField(home, "_encounterDescription")));
         Assert.Equal(8, Assert.IsType<int>(GetField(home, "_ammo")));
         Assert.Equal(34, Assert.IsType<int>(GetField(home, "_maxHealth")));
+        Assert.Equal("None", Assert.IsType<string>(GetField(home, "_contactState")));
+        Assert.Equal("None", Assert.IsType<string>(GetField(home, "_surpriseSide")));
+        Assert.Equal("None", Assert.IsType<string>(GetField(home, "_initiativeWinner")));
+        Assert.Equal(0, Assert.IsType<int>(GetField(home, "_openingActionsRemaining")));
+        Assert.False(Assert.IsType<bool>(GetField(home, "_surprisePersistenceEligible")));
         var raid = Assert.IsType<RaidState>(GetField(home, "_raid"));
         Assert.Equal("Makarov", raid.Inventory.EquippedWeapon?.Name);
     }

@@ -12,7 +12,7 @@
 
 ### Duplicate-Pattern Checklist
 
-- repeated `select ... from game.item_defs where name = ... and enabled` in `game.authored_item` and the item stat helpers currently redefined in `supabase/migrations/20260323015_add_item_defs_table.sql`
+- repeated `select ... from game.item_defs where name = ... and enabled` in `game.authored_item` and the item stat helpers currently redefined in `supabase/migrations/2026032301_add_item_defs_table.sql`
 - repeated weighted running-sum selection CTEs in `game.random_enemy_loadout_from_table`, `game.random_loot_items_from_table`, and both extraction/default encounter branches in `game.generate_raid_encounter` from `supabase/migrations/2026032302_add_authored_loot_and_encounter_tables.sql`
 - repeated joins from authored variant item tables back to `game.item_defs` in enemy-loadout and loot-table JSON generation in `supabase/migrations/2026032302_add_authored_loot_and_encounter_tables.sql`
 - repeated name-based stat lookups in combat/action code, with the latest effective `game.perform_raid_action` definition still in `supabase/migrations/2026032205_remove_gun_malfunctions_and_clear_jams.sql`
@@ -21,7 +21,7 @@
 
 `rg -n "create or replace function game\.(authored_item|weapon_magazine_capacity|backpack_capacity|weapon_armor_penetration|armor_damage_reduction|weapon_supports_single_shot|weapon_supports_burst_fire|weapon_supports_full_auto|weapon_burst_attack_penalty|roll_weapon_damage_d20|random_enemy_loadout_from_table|random_loot_items_from_table|generate_raid_encounter|perform_raid_action)" supabase/migrations` currently resolves the latest definitions to:
 
-- `supabase/migrations/20260323015_add_item_defs_table.sql` for `game.authored_item` and the item stat helper layer
+- `supabase/migrations/2026032301_add_item_defs_table.sql` for `game.authored_item` and the item stat helper layer
 - `supabase/migrations/2026032302_add_authored_loot_and_encounter_tables.sql` for authored weighted selection and encounter generation
 - `supabase/migrations/2026032205_remove_gun_malfunctions_and_clear_jams.sql` for the latest effective `game.perform_raid_action`
 
@@ -36,7 +36,7 @@
 
 **Files:**
 - Modify: `C:/Users/james/source/repos/extractor-shooter-light/.worktrees/data-driven-authoring/docs/plans/2026-03-23-item-key-lookups-and-shared-selection-helpers.md`
-- Reference: `C:/Users/james/source/repos/extractor-shooter-light/.worktrees/data-driven-authoring/supabase/migrations/20260323015_add_item_defs_table.sql`
+- Reference: `C:/Users/james/source/repos/extractor-shooter-light/.worktrees/data-driven-authoring/supabase/migrations/2026032301_add_item_defs_table.sql`
 - Reference: `C:/Users/james/source/repos/extractor-shooter-light/.worktrees/data-driven-authoring/supabase/migrations/2026032302_add_authored_loot_and_encounter_tables.sql`
 - Reference: `C:/Users/james/source/repos/extractor-shooter-light/.worktrees/data-driven-authoring/supabase/migrations/2026032205_remove_gun_malfunctions_and_clear_jams.sql`
 
@@ -74,7 +74,7 @@ git commit -m "docs: inventory duplicate lookup patterns"
 
 **Files:**
 - Create: `C:/Users/james/source/repos/extractor-shooter-light/.worktrees/data-driven-authoring/supabase/migrations/2026032303_add_item_lookup_helpers.sql`
-- Reference: `C:/Users/james/source/repos/extractor-shooter-light/.worktrees/data-driven-authoring/supabase/migrations/20260323015_add_item_defs_table.sql`
+- Reference: `C:/Users/james/source/repos/extractor-shooter-light/.worktrees/data-driven-authoring/supabase/migrations/2026032301_add_item_defs_table.sql`
 
 **Step 1: Write the failing verification queries in migration notes**
 
@@ -122,7 +122,7 @@ git commit -m "feat: add canonical item lookup helpers"
 
 **Files:**
 - Modify: `C:/Users/james/source/repos/extractor-shooter-light/.worktrees/data-driven-authoring/supabase/migrations/2026032303_add_item_lookup_helpers.sql`
-- Reference: `C:/Users/james/source/repos/extractor-shooter-light/.worktrees/data-driven-authoring/supabase/migrations/20260323015_add_item_defs_table.sql`
+- Reference: `C:/Users/james/source/repos/extractor-shooter-light/.worktrees/data-driven-authoring/supabase/migrations/2026032301_add_item_defs_table.sql`
 
 **Step 1: Write parity checks**
 
@@ -235,7 +235,7 @@ git commit -m "refactor: share weighted selection logic across authored generato
 
 **Files:**
 - Create: `C:/Users/james/source/repos/extractor-shooter-light/.worktrees/data-driven-authoring/supabase/migrations/2026032305_add_internal_item_key_usage.sql`
-- Reference: `C:/Users/james/source/repos/extractor-shooter-light/.worktrees/data-driven-authoring/supabase/migrations/20260323015_add_item_defs_table.sql`
+- Reference: `C:/Users/james/source/repos/extractor-shooter-light/.worktrees/data-driven-authoring/supabase/migrations/2026032301_add_item_defs_table.sql`
 - Reference: `C:/Users/james/source/repos/extractor-shooter-light/.worktrees/data-driven-authoring/supabase/migrations/2026032302_add_authored_loot_and_encounter_tables.sql`
 
 **Step 1: Define the compatibility rule**

@@ -108,7 +108,7 @@ git commit -m "feat: persist constitution and max health in player snapshot"
 
 **Files:**
 - Modify: `tests/RaidLoop.Core.Tests/HomeMarkupBindingTests.cs`
-- Create: `supabase/migrations/2026032301_add_constitution_and_health.sql`
+- Create: `supabase/migrations/2026032304_add_constitution_and_health.sql`
 
 **Step 1: Write the failing test**
 
@@ -142,7 +142,7 @@ Expected: PASS
 **Step 5: Commit**
 
 ```bash
-git add tests/RaidLoop.Core.Tests/HomeMarkupBindingTests.cs supabase/migrations/2026032301_add_constitution_and_health.sql
+git add tests/RaidLoop.Core.Tests/HomeMarkupBindingTests.cs supabase/migrations/2026032304_add_constitution_and_health.sql
 git commit -m "feat: backfill constitution and max health in save payload"
 ```
 
@@ -241,7 +241,7 @@ git commit -m "feat: use persisted max health in raid sql flows"
 **Files:**
 - Modify: `src/RaidLoop.Client/Pages/Home.razor.cs`
 - Modify: `src/RaidLoop.Core/Contracts/PlayerSnapshot.cs`
-- Modify: `supabase/migrations/2026032301_add_constitution_and_health.sql`
+- Modify: `supabase/migrations/2026032304_add_constitution_and_health.sql`
 - Modify: `tests/RaidLoop.Core.Tests/*.cs`
 
 **Step 1: Run targeted suites**
@@ -261,7 +261,7 @@ Expected: PASS
 Run:
 
 ```bash
-git diff -- docs/plans/2026-03-23-constitution-health-design.md docs/plans/2026-03-23-constitution-health-implementation.md src/RaidLoop.Core/CombatBalance.cs src/RaidLoop.Core/Contracts/PlayerSnapshot.cs src/RaidLoop.Client/Pages/Home.razor.cs supabase/migrations/2026032301_add_constitution_and_health.sql supabase/migrations/2026031807_game_raid_start_functions.sql supabase/migrations/2026031809_game_raid_action_functions.sql tests/RaidLoop.Core.Tests/RaidEngineTests.cs tests/RaidLoop.Core.Tests/ContractsTests.cs tests/RaidLoop.Core.Tests/RaidStartApiTests.cs tests/RaidLoop.Core.Tests/RaidActionApiTests.cs tests/RaidLoop.Core.Tests/HomeMarkupBindingTests.cs
+git diff -- docs/plans/2026-03-23-constitution-health-design.md docs/plans/2026-03-23-constitution-health-implementation.md src/RaidLoop.Core/CombatBalance.cs src/RaidLoop.Core/Contracts/PlayerSnapshot.cs src/RaidLoop.Client/Pages/Home.razor.cs supabase/migrations/2026032304_add_constitution_and_health.sql supabase/migrations/2026031807_game_raid_start_functions.sql supabase/migrations/2026031809_game_raid_action_functions.sql tests/RaidLoop.Core.Tests/RaidEngineTests.cs tests/RaidLoop.Core.Tests/ContractsTests.cs tests/RaidLoop.Core.Tests/RaidStartApiTests.cs tests/RaidLoop.Core.Tests/RaidActionApiTests.cs tests/RaidLoop.Core.Tests/HomeMarkupBindingTests.cs
 ```
 
 Expected: Only constitution/max-health related changes.
@@ -269,6 +269,6 @@ Expected: Only constitution/max-health related changes.
 **Step 4: Final commit**
 
 ```bash
-git add docs/plans/2026-03-23-constitution-health-design.md docs/plans/2026-03-23-constitution-health-implementation.md src/RaidLoop.Core/CombatBalance.cs src/RaidLoop.Core/Contracts/PlayerSnapshot.cs src/RaidLoop.Client/Pages/Home.razor.cs supabase/migrations/2026032301_add_constitution_and_health.sql supabase/migrations/2026031807_game_raid_start_functions.sql supabase/migrations/2026031809_game_raid_action_functions.sql tests/RaidLoop.Core.Tests/RaidEngineTests.cs tests/RaidLoop.Core.Tests/ContractsTests.cs tests/RaidLoop.Core.Tests/RaidStartApiTests.cs tests/RaidLoop.Core.Tests/RaidActionApiTests.cs tests/RaidLoop.Core.Tests/HomeMarkupBindingTests.cs
+git add docs/plans/2026-03-23-constitution-health-design.md docs/plans/2026-03-23-constitution-health-implementation.md src/RaidLoop.Core/CombatBalance.cs src/RaidLoop.Core/Contracts/PlayerSnapshot.cs src/RaidLoop.Client/Pages/Home.razor.cs supabase/migrations/2026032304_add_constitution_and_health.sql supabase/migrations/2026031807_game_raid_start_functions.sql supabase/migrations/2026031809_game_raid_action_functions.sql tests/RaidLoop.Core.Tests/RaidEngineTests.cs tests/RaidLoop.Core.Tests/ContractsTests.cs tests/RaidLoop.Core.Tests/RaidStartApiTests.cs tests/RaidLoop.Core.Tests/RaidActionApiTests.cs tests/RaidLoop.Core.Tests/HomeMarkupBindingTests.cs
 git commit -m "feat: add constitution-based player max health"
 ```

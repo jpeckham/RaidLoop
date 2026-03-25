@@ -36,7 +36,7 @@ public sealed class HomeMarkupBindingTests
     private static readonly string DexterityMigrationPath = Path.GetFullPath(
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026032202_add_dexterity_stats.sql"));
     private static readonly string ConstitutionMigrationPath = Path.GetFullPath(
-        Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026032301_add_constitution_and_health.sql"));
+        Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026032304_add_constitution_and_health.sql"));
     private static readonly string MaxHealthHotfixMigrationPath = Path.GetFullPath(
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026032401_fix_zero_player_max_health.sql"));
     private static readonly string WeaponArmorPenetrationMigrationPath = Path.GetFullPath(

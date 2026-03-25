@@ -296,7 +296,7 @@ Add a short verification note to this plan or a follow-up handoff doc describing
 
 **Verification Notes**
 
-- `game.item_defs` was added in [20260323015_add_item_defs_table.sql](C:/Users/james/source/repos/extractor-shooter-light/.worktrees/data-driven-authoring/supabase/migrations/20260323015_add_item_defs_table.sql) with 22 seeded rows and parity-oriented fallback defaults.
+- `game.item_defs` was added in [2026032301_add_item_defs_table.sql](C:/Users/james/source/repos/extractor-shooter-light/.worktrees/data-driven-authoring/supabase/migrations/2026032301_add_item_defs_table.sql) with 22 seeded rows and parity-oriented fallback defaults.
 - `game.authored_item`, `game.weapon_magazine_capacity`, `game.backpack_capacity`, `game.weapon_armor_penetration`, `game.armor_damage_reduction`, `game.weapon_supports_*`, `game.weapon_burst_attack_penalty`, and `game.roll_weapon_damage_d20` were redefined in the same migration to read from `game.item_defs`.
 - Table-backed lookup functions that were previously marked `immutable` were downgraded to `stable` because they now depend on persisted row data.
 - Current callers remain untouched and continue to use the same function names. This kept phase 1 isolated to schema and lookup logic.

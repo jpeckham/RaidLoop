@@ -43,6 +43,8 @@ public sealed class HomeMarkupBindingTests
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026032203_add_weapon_armor_penetration.sql"));
     private static readonly string D20GunDamageMigrationPath = Path.GetFullPath(
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026032205_remove_gun_malfunctions_and_clear_jams.sql"));
+    private static readonly string CombatOutcomeFlavorMigrationPath = Path.GetFullPath(
+        Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026032402_add_combat_outcome_flavor.sql"));
     private static readonly string SupabaseAuthServicePath = Path.GetFullPath(
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "RaidLoop.Client", "Services", "SupabaseAuthService.cs"));
     private static readonly string ClientTelemetryServicePath = Path.GetFullPath(
@@ -703,15 +705,31 @@ public sealed class HomeMarkupBindingTests
     [Fact]
     public void D20GunDamageMigrationPinsCombatOutcomeFlavorForMissEvadeArmorAndHit()
     {
-        var migration = File.ReadAllText(D20GunDamageMigrationPath);
+        var migration = File.ReadAllText(CombatOutcomeFlavorMigrationPath);
 
+        Assert.Contains("armor_hit_bonus int not null default 0", migration);
         Assert.Contains("create or replace function game.armor_hit_bonus", migration);
+        Assert.Contains("create or replace function game.classify_attack_outcome", migration);
+        Assert.Contains("create or replace function game.describe_player_attack_outcome", migration);
+        Assert.Contains("create or replace function game.describe_enemy_attack_outcome", migration);
         Assert.Contains("attack_total < 10", migration);
         Assert.Contains("attack_total < 10 + dodge_bonus", migration);
         Assert.Contains("attack_total < 10 + dodge_bonus + armor_bonus", migration);
+        Assert.Contains("when 'miss'", migration);
+        Assert.Contains("when 'evaded'", migration);
+        Assert.Contains("when 'armor-absorbed'", migration);
+        Assert.Contains("when 'hit'", migration);
+        Assert.Contains("enemy_armor_bonus", migration);
+        Assert.Contains("player_armor_bonus", migration);
+        Assert.Contains("player_attack_total", migration);
+        Assert.Contains("enemy_attack_total", migration);
+        Assert.Contains("attack_outcome := game.classify_attack_outcome(", migration);
+        Assert.Contains("game.describe_player_attack_outcome", migration);
+        Assert.Contains("game.describe_enemy_attack_outcome", migration);
         Assert.Contains("evades your attack", migration);
         Assert.Contains("absorbed by armor", migration);
         Assert.Contains("armor absorbs", migration);
+        Assert.Contains("6b43_zabralo_sh_body_armor", migration);
     }
 
     [Fact]

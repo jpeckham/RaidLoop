@@ -33,13 +33,13 @@ public sealed class RaidStartApiTests
                             "extractProgress": 1,
                             "extractRequired": 3,
                             "encounterType": "Combat",
-                            "encounterTitle": "Server Encounter",
-                            "encounterDescription": "Server combat",
-                            "contactState": "PlayerAmbush",
-                            "surpriseSide": "Player",
+                            "encounterTitle": "Extract Route Ambush",
+                            "encounterDescription": "You are ambushed while moving between positions.",
+                            "contactState": "EnemyAmbush",
+                            "surpriseSide": "Enemy",
                             "initiativeWinner": "None",
                             "openingActionsRemaining": 1,
-                            "surprisePersistenceEligible": true,
+                            "surprisePersistenceEligible": false,
                             "enemyName": "Server Scav",
                             "enemyHealth": 17,
                             "lootContainer": "Dead Body",
@@ -78,14 +78,92 @@ public sealed class RaidStartApiTests
         Assert.Equal(17, Assert.IsType<int>(GetField(home, "_enemyHealth")));
         Assert.Equal(34, Assert.IsType<int>(GetField(home, "_maxHealth")));
         Assert.Equal(EncounterType.Combat, Assert.IsType<EncounterType>(GetField(home, "_encounterType")));
-        Assert.Equal("PlayerAmbush", Assert.IsType<string>(GetField(home, "_contactState")));
-        Assert.Equal("Player", Assert.IsType<string>(GetField(home, "_surpriseSide")));
+        Assert.Equal("EnemyAmbush", Assert.IsType<string>(GetField(home, "_contactState")));
+        Assert.Equal("Enemy", Assert.IsType<string>(GetField(home, "_surpriseSide")));
         Assert.Equal("None", Assert.IsType<string>(GetField(home, "_initiativeWinner")));
         Assert.Equal(1, Assert.IsType<int>(GetField(home, "_openingActionsRemaining")));
-        Assert.True(Assert.IsType<bool>(GetField(home, "_surprisePersistenceEligible")));
+        Assert.False(Assert.IsType<bool>(GetField(home, "_surprisePersistenceEligible")));
         var raid = Assert.IsType<RaidState>(GetField(home, "_raid"));
         Assert.Equal("AK74", raid.Inventory.EquippedWeapon?.Name);
         Assert.Equal("Small Backpack", raid.Inventory.EquippedBackpack?.Name);
+    }
+
+    [Fact]
+    public async Task StartRandomRaidAsync_CallsBackend_And_HydratesMutualContactCombatSnapshot()
+    {
+        var actionClient = new FakeGameActionApiClient
+        {
+            ResponseFactory = request =>
+            {
+                Assert.Equal("start-random-raid", request.Action);
+                return new GameActionResult(
+                    "RaidStarted",
+                    null,
+                    JsonDocument.Parse("""
+                        {
+                          "luckRun": {
+                            "randomCharacterAvailableAt": "0001-01-01T00:00:00+00:00",
+                            "randomCharacter": {
+                              "name": "Ghost-101",
+                              "inventory": [
+                                { "name": "Makarov", "type": 0, "value": 60, "slots": 1, "rarity": 0, "displayRarity": 1 }
+                              ]
+                            }
+                          },
+                          "raid": {
+                            "health": 27,
+                            "backpackCapacity": 3,
+                            "ammo": 8,
+                            "weaponMalfunction": false,
+                            "medkits": 1,
+                            "lootSlots": 0,
+                            "extractProgress": 1,
+                            "extractRequired": 3,
+                            "encounterType": "Combat",
+                            "encounterTitle": "Roadside Contact",
+                            "encounterDescription": "You and a scav patrol spot each other at the same moment.",
+                            "contactState": "MutualContact",
+                            "surpriseSide": "None",
+                            "initiativeWinner": "Player",
+                            "openingActionsRemaining": 0,
+                            "surprisePersistenceEligible": false,
+                            "enemyName": "Road Scav",
+                            "enemyHealth": 14,
+                            "lootContainer": "Dead Body",
+                            "awaitingDecision": false,
+                            "discoveredLoot": [],
+                            "carriedLoot": [],
+                            "equippedItems": [
+                              { "name": "Makarov", "type": 0, "value": 60, "slots": 1, "rarity": 0, "displayRarity": 1 }
+                            ],
+                            "logEntries": ["Raid started on server."]
+                          }
+                        }
+                        """).RootElement.Clone(),
+                    null);
+            }
+        };
+        var home = CreateHome(actionClient);
+        InvokePrivateVoid(
+            home,
+            "ApplySnapshot",
+            new PlayerSnapshot(500, [], [], 12, 34, DateTimeOffset.MinValue, null, null));
+
+        SetField(home, "_randomCharacterAvailableAt", DateTimeOffset.MinValue);
+        SetField(home, "_randomCharacter", null);
+
+        await InvokePrivateAsync(home, "StartRandomRaidAsync");
+
+        Assert.Single(actionClient.Requests);
+        Assert.True(Assert.IsType<bool>(GetField(home, "_inRaid")));
+        Assert.Equal(EncounterType.Combat, Assert.IsType<EncounterType>(GetField(home, "_encounterType")));
+        Assert.Equal("MutualContact", Assert.IsType<string>(GetField(home, "_contactState")));
+        Assert.Equal("None", Assert.IsType<string>(GetField(home, "_surpriseSide")));
+        Assert.Equal("Player", Assert.IsType<string>(GetField(home, "_initiativeWinner")));
+        Assert.Equal(0, Assert.IsType<int>(GetField(home, "_openingActionsRemaining")));
+        Assert.False(Assert.IsType<bool>(GetField(home, "_surprisePersistenceEligible")));
+        Assert.Equal("Road Scav", Assert.IsType<string>(GetField(home, "_enemyName")));
+        Assert.Equal(14, Assert.IsType<int>(GetField(home, "_enemyHealth")));
     }
 
     [Fact]

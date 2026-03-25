@@ -304,12 +304,14 @@ declare
     dropped_item jsonb;
     loot_count int;
     enemy_dropped_items jsonb;
+    player_max_health int;
 begin
     if target_user_id is null then
         raise exception 'Authenticated user required';
     end if;
 
     save_payload := game.normalize_save_payload(game.bootstrap_player(target_user_id));
+    player_max_health := greatest(coalesce((save_payload->>'playerMaxHealth')::int, 30), 1);
     player_dexterity := greatest(coalesce((save_payload->>'playerDexterity')::int, 10), 0);
 
     select raid_sessions.profile, raid_sessions.payload
@@ -332,7 +334,7 @@ begin
     enemy_dexterity := greatest(coalesce((raid_payload->>'enemyDexterity')::int, 10), 0);
     ammo := greatest(coalesce((raid_payload->>'ammo')::int, 0), 0);
     medkits := greatest(coalesce((raid_payload->>'medkits')::int, 0), 0);
-    health := greatest(coalesce((raid_payload->>'health')::int, 30), 0);
+    health := greatest(coalesce((raid_payload->>'health')::int, player_max_health), 0);
     extract_required := greatest(coalesce((raid_payload->>'extractRequired')::int, 3), 1);
     extraction_combat := coalesce((raid_payload->>'extractionCombat')::boolean, false);
     equipped_weapon := game.raid_find_equipped_item(equipped_items, 0);
@@ -494,7 +496,7 @@ begin
     elsif action = 'use-medkit' then
         if medkits > 0 then
             medkits := medkits - 1;
-            health := least(30, health + 10);
+            health := least(player_max_health, health + 10);
             log_entries := game.raid_append_log(log_entries, 'Medkit used (+10 HP).');
 
             if encounter_type = 'Combat' then

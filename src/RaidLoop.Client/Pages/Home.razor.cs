@@ -40,6 +40,11 @@ public partial class Home : IDisposable
     private bool _awaitingDecision;
     private EncounterType _encounterType = EncounterType.Neutral;
     private string _encounterDescription = string.Empty;
+    private string _contactState = string.Empty;
+    private string _surpriseSide = string.Empty;
+    private string _initiativeWinner = string.Empty;
+    private int _openingActionsRemaining;
+    private bool _surprisePersistenceEligible;
 
     private string _enemyName = string.Empty;
     private int _enemyHealth;
@@ -430,6 +435,11 @@ public partial class Home : IDisposable
             _extractProgress = 0;
             _ammo = 0;
             _encounterDescription = string.Empty;
+            _contactState = string.Empty;
+            _surpriseSide = string.Empty;
+            _initiativeWinner = string.Empty;
+            _openingActionsRemaining = 0;
+            _surprisePersistenceEligible = false;
             _enemyName = string.Empty;
             _enemyHealth = 0;
             _lootContainer = string.Empty;
@@ -601,6 +611,11 @@ public partial class Home : IDisposable
         _ammo = 0;
         _encounterType = EncounterType.Neutral;
         _encounterDescription = string.Empty;
+        _contactState = string.Empty;
+        _surpriseSide = string.Empty;
+        _initiativeWinner = string.Empty;
+        _openingActionsRemaining = 0;
+        _surprisePersistenceEligible = false;
         _enemyName = string.Empty;
         _enemyHealth = 0;
         _lootContainer = string.Empty;
@@ -1129,6 +1144,11 @@ public partial class Home : IDisposable
         {
             _raid = null;
             _inRaid = false;
+            _contactState = string.Empty;
+            _surpriseSide = string.Empty;
+            _initiativeWinner = string.Empty;
+            _openingActionsRemaining = 0;
+            _surprisePersistenceEligible = false;
             return;
         }
 
@@ -1151,6 +1171,11 @@ public partial class Home : IDisposable
         _extractProgress = snapshot.ExtractProgress;
         _ammo = snapshot.Ammo;
         _encounterDescription = snapshot.EncounterDescription;
+        _contactState = string.IsNullOrWhiteSpace(snapshot.ContactState) ? string.Empty : snapshot.ContactState;
+        _surpriseSide = string.IsNullOrWhiteSpace(snapshot.SurpriseSide) ? string.Empty : snapshot.SurpriseSide;
+        _initiativeWinner = string.IsNullOrWhiteSpace(snapshot.InitiativeWinner) ? string.Empty : snapshot.InitiativeWinner;
+        _openingActionsRemaining = snapshot.OpeningActionsRemaining;
+        _surprisePersistenceEligible = snapshot.SurprisePersistenceEligible;
         _enemyName = snapshot.EnemyName;
         _enemyHealth = snapshot.EnemyHealth;
         _lootContainer = snapshot.LootContainer;

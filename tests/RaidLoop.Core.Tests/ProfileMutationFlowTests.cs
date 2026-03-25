@@ -631,6 +631,11 @@ public sealed class ProfileMutationFlowTests
         Assert.Equal(0, Assert.IsType<int>(GetField(home, "_ammo")));
         Assert.Equal(EncounterType.Neutral, Assert.IsType<EncounterType>(GetField(home, "_encounterType")));
         Assert.Equal(string.Empty, Assert.IsType<string>(GetField(home, "_encounterDescription")));
+        Assert.Equal(string.Empty, Assert.IsType<string>(GetField(home, "_contactState")));
+        Assert.Equal(string.Empty, Assert.IsType<string>(GetField(home, "_surpriseSide")));
+        Assert.Equal(string.Empty, Assert.IsType<string>(GetField(home, "_initiativeWinner")));
+        Assert.Equal(0, Assert.IsType<int>(GetField(home, "_openingActionsRemaining")));
+        Assert.False(Assert.IsType<bool>(GetField(home, "_surprisePersistenceEligible")));
         Assert.Equal(string.Empty, Assert.IsType<string>(GetField(home, "_enemyName")));
         Assert.Equal(0, Assert.IsType<int>(GetField(home, "_enemyHealth")));
         Assert.Equal(string.Empty, Assert.IsType<string>(GetField(home, "_lootContainer")));
@@ -715,6 +720,11 @@ public sealed class ProfileMutationFlowTests
     public void ApplySnapshot_ClearsEmptyRandomCharacter_And_LeavesReadyStateWhenCooldownMissing()
     {
         var home = CreateHome(new FakeGameActionApiClient());
+        SetField(home, "_contactState", "PlayerAmbush");
+        SetField(home, "_surpriseSide", "Player");
+        SetField(home, "_initiativeWinner", "Player");
+        SetField(home, "_openingActionsRemaining", 2);
+        SetField(home, "_surprisePersistenceEligible", true);
 
         InvokePrivateVoid(
             home,
@@ -731,6 +741,11 @@ public sealed class ProfileMutationFlowTests
 
         Assert.Null(GetField(home, "_randomCharacter"));
         Assert.Equal(DateTimeOffset.MinValue, Assert.IsType<DateTimeOffset>(GetField(home, "_randomCharacterAvailableAt")));
+        Assert.Equal(string.Empty, Assert.IsType<string>(GetField(home, "_contactState")));
+        Assert.Equal(string.Empty, Assert.IsType<string>(GetField(home, "_surpriseSide")));
+        Assert.Equal(string.Empty, Assert.IsType<string>(GetField(home, "_initiativeWinner")));
+        Assert.Equal(0, Assert.IsType<int>(GetField(home, "_openingActionsRemaining")));
+        Assert.False(Assert.IsType<bool>(GetField(home, "_surprisePersistenceEligible")));
     }
 
     [Fact]
@@ -754,6 +769,104 @@ public sealed class ProfileMutationFlowTests
 
         Assert.Null(GetField(home, "_randomCharacter"));
         Assert.Equal(expectedCooldown, Assert.IsType<DateTimeOffset>(GetField(home, "_randomCharacterAvailableAt")));
+    }
+
+    [Fact]
+    public void ApplySnapshot_AppliesOpeningPhaseStateFromActiveRaidSnapshot()
+    {
+        var home = CreateHome(new FakeGameActionApiClient());
+
+        InvokePrivateVoid(
+            home,
+            "ApplySnapshot",
+            new PlayerSnapshot(
+                Money: 500,
+                MainStash: [],
+                OnPersonItems: [],
+                PlayerConstitution: 10,
+                PlayerMaxHealth: 30,
+                RandomCharacterAvailableAt: DateTimeOffset.MinValue,
+                RandomCharacter: null,
+                ActiveRaid: new RaidSnapshot(
+                    Health: 30,
+                    BackpackCapacity: 3,
+                    Ammo: 8,
+                    WeaponMalfunction: false,
+                    Medkits: 1,
+                    LootSlots: 0,
+                    ExtractProgress: 0,
+                    ExtractRequired: 3,
+                    EncounterType: "Combat",
+                    EncounterTitle: "Ambush",
+                    EncounterDescription: "They spotted you first.",
+                    EnemyName: "Scav",
+                    EnemyHealth: 12,
+                    LootContainer: string.Empty,
+                    AwaitingDecision: false,
+                    ContactState: "PlayerAmbush",
+                    SurpriseSide: "Player",
+                    InitiativeWinner: "None",
+                    OpeningActionsRemaining: 1,
+                    SurprisePersistenceEligible: true,
+                    DiscoveredLoot: [],
+                    CarriedLoot: [],
+                    EquippedItems: [],
+                    LogEntries: [])));
+
+        Assert.Equal("PlayerAmbush", Assert.IsType<string>(GetField(home, "_contactState")));
+        Assert.Equal("Player", Assert.IsType<string>(GetField(home, "_surpriseSide")));
+        Assert.Equal("None", Assert.IsType<string>(GetField(home, "_initiativeWinner")));
+        Assert.Equal(1, Assert.IsType<int>(GetField(home, "_openingActionsRemaining")));
+        Assert.True(Assert.IsType<bool>(GetField(home, "_surprisePersistenceEligible")));
+    }
+
+    [Fact]
+    public void ApplySnapshot_NormalizesMissingOpeningPhaseState_WhenActiveRaidSnapshotHasNullValues()
+    {
+        var home = CreateHome(new FakeGameActionApiClient());
+
+        InvokePrivateVoid(
+            home,
+            "ApplySnapshot",
+            new PlayerSnapshot(
+                Money: 500,
+                MainStash: [],
+                OnPersonItems: [],
+                PlayerConstitution: 10,
+                PlayerMaxHealth: 30,
+                RandomCharacterAvailableAt: DateTimeOffset.MinValue,
+                RandomCharacter: null,
+                ActiveRaid: new RaidSnapshot(
+                    Health: 30,
+                    BackpackCapacity: 3,
+                    Ammo: 8,
+                    WeaponMalfunction: false,
+                    Medkits: 1,
+                    LootSlots: 0,
+                    ExtractProgress: 0,
+                    ExtractRequired: 3,
+                    EncounterType: "Combat",
+                    EncounterTitle: "Ambush",
+                    EncounterDescription: "They spotted you first.",
+                    EnemyName: "Scav",
+                    EnemyHealth: 12,
+                    LootContainer: string.Empty,
+                    AwaitingDecision: false,
+                    ContactState: null!,
+                    SurpriseSide: null!,
+                    InitiativeWinner: null!,
+                    OpeningActionsRemaining: 0,
+                    SurprisePersistenceEligible: false,
+                    DiscoveredLoot: [],
+                    CarriedLoot: [],
+                    EquippedItems: [],
+                    LogEntries: [])));
+
+        Assert.Equal(string.Empty, Assert.IsType<string>(GetField(home, "_contactState")));
+        Assert.Equal(string.Empty, Assert.IsType<string>(GetField(home, "_surpriseSide")));
+        Assert.Equal(string.Empty, Assert.IsType<string>(GetField(home, "_initiativeWinner")));
+        Assert.Equal(0, Assert.IsType<int>(GetField(home, "_openingActionsRemaining")));
+        Assert.False(Assert.IsType<bool>(GetField(home, "_surprisePersistenceEligible")));
     }
 
     private static Home CreateHome(

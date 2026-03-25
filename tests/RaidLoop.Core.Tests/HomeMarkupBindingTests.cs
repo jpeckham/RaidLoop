@@ -701,6 +701,20 @@ public sealed class HomeMarkupBindingTests
     }
 
     [Fact]
+    public void D20GunDamageMigrationPinsCombatOutcomeFlavorForMissEvadeArmorAndHit()
+    {
+        var migration = File.ReadAllText(D20GunDamageMigrationPath);
+
+        Assert.Contains("create or replace function game.armor_hit_bonus", migration);
+        Assert.Contains("attack_total < 10", migration);
+        Assert.Contains("attack_total < 10 + dodge_bonus", migration);
+        Assert.Contains("attack_total < 10 + dodge_bonus + armor_bonus", migration);
+        Assert.Contains("evades your attack", migration);
+        Assert.Contains("absorbed by armor", migration);
+        Assert.Contains("armor absorbs", migration);
+    }
+
+    [Fact]
     public void ClientDoesNotExposeGenericProfileSnapshotSavePath()
     {
         var profileApiClient = File.ReadAllText(ProfileApiClientPath);

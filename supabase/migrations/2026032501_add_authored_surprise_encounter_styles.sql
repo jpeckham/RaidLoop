@@ -95,6 +95,11 @@ begin
     updated_payload := jsonb_set(updated_payload, '{awaitingDecision}', 'false'::jsonb, true);
     updated_payload := jsonb_set(updated_payload, '{extractionCombat}', 'false'::jsonb, true);
     updated_payload := jsonb_set(updated_payload, '{extractProgress}', to_jsonb(extract_progress), true);
+    updated_payload := jsonb_set(updated_payload, '{contactState}', to_jsonb('None'::text), true);
+    updated_payload := jsonb_set(updated_payload, '{surpriseSide}', to_jsonb('None'::text), true);
+    updated_payload := jsonb_set(updated_payload, '{initiativeWinner}', to_jsonb('None'::text), true);
+    updated_payload := jsonb_set(updated_payload, '{openingActionsRemaining}', to_jsonb(0), true);
+    updated_payload := jsonb_set(updated_payload, '{surprisePersistenceEligible}', to_jsonb(false), true);
 
     if extract_progress >= extract_required then
         with weighted_entries as (
@@ -202,10 +207,24 @@ begin
         updated_payload := jsonb_set(updated_payload, '{encounterType}', to_jsonb('Combat'::text), true);
         updated_payload := jsonb_set(updated_payload, '{encounterTitle}', to_jsonb(coalesce(selected_entry.title, game.encounter_title('Combat'))), true);
         updated_payload := jsonb_set(updated_payload, '{encounterDescription}', to_jsonb(coalesce(selected_entry.description, 'Enemy contact on your position.'::text)), true);
+        updated_payload := jsonb_set(updated_payload, '{contactState}', to_jsonb(coalesce(selected_entry.contact_state, 'MutualContact'::text)), true);
         updated_payload := jsonb_set(updated_payload, '{enemyName}', to_jsonb(coalesce(selected_entry.enemy_name, ''::text)), true);
         updated_payload := jsonb_set(updated_payload, '{enemyHealth}', to_jsonb(enemy_health), true);
         updated_payload := jsonb_set(updated_payload, '{lootContainer}', to_jsonb(''::text), true);
         updated_payload := jsonb_set(updated_payload, '{enemyLoadout}', enemy_loadout, true);
+        if selected_entry.contact_state = 'PlayerAmbush' then
+            updated_payload := jsonb_set(updated_payload, '{surpriseSide}', to_jsonb('Player'::text), true);
+            updated_payload := jsonb_set(updated_payload, '{initiativeWinner}', to_jsonb('None'::text), true);
+            updated_payload := jsonb_set(updated_payload, '{openingActionsRemaining}', to_jsonb(1), true);
+        elsif selected_entry.contact_state = 'EnemyAmbush' then
+            updated_payload := jsonb_set(updated_payload, '{surpriseSide}', to_jsonb('Enemy'::text), true);
+            updated_payload := jsonb_set(updated_payload, '{initiativeWinner}', to_jsonb('None'::text), true);
+            updated_payload := jsonb_set(updated_payload, '{openingActionsRemaining}', to_jsonb(1), true);
+        else
+            updated_payload := jsonb_set(updated_payload, '{surpriseSide}', to_jsonb('None'::text), true);
+            updated_payload := jsonb_set(updated_payload, '{initiativeWinner}', to_jsonb(case when random() < 0.5 then 'Player'::text else 'Enemy'::text end), true);
+            updated_payload := jsonb_set(updated_payload, '{openingActionsRemaining}', to_jsonb(0), true);
+        end if;
         updated_payload := jsonb_set(updated_payload, '{logEntries}', log_entries, true);
         return updated_payload;
     end if;

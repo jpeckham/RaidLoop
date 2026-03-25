@@ -1,7 +1,22 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 
 import { createGameActionHandler } from "./handler.mjs";
+
+test("surprise encounter migration writes authoritative opening phase fields", async () => {
+  const migration = readFileSync(
+    new URL("../../migrations/2026032501_add_authored_surprise_encounter_styles.sql", import.meta.url),
+    "utf8",
+  );
+
+  assert.match(migration, /jsonb_set\(updated_payload, '\{contactState\}', to_jsonb\(coalesce\(selected_entry\.contact_state, 'MutualContact'::text\)\), true\)/);
+  assert.match(migration, /selected_entry\.contact_state = 'PlayerAmbush'/);
+  assert.match(migration, /selected_entry\.contact_state = 'EnemyAmbush'/);
+  assert.match(migration, /random\(\) < 0\.5/);
+  assert.match(migration, /openingActionsRemaining/);
+  assert.match(migration, /surprisePersistenceEligible/);
+});
 
 test("game-action responds to preflight requests", async () => {
   const handler = createGameActionHandler({
@@ -366,7 +381,7 @@ test("game-action returns combat-resolved projections with appended log entries"
           surpriseSide: "Player",
           initiativeWinner: "None",
           openingActionsRemaining: 1,
-          surprisePersistenceEligible: true,
+          surprisePersistenceEligible: false,
           enemyName: "Scav",
           enemyHealth: 8,
           lootContainer: "",
@@ -408,12 +423,79 @@ test("game-action returns combat-resolved projections with appended log entries"
   assert.equal(body.projections.raid.surpriseSide, "Player");
   assert.equal(body.projections.raid.initiativeWinner, "None");
   assert.equal(body.projections.raid.openingActionsRemaining, 1);
-  assert.equal(body.projections.raid.surprisePersistenceEligible, true);
+  assert.equal(body.projections.raid.surprisePersistenceEligible, false);
   assert.deepEqual(body.projections.raid.logEntriesAdded, [
     "You hit Scav for 4.",
     "Scav hits you for 3.",
   ]);
   assert.equal(body.projections.raid.logEntries, undefined);
+});
+
+test("game-action returns mutual-contact combat projections with initiative winner", async () => {
+  const handler = createGameActionHandler({
+    dispatchAction: async (accessToken, action, payload) => {
+      assert.equal(accessToken, "token-123");
+      assert.equal(action, "attack");
+      assert.equal(payload.target, "enemy");
+      assert.equal(payload.knownLogCount, 1);
+      return {
+        money: 500,
+        mainStash: [],
+        onPersonItems: [],
+        randomCharacterAvailableAt: "0001-01-01T00:00:00+00:00",
+        randomCharacter: null,
+        activeRaid: {
+          health: 26,
+          backpackCapacity: 3,
+          ammo: 7,
+          weaponMalfunction: false,
+          medkits: 1,
+          lootSlots: 0,
+          extractProgress: 1,
+          extractRequired: 3,
+          encounterType: "Combat",
+          encounterTitle: "Combat Encounter",
+          encounterDescription: "You and a patrol notice each other at nearly the same moment.",
+          contactState: "MutualContact",
+          surpriseSide: "None",
+          initiativeWinner: "Enemy",
+          openingActionsRemaining: 0,
+          surprisePersistenceEligible: false,
+          enemyName: "Patrol Guard",
+          enemyHealth: 11,
+          lootContainer: "",
+          awaitingDecision: false,
+          discoveredLoot: [],
+          carriedLoot: [],
+          equippedItems: [],
+          logEntries: [
+            "Raid started as Main Character.",
+            "You hit Patrol Guard for 3.",
+          ],
+        },
+      };
+    },
+  });
+
+  const response = await handler(new Request("https://example.test/game-action", {
+    method: "POST",
+    headers: {
+      Authorization: "Bearer token-123",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      action: "attack",
+      payload: { target: "enemy", knownLogCount: 1 },
+    }),
+  }));
+
+  const body = await response.json();
+  assert.equal(body.eventType, "CombatResolved");
+  assert.equal(body.projections.raid.contactState, "MutualContact");
+  assert.equal(body.projections.raid.surpriseSide, "None");
+  assert.equal(body.projections.raid.initiativeWinner, "Enemy");
+  assert.equal(body.projections.raid.openingActionsRemaining, 0);
+  assert.equal(body.projections.raid.surprisePersistenceEligible, false);
 });
 
 test("game-action treats full-auto as a combat action", async () => {

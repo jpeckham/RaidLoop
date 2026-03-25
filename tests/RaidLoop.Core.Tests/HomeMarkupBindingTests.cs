@@ -45,6 +45,8 @@ public sealed class HomeMarkupBindingTests
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026032205_remove_gun_malfunctions_and_clear_jams.sql"));
     private static readonly string CombatOutcomeFlavorMigrationPath = Path.GetFullPath(
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026032402_add_combat_outcome_flavor.sql"));
+    private static readonly string AuthoredSurpriseEncounterStylesMigrationPath = Path.GetFullPath(
+        Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026032501_add_authored_surprise_encounter_styles.sql"));
     private static readonly string SupabaseAuthServicePath = Path.GetFullPath(
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "RaidLoop.Client", "Services", "SupabaseAuthService.cs"));
     private static readonly string ClientTelemetryServicePath = Path.GetFullPath(
@@ -755,6 +757,20 @@ public sealed class HomeMarkupBindingTests
         Assert.Contains("absorbed by armor", migration);
         Assert.Contains("armor absorbs", migration);
         Assert.Contains("6b43_zabralo_sh_body_armor", migration);
+    }
+
+    [Fact]
+    public void AuthoredSurpriseEncounterStylesMigrationPinsContactStatesAndFamilies()
+    {
+        var migration = File.ReadAllText(AuthoredSurpriseEncounterStylesMigrationPath);
+
+        Assert.Contains("contact_state text", migration);
+        Assert.Contains("default_raid_travel", migration);
+        Assert.Contains("loot_interruption", migration);
+        Assert.Contains("extract_approach", migration);
+        Assert.Contains("PlayerAmbush", migration);
+        Assert.Contains("EnemyAmbush", migration);
+        Assert.Contains("MutualContact", migration);
     }
 
     [Fact]

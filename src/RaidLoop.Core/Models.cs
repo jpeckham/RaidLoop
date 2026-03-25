@@ -10,6 +10,20 @@ public enum ItemType
     Material
 }
 
+public enum OpeningContactState
+{
+    MutualContact,
+    PlayerAmbush,
+    EnemyAmbush
+}
+
+public enum OpeningSide
+{
+    None,
+    Player,
+    Enemy
+}
+
 public sealed record Item(
     string Name,
     ItemType Type,
@@ -127,3 +141,10 @@ public sealed class RaidInventory
         return inventory;
     }
 }
+
+public sealed record OpeningPhaseResult(
+    OpeningContactState ContactState,
+    OpeningSide SurpriseSide,
+    OpeningSide InitiativeWinner,
+    int OpeningActionsRemaining,
+    bool SurprisePersistenceEligible);

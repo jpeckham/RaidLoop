@@ -275,6 +275,42 @@ public class RaidEngineTests
     }
 
     [Fact]
+    public void ResolveOpeningPhase_PlayerAmbush_GrantsPlayerSurpriseAndOneOpeningAction()
+    {
+        var result = RaidEngine.ResolveOpeningPhase(OpeningContactState.PlayerAmbush, playerInitiative: 12, enemyInitiative: 8);
+
+        Assert.Equal(OpeningContactState.PlayerAmbush, result.ContactState);
+        Assert.Equal(OpeningSide.Player, result.SurpriseSide);
+        Assert.Equal(OpeningSide.None, result.InitiativeWinner);
+        Assert.Equal(1, result.OpeningActionsRemaining);
+        Assert.False(result.SurprisePersistenceEligible);
+    }
+
+    [Fact]
+    public void ResolveOpeningPhase_EnemyAmbush_GrantsEnemySurpriseAndOneOpeningAction()
+    {
+        var result = RaidEngine.ResolveOpeningPhase(OpeningContactState.EnemyAmbush, playerInitiative: 7, enemyInitiative: 14);
+
+        Assert.Equal(OpeningContactState.EnemyAmbush, result.ContactState);
+        Assert.Equal(OpeningSide.Enemy, result.SurpriseSide);
+        Assert.Equal(OpeningSide.None, result.InitiativeWinner);
+        Assert.Equal(1, result.OpeningActionsRemaining);
+        Assert.False(result.SurprisePersistenceEligible);
+    }
+
+    [Fact]
+    public void ResolveOpeningPhase_MutualContact_UsesInitiativeToSetOpeningControl()
+    {
+        var result = RaidEngine.ResolveOpeningPhase(OpeningContactState.MutualContact, playerInitiative: 15, enemyInitiative: 11);
+
+        Assert.Equal(OpeningContactState.MutualContact, result.ContactState);
+        Assert.Equal(OpeningSide.None, result.SurpriseSide);
+        Assert.Equal(OpeningSide.Player, result.InitiativeWinner);
+        Assert.Equal(1, result.OpeningActionsRemaining);
+        Assert.False(result.SurprisePersistenceEligible);
+    }
+
+    [Fact]
     public void TryAddLoot_RejectsWhenBackpackCapacityExceeded()
     {
         var state = new RaidState(

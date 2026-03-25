@@ -2,6 +2,31 @@ namespace RaidLoop.Core;
 
 public static class RaidEngine
 {
+    public static OpeningPhaseResult ResolveOpeningPhase(OpeningContactState contactState, int playerInitiative, int enemyInitiative)
+    {
+        return contactState switch
+        {
+            OpeningContactState.PlayerAmbush => new OpeningPhaseResult(
+                contactState,
+                OpeningSide.Player,
+                OpeningSide.None,
+                OpeningActionsRemaining: 1,
+                SurprisePersistenceEligible: false),
+            OpeningContactState.EnemyAmbush => new OpeningPhaseResult(
+                contactState,
+                OpeningSide.Enemy,
+                OpeningSide.None,
+                OpeningActionsRemaining: 1,
+                SurprisePersistenceEligible: false),
+            _ => new OpeningPhaseResult(
+                contactState,
+                OpeningSide.None,
+                playerInitiative >= enemyInitiative ? OpeningSide.Player : OpeningSide.Enemy,
+                OpeningActionsRemaining: 1,
+                SurprisePersistenceEligible: false)
+        };
+    }
+
     public static RaidState StartRaid(GameState game, List<Item> loadout, int backpackCapacity, int startingHealth)
     {
         foreach (var item in loadout)

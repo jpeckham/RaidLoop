@@ -15,6 +15,13 @@
 
         @if (EncounterType == EncounterType.Combat)
         {
+            var openingPhaseSummary = GetOpeningPhaseSummary();
+            if (!string.IsNullOrWhiteSpace(openingPhaseSummary))
+            {
+                <div class="opening-phase">
+                    <p>@openingPhaseSummary</p>
+                </div>
+            }
             <p>Enemy: @EnemyName (HP: @EnemyHealth)</p>
             <div class="actions">
                 @if (CanAttack)
@@ -163,6 +170,11 @@
     [Parameter, EditorRequired] public EncounterType EncounterType { get; set; }
     [Parameter, EditorRequired] public string EncounterTitle { get; set; } = string.Empty;
     [Parameter, EditorRequired] public string EncounterDescription { get; set; } = string.Empty;
+    [Parameter] public string ContactState { get; set; } = string.Empty;
+    [Parameter] public string SurpriseSide { get; set; } = string.Empty;
+    [Parameter] public string InitiativeWinner { get; set; } = string.Empty;
+    [Parameter, EditorRequired] public int OpeningActionsRemaining { get; set; }
+    [Parameter, EditorRequired] public bool SurprisePersistenceEligible { get; set; }
     [Parameter] public string EnemyName { get; set; } = string.Empty;
     [Parameter, EditorRequired] public int EnemyHealth { get; set; }
     [Parameter] public string LootContainer { get; set; } = string.Empty;
@@ -195,4 +207,44 @@
     [Parameter, EditorRequired] public EventCallback OnAttemptExtract { get; set; }
     [Parameter, EditorRequired] public EventCallback OnContinueSearching { get; set; }
     [Parameter, EditorRequired] public EventCallback OnMoveTowardExtract { get; set; }
+
+    private string GetOpeningPhaseSummary()
+    {
+        if (Matches(SurpriseSide, "Player"))
+        {
+            return "You spotted them first.";
+        }
+
+        if (Matches(SurpriseSide, "Enemy"))
+        {
+            return "They ambushed you.";
+        }
+
+        if (Matches(InitiativeWinner, "Player"))
+        {
+            return "You won initiative.";
+        }
+
+        if (Matches(InitiativeWinner, "Enemy"))
+        {
+            return "Enemy won initiative.";
+        }
+
+        if (Matches(ContactState, "PlayerAmbush"))
+        {
+            return "You spotted them first.";
+        }
+
+        if (Matches(ContactState, "EnemyAmbush"))
+        {
+            return "They ambushed you.";
+        }
+
+        return string.Empty;
+    }
+
+    private static bool Matches(string value, string expected)
+    {
+        return string.Equals(value, expected, StringComparison.OrdinalIgnoreCase);
+    }
 }

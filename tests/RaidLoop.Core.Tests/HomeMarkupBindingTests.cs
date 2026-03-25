@@ -267,6 +267,31 @@ public sealed class HomeMarkupBindingTests
     }
 
     [Fact]
+    public void HomePassesOpeningPhaseStateToRaidHud()
+    {
+        var markup = File.ReadAllText(HomeMarkupPath);
+
+        Assert.Contains("ContactState=\"@_contactState\"", markup);
+        Assert.Contains("SurpriseSide=\"@_surpriseSide\"", markup);
+        Assert.Contains("InitiativeWinner=\"@_initiativeWinner\"", markup);
+        Assert.Contains("OpeningActionsRemaining=\"_openingActionsRemaining\"", markup);
+        Assert.Contains("SurprisePersistenceEligible=\"_surprisePersistenceEligible\"", markup);
+    }
+
+    [Fact]
+    public void RaidHudShowsCompactOpeningPhaseSummaryDuringCombat()
+    {
+        var markup = File.ReadAllText(RaidHudPath);
+
+        Assert.Contains("class=\"opening-phase\"", markup);
+        Assert.Contains("You spotted them first.", markup);
+        Assert.Contains("They ambushed you.", markup);
+        Assert.Contains("You won initiative.", markup);
+        Assert.Contains("SurpriseSide", markup);
+        Assert.Contains("InitiativeWinner", markup);
+    }
+
+    [Fact]
     public void HomeWiresFullAutoToRaidAction()
     {
         var codeBehind = File.ReadAllText(HomeCodeBehindPath);

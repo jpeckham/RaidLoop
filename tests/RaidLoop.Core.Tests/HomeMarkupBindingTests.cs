@@ -779,6 +779,11 @@ public sealed class HomeMarkupBindingTests
         Assert.Contains("You spot an enemy camp before they see you.", migration);
         Assert.Contains("You hear movement while looting and catch them before they spot you.", migration);
         Assert.Contains("You and a guard on the extraction route notice each other at the same time.", migration);
+        Assert.Contains("selected_combat_table_key text", migration);
+        Assert.Contains("selected_combat_table_key := 'extract_approach';", migration);
+        Assert.Contains("selected_combat_table_key := 'loot_interruption';", migration);
+        Assert.Contains("selected_combat_table_key := 'default_raid_travel';", migration);
+        Assert.Contains("where entries.table_key = selected_combat_table_key", migration);
     }
 
     [Fact]

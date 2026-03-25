@@ -69,3 +69,181 @@ set table_key = excluded.table_key,
     title = excluded.title,
     description = excluded.description,
     enabled = excluded.enabled;
+
+create or replace function game.generate_raid_encounter(raid_payload jsonb, moving_to_extract boolean default false)
+returns jsonb
+language plpgsql
+volatile
+as $$
+declare
+    updated_payload jsonb := coalesce(raid_payload, '{}'::jsonb);
+    extract_progress int := greatest(coalesce((updated_payload->>'extractProgress')::int, 0), 0);
+    extract_required int := greatest(coalesce((updated_payload->>'extractRequired')::int, 3), 1);
+    log_entries jsonb := coalesce(updated_payload->'logEntries', '[]'::jsonb);
+    selected_entry game.encounter_table_entries%rowtype;
+    selected_combat_table_key text := 'default_raid_travel';
+    container_name text;
+    discovered_loot jsonb;
+    enemy_loadout jsonb;
+    enemy_health int;
+begin
+    if moving_to_extract then
+        extract_progress := extract_progress + 1;
+    end if;
+
+    updated_payload := jsonb_set(updated_payload, '{discoveredLoot}', '[]'::jsonb, true);
+    updated_payload := jsonb_set(updated_payload, '{awaitingDecision}', 'false'::jsonb, true);
+    updated_payload := jsonb_set(updated_payload, '{extractionCombat}', 'false'::jsonb, true);
+    updated_payload := jsonb_set(updated_payload, '{extractProgress}', to_jsonb(extract_progress), true);
+
+    if extract_progress >= extract_required then
+        with weighted_entries as (
+            select
+                entries.*,
+                sum(entries.weight) over (order by entries.sort_order, entries.entry_key) as running_weight,
+                sum(entries.weight) over () as total_weight
+            from game.encounter_table_entries entries
+            join game.encounter_tables tables
+                on tables.table_key = entries.table_key
+            where entries.table_key = 'extraction_check'
+              and entries.enabled
+              and tables.enabled
+        ),
+        target_roll as (
+            select floor(random() * max(weighted_entries.total_weight))::int + 1 as target
+            from weighted_entries
+        )
+        select weighted_entries.*
+        into selected_entry
+        from weighted_entries
+        cross join target_roll
+        where weighted_entries.running_weight >= target_roll.target
+        order by weighted_entries.running_weight
+        limit 1;
+
+        if selected_entry.encounter_type = 'Extraction' then
+            log_entries := game.raid_append_log(log_entries, 'Extraction point located.');
+            updated_payload := jsonb_set(updated_payload, '{encounterType}', to_jsonb('Extraction'::text), true);
+            updated_payload := jsonb_set(updated_payload, '{encounterTitle}', to_jsonb(coalesce(selected_entry.title, game.encounter_title('Extraction'))), true);
+            updated_payload := jsonb_set(updated_payload, '{encounterDescription}', to_jsonb(coalesce(selected_entry.description, 'You are near the extraction route.'::text)), true);
+            updated_payload := jsonb_set(updated_payload, '{enemyName}', to_jsonb(''::text), true);
+            updated_payload := jsonb_set(updated_payload, '{enemyHealth}', to_jsonb(0), true);
+            updated_payload := jsonb_set(updated_payload, '{lootContainer}', to_jsonb(''::text), true);
+            updated_payload := jsonb_set(updated_payload, '{enemyLoadout}', '[]'::jsonb, true);
+            updated_payload := jsonb_set(updated_payload, '{logEntries}', log_entries, true);
+            return updated_payload;
+        end if;
+    end if;
+
+    with weighted_entries as (
+        select
+            entries.*,
+            sum(entries.weight) over (order by entries.sort_order, entries.entry_key) as running_weight,
+            sum(entries.weight) over () as total_weight
+        from game.encounter_table_entries entries
+        join game.encounter_tables tables
+            on tables.table_key = entries.table_key
+        where entries.table_key = 'default_raid'
+          and entries.enabled
+          and tables.enabled
+    ),
+    target_roll as (
+        select floor(random() * max(weighted_entries.total_weight))::int + 1 as target
+        from weighted_entries
+    )
+    select weighted_entries.*
+    into selected_entry
+    from weighted_entries
+    cross join target_roll
+    where weighted_entries.running_weight >= target_roll.target
+    order by weighted_entries.running_weight
+    limit 1;
+
+    if selected_entry.encounter_type = 'Combat' then
+        if moving_to_extract then
+            selected_combat_table_key := 'extract_approach';
+        elsif coalesce(updated_payload->>'encounterType', 'Neutral') = 'Loot' then
+            selected_combat_table_key := 'loot_interruption';
+        else
+            selected_combat_table_key := 'default_raid_travel';
+        end if;
+
+        with weighted_entries as (
+            select
+                entries.*,
+                sum(entries.weight) over (order by entries.sort_order, entries.entry_key) as running_weight,
+                sum(entries.weight) over () as total_weight
+            from game.encounter_table_entries entries
+            join game.encounter_tables tables
+                on tables.table_key = entries.table_key
+            where entries.table_key = selected_combat_table_key
+              and entries.enabled
+              and tables.enabled
+        ),
+        target_roll as (
+            select floor(random() * max(weighted_entries.total_weight))::int + 1 as target
+            from weighted_entries
+        )
+        select weighted_entries.*
+        into selected_entry
+        from weighted_entries
+        cross join target_roll
+        where weighted_entries.running_weight >= target_roll.target
+        order by weighted_entries.running_weight
+        limit 1;
+    end if;
+
+    if selected_entry.encounter_type = 'Combat' then
+        enemy_health := selected_entry.enemy_health_min
+            + floor(random() * (selected_entry.enemy_health_max_exclusive - selected_entry.enemy_health_min))::int;
+        enemy_loadout := game.random_enemy_loadout_from_table(coalesce(selected_entry.enemy_loadout_table_key, 'default_enemy_loadout'));
+        log_entries := game.raid_append_log(log_entries, format('Combat started vs %s.', selected_entry.enemy_name));
+
+        updated_payload := jsonb_set(updated_payload, '{encounterType}', to_jsonb('Combat'::text), true);
+        updated_payload := jsonb_set(updated_payload, '{encounterTitle}', to_jsonb(coalesce(selected_entry.title, game.encounter_title('Combat'))), true);
+        updated_payload := jsonb_set(updated_payload, '{encounterDescription}', to_jsonb(coalesce(selected_entry.description, 'Enemy contact on your position.'::text)), true);
+        updated_payload := jsonb_set(updated_payload, '{enemyName}', to_jsonb(coalesce(selected_entry.enemy_name, ''::text)), true);
+        updated_payload := jsonb_set(updated_payload, '{enemyHealth}', to_jsonb(enemy_health), true);
+        updated_payload := jsonb_set(updated_payload, '{lootContainer}', to_jsonb(''::text), true);
+        updated_payload := jsonb_set(updated_payload, '{enemyLoadout}', enemy_loadout, true);
+        updated_payload := jsonb_set(updated_payload, '{logEntries}', log_entries, true);
+        return updated_payload;
+    end if;
+
+    if selected_entry.encounter_type = 'Loot' then
+        select tables.source_name
+        into container_name
+        from game.loot_tables tables
+        where tables.table_key = selected_entry.loot_table_key
+          and tables.enabled
+        limit 1;
+
+        discovered_loot := game.random_loot_items_from_table(selected_entry.loot_table_key);
+        log_entries := game.raid_append_log(
+            log_entries,
+            format('Found %s with %s lootable items.', container_name, jsonb_array_length(discovered_loot)));
+
+        updated_payload := jsonb_set(updated_payload, '{encounterType}', to_jsonb('Loot'::text), true);
+        updated_payload := jsonb_set(updated_payload, '{encounterTitle}', to_jsonb(coalesce(selected_entry.title, game.encounter_title('Loot'))), true);
+        updated_payload := jsonb_set(updated_payload, '{encounterDescription}', to_jsonb(coalesce(selected_entry.description, 'A searchable container appears.'::text)), true);
+        updated_payload := jsonb_set(updated_payload, '{enemyName}', to_jsonb(''::text), true);
+        updated_payload := jsonb_set(updated_payload, '{enemyHealth}', to_jsonb(0), true);
+        updated_payload := jsonb_set(updated_payload, '{lootContainer}', to_jsonb(coalesce(container_name, 'Filing Cabinet'::text)), true);
+        updated_payload := jsonb_set(updated_payload, '{discoveredLoot}', discovered_loot, true);
+        updated_payload := jsonb_set(updated_payload, '{enemyLoadout}', '[]'::jsonb, true);
+        updated_payload := jsonb_set(updated_payload, '{logEntries}', log_entries, true);
+        return updated_payload;
+    end if;
+
+    log_entries := game.raid_append_log(log_entries, 'No enemies or loot found.');
+    updated_payload := jsonb_set(updated_payload, '{encounterType}', to_jsonb('Neutral'::text), true);
+    updated_payload := jsonb_set(updated_payload, '{encounterTitle}', to_jsonb(coalesce(selected_entry.title, game.encounter_title('Neutral'))), true);
+    updated_payload := jsonb_set(updated_payload, '{encounterDescription}', to_jsonb(coalesce(selected_entry.description, 'Area looks quiet. Nothing useful here.'::text)), true);
+    updated_payload := jsonb_set(updated_payload, '{enemyName}', to_jsonb(''::text), true);
+    updated_payload := jsonb_set(updated_payload, '{enemyHealth}', to_jsonb(0), true);
+    updated_payload := jsonb_set(updated_payload, '{lootContainer}', to_jsonb(''::text), true);
+    updated_payload := jsonb_set(updated_payload, '{enemyLoadout}', '[]'::jsonb, true);
+    updated_payload := jsonb_set(updated_payload, '{logEntries}', log_entries, true);
+    return updated_payload;
+end;
+$$;

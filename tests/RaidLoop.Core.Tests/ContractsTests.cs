@@ -35,6 +35,11 @@ public sealed class ContractsTests
                     EnemyHealth: 0,
                     LootContainer: string.Empty,
                     AwaitingDecision: false,
+                    ContactState: "PlayerAmbush",
+                    SurpriseSide: "Player",
+                    InitiativeWinner: "None",
+                    OpeningActionsRemaining: 1,
+                    SurprisePersistenceEligible: false,
                     DiscoveredLoot: [],
                     CarriedLoot: [],
                     EquippedItems: [ItemCatalog.Create("Makarov")],
@@ -51,6 +56,11 @@ public sealed class ContractsTests
         Assert.Equal(10, roundTrip.Snapshot.PlayerConstitution);
         Assert.Equal(30, roundTrip.Snapshot.PlayerMaxHealth);
         Assert.Equal("Neutral", roundTrip.Snapshot.ActiveRaid!.EncounterType);
+        Assert.Equal("PlayerAmbush", roundTrip.Snapshot.ActiveRaid.ContactState);
+        Assert.Equal("Player", roundTrip.Snapshot.ActiveRaid.SurpriseSide);
+        Assert.Equal("None", roundTrip.Snapshot.ActiveRaid.InitiativeWinner);
+        Assert.Equal(1, roundTrip.Snapshot.ActiveRaid.OpeningActionsRemaining);
+        Assert.False(roundTrip.Snapshot.ActiveRaid.SurprisePersistenceEligible);
     }
 
     [Fact]

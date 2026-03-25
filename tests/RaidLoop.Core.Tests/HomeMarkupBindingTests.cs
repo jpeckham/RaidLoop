@@ -764,13 +764,21 @@ public sealed class HomeMarkupBindingTests
     {
         var migration = File.ReadAllText(AuthoredSurpriseEncounterStylesMigrationPath);
 
-        Assert.Contains("contact_state text", migration);
+        Assert.Contains("add column if not exists contact_state text not null default 'MutualContact'", migration);
+        Assert.Contains("encounter_table_entries_contact_state_check", migration);
+        Assert.Contains("update game.encounter_table_entries", migration);
         Assert.Contains("default_raid_travel", migration);
         Assert.Contains("loot_interruption", migration);
         Assert.Contains("extract_approach", migration);
         Assert.Contains("PlayerAmbush", migration);
         Assert.Contains("EnemyAmbush", migration);
         Assert.Contains("MutualContact", migration);
+        Assert.Contains("raid_combat_travel_player_spots_camp", migration);
+        Assert.Contains("raid_combat_loot_player_hears_movement", migration);
+        Assert.Contains("raid_combat_extract_mutual_contact", migration);
+        Assert.Contains("You spot an enemy camp before they see you.", migration);
+        Assert.Contains("You hear movement while looting and catch them before they spot you.", migration);
+        Assert.Contains("You and a guard on the extraction route notice each other at the same time.", migration);
     }
 
     [Fact]

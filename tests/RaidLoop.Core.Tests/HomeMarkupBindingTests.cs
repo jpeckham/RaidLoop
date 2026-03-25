@@ -1,4 +1,5 @@
 using System.IO;
+using System.Linq;
 
 namespace RaidLoop.Core.Tests;
 
@@ -615,6 +616,24 @@ public sealed class HomeMarkupBindingTests
         Assert.Contains("update public.game_saves", migration);
         Assert.Contains("payload = game.normalize_save_payload(payload)", migration);
         Assert.Contains("payload is distinct from game.normalize_save_payload(payload)", migration);
+    }
+
+    [Fact]
+    public void SupabaseMigrationVersionsAreUnique()
+    {
+        var migrationDirectory = Path.GetFullPath(
+            Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations"));
+
+        var duplicateVersions = Directory.GetFiles(migrationDirectory, "*.sql")
+            .Select(Path.GetFileNameWithoutExtension)
+            .Where(static name => !string.IsNullOrWhiteSpace(name))
+            .Select(static name => name!)
+            .GroupBy(static name => name.Split('_')[0], StringComparer.Ordinal)
+            .Where(group => group.Count() > 1)
+            .Select(group => $"{group.Key}: {string.Join(", ", group.OrderBy(name => name, StringComparer.Ordinal))}")
+            .ToArray();
+
+        Assert.Empty(duplicateVersions);
     }
 
     [Fact]

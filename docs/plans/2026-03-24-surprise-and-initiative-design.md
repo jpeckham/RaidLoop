@@ -70,13 +70,14 @@ This avoids hard-coding “suppressor equals extra round” while supporting the
 
 **Data Model Direction**
 
-The raid/combat payload should gain a small opening-phase projection rather than overloading encounter description text alone. A minimal future-proof shape is:
+The raid/combat payload should gain a small opening-phase projection rather than overloading encounter description text alone. The core resolver should also accept a structured opening-phase context so future modifier values can be carried without changing the method shape again. A minimal future-proof shape is:
 
 - `ContactState`
 - `SurpriseSide`
 - `InitiativeWinner`
 - `OpeningActionsRemaining`
 - `SurprisePersistenceEligible`
+- `OpeningPhaseContext` with modifier slots for visibility, environment, player gear, and enemy localization
 
 The first implementation can populate only the fields needed for the new behavior while keeping room for later expansion.
 

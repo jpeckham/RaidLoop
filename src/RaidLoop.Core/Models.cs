@@ -24,6 +24,15 @@ public enum OpeningSide
     Enemy
 }
 
+public sealed record OpeningPhaseContext(
+    OpeningContactState ContactState,
+    int PlayerInitiative,
+    int EnemyInitiative,
+    int TimeOfDayVisibilityModifier = 0,
+    int EnvironmentAwarenessModifier = 0,
+    int PlayerGearAwarenessModifier = 0,
+    int EnemyLocalizationModifier = 0);
+
 public sealed record Item(
     string Name,
     ItemType Type,

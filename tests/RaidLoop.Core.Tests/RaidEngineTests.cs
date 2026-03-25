@@ -311,6 +311,23 @@ public class RaidEngineTests
     }
 
     [Fact]
+    public void ResolveOpeningPhase_ContextWithZeroModifiers_PreservesCurrentBehavior()
+    {
+        var context = new OpeningPhaseContext(
+            OpeningContactState.MutualContact,
+            PlayerInitiative: 15,
+            EnemyInitiative: 11);
+
+        var result = RaidEngine.ResolveOpeningPhase(context);
+
+        Assert.Equal(OpeningContactState.MutualContact, result.ContactState);
+        Assert.Equal(OpeningSide.None, result.SurpriseSide);
+        Assert.Equal(OpeningSide.Player, result.InitiativeWinner);
+        Assert.Equal(1, result.OpeningActionsRemaining);
+        Assert.False(result.SurprisePersistenceEligible);
+    }
+
+    [Fact]
     public void TryAddLoot_RejectsWhenBackpackCapacityExceeded()
     {
         var state = new RaidState(

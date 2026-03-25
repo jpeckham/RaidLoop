@@ -4,24 +4,29 @@ public static class RaidEngine
 {
     public static OpeningPhaseResult ResolveOpeningPhase(OpeningContactState contactState, int playerInitiative, int enemyInitiative)
     {
-        return contactState switch
+        return ResolveOpeningPhase(new OpeningPhaseContext(contactState, playerInitiative, enemyInitiative));
+    }
+
+    public static OpeningPhaseResult ResolveOpeningPhase(OpeningPhaseContext context)
+    {
+        return context.ContactState switch
         {
             OpeningContactState.PlayerAmbush => new OpeningPhaseResult(
-                contactState,
+                context.ContactState,
                 OpeningSide.Player,
                 OpeningSide.None,
                 OpeningActionsRemaining: 1,
                 SurprisePersistenceEligible: false),
             OpeningContactState.EnemyAmbush => new OpeningPhaseResult(
-                contactState,
+                context.ContactState,
                 OpeningSide.Enemy,
                 OpeningSide.None,
                 OpeningActionsRemaining: 1,
                 SurprisePersistenceEligible: false),
             _ => new OpeningPhaseResult(
-                contactState,
+                context.ContactState,
                 OpeningSide.None,
-                playerInitiative >= enemyInitiative ? OpeningSide.Player : OpeningSide.Enemy,
+                context.PlayerInitiative >= context.EnemyInitiative ? OpeningSide.Player : OpeningSide.Enemy,
                 OpeningActionsRemaining: 1,
                 SurprisePersistenceEligible: false)
         };

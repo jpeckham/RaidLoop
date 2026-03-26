@@ -122,23 +122,23 @@
         else if (EncounterType == EncounterType.Extraction)
         {
             <div class="actions">
-                <button class="action" @onclick="() => OnContinueSearching.InvokeAsync()">Continue Searching</button>
                 <button class="action" @onclick="() => OnAttemptExtract.InvokeAsync()">Attempt Extraction</button>
+                <button class="action" @onclick="() => OnStayAtExtract.InvokeAsync()">Stay at Extract</button>
             </div>
         }
         else if (EncounterType == EncounterType.Neutral)
         {
             <div class="actions">
-                <button class="action" @onclick="() => OnContinueSearching.InvokeAsync()">Keep Searching</button>
-                <button class="action" @onclick="() => OnMoveTowardExtract.InvokeAsync()">Move to Extract</button>
+                <button class="action" @onclick="() => OnGoDeeper.InvokeAsync()">Go Deeper</button>
+                <button class="action" @onclick="() => OnMoveTowardExtract.InvokeAsync()">Move Toward Extract</button>
             </div>
         }
 
         @if (AwaitingDecision || EncounterType == EncounterType.Loot)
         {
             <div class="actions top-gap">
-                <button class="action" @onclick="() => OnContinueSearching.InvokeAsync()">Continue Searching</button>
-                <button class="action" @onclick="() => OnMoveTowardExtract.InvokeAsync()">@(EncounterType == EncounterType.Loot ? "Move To Extract" : "Move Toward Extract")</button>
+                <button class="action" @onclick="() => OnGoDeeper.InvokeAsync()">Go Deeper</button>
+                <button class="action" @onclick="() => OnMoveTowardExtract.InvokeAsync()">Move Toward Extract</button>
             </div>
         }
 
@@ -206,7 +206,8 @@
     [Parameter, EditorRequired] public EventCallback<Item> OnEquipFromDiscovered { get; set; }
     [Parameter, EditorRequired] public EventCallback<Item> OnEquipFromCarried { get; set; }
     [Parameter, EditorRequired] public EventCallback OnAttemptExtract { get; set; }
-    [Parameter, EditorRequired] public EventCallback OnContinueSearching { get; set; }
+    [Parameter, EditorRequired] public EventCallback OnGoDeeper { get; set; }
+    [Parameter, EditorRequired] public EventCallback OnStayAtExtract { get; set; }
     [Parameter, EditorRequired] public EventCallback OnMoveTowardExtract { get; set; }
 
     private string GetOpeningPhaseSummary()

@@ -44,8 +44,9 @@ const LOOT_ACTIONS = new Set([
 ]);
 
 const ENCOUNTER_ACTIONS = new Set([
-  "continue-searching",
+  "go-deeper",
   "move-toward-extract",
+  "stay-at-extract",
   "attempt-extract",
 ]);
 

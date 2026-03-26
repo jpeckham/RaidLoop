@@ -228,18 +228,37 @@ public sealed class HomeMarkupBindingTests
     }
 
     [Fact]
-    public void RaidHudPlacesAttemptExtractionAfterContinueSearching()
+    public void RaidHudUsesExplicitExtractActions()
     {
         var markup = File.ReadAllText(RaidHudPath);
         var extractionBlockStart = markup.IndexOf("else if (EncounterType == EncounterType.Extraction)", StringComparison.Ordinal);
-        var extractionBlockEnd = markup.IndexOf("else if (EncounterType == EncounterType.Neutral)", extractionBlockStart, StringComparison.Ordinal);
-        var extractionBlock = markup.Substring(extractionBlockStart, extractionBlockEnd - extractionBlockStart);
-        var continueIndex = extractionBlock.IndexOf("OnContinueSearching.InvokeAsync()", StringComparison.Ordinal);
-        var attemptIndex = extractionBlock.IndexOf("OnAttemptExtract.InvokeAsync()", StringComparison.Ordinal);
+        var neutralBlockStart = markup.IndexOf("else if (EncounterType == EncounterType.Neutral)", extractionBlockStart, StringComparison.Ordinal);
+        var extractionBlock = markup.Substring(extractionBlockStart, neutralBlockStart - extractionBlockStart);
+        var neutralBlockEnd = markup.IndexOf("@if (AwaitingDecision || EncounterType == EncounterType.Loot)", neutralBlockStart, StringComparison.Ordinal);
+        var neutralBlock = markup.Substring(neutralBlockStart, neutralBlockEnd - neutralBlockStart);
+        var extractAttemptIndex = extractionBlock.IndexOf("Attempt Extraction", StringComparison.Ordinal);
+        var stayIndex = extractionBlock.IndexOf("Stay at Extract", StringComparison.Ordinal);
+        var goDeeperIndex = neutralBlock.IndexOf("Go Deeper", StringComparison.Ordinal);
+        var moveTowardIndex = neutralBlock.IndexOf("Move Toward Extract", StringComparison.Ordinal);
 
         Assert.True(extractionBlockStart >= 0);
-        Assert.True(continueIndex >= 0);
-        Assert.True(attemptIndex > continueIndex);
+        Assert.True(neutralBlockStart > extractionBlockStart);
+        Assert.True(neutralBlockEnd > neutralBlockStart);
+        Assert.Contains("Attempt Extraction", extractionBlock);
+        Assert.Contains("Stay at Extract", extractionBlock);
+        Assert.DoesNotContain("Go Deeper", extractionBlock);
+        Assert.DoesNotContain("Move Toward Extract", extractionBlock);
+        Assert.True(extractAttemptIndex >= 0);
+        Assert.True(stayIndex > extractAttemptIndex);
+        Assert.Contains("Go Deeper", neutralBlock);
+        Assert.Contains("Move Toward Extract", neutralBlock);
+        Assert.DoesNotContain("Attempt Extraction", neutralBlock);
+        Assert.DoesNotContain("Stay at Extract", neutralBlock);
+        Assert.True(goDeeperIndex >= 0);
+        Assert.True(moveTowardIndex > goDeeperIndex);
+        var continueSearching = string.Concat("Continue", " Searching");
+        Assert.DoesNotContain(continueSearching, extractionBlock);
+        Assert.DoesNotContain(continueSearching, neutralBlock);
     }
 
     [Fact]
@@ -478,7 +497,7 @@ public sealed class HomeMarkupBindingTests
     }
 
     [Fact]
-    public void GameActionMigrationRoutesCombatAndLootActionsServerSide()
+    public void GameActionMigrationRoutesNewRaidMovementActionsServerSide()
     {
         var migration = File.ReadAllText(RaidActionMigrationPath);
 
@@ -492,10 +511,34 @@ public sealed class HomeMarkupBindingTests
         Assert.Contains("drop-equipped", migration);
         Assert.Contains("equip-from-discovered", migration);
         Assert.Contains("equip-from-carried", migration);
-        Assert.Contains("continue-searching", migration);
+        Assert.Contains("go-deeper", migration);
         Assert.Contains("move-toward-extract", migration);
+        Assert.Contains("stay-at-extract", migration);
         Assert.Contains("attempt-extract", migration);
+        Assert.Contains("challenge", migration);
+        Assert.Contains("distanceFromExtract", migration);
+        Assert.Contains("challenge := challenge + 1", migration);
+        Assert.Contains("distanceFromExtract := greatest(distanceFromExtract - 1, 0)", migration);
+        Assert.Contains("if distanceFromExtract = 0 then", migration);
+        Assert.Contains("elsif action = 'attempt-extract' then", migration);
+        Assert.DoesNotContain("continue-searching", migration);
         Assert.Contains("select raid_sessions.profile, raid_sessions.payload", migration);
+    }
+
+    [Fact]
+    public void RaidEncounterMigrationTracksChallengeDistanceAndDrift()
+    {
+        var migration = File.ReadAllText(AuthoredSurpriseEncounterStylesMigrationPath);
+
+        Assert.Contains("create or replace function game.generate_raid_encounter", migration);
+        Assert.Contains("moving_to_extract boolean default false", migration);
+        Assert.Contains("challenge", migration);
+        Assert.Contains("distanceFromExtract", migration);
+        Assert.Contains("random() < 0.1", migration);
+        Assert.Contains("distanceFromExtract := distanceFromExtract + 1", migration);
+        Assert.Contains("You drifted one step away from extract.", migration);
+        Assert.DoesNotContain(string.Concat("extract", "Progress"), migration);
+        Assert.DoesNotContain("continue-searching", migration);
     }
 
     [Fact]

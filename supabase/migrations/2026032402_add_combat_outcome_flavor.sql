@@ -276,7 +276,8 @@ declare
     medkits int;
     health int;
     backpack_capacity int;
-    extract_required int;
+    challenge int;
+    distance_from_extract int;
     extraction_combat boolean;
     equipped_weapon jsonb;
     equipped_weapon_name text;
@@ -335,7 +336,8 @@ begin
     ammo := greatest(coalesce((raid_payload->>'ammo')::int, 0), 0);
     medkits := greatest(coalesce((raid_payload->>'medkits')::int, 0), 0);
     health := greatest(coalesce((raid_payload->>'health')::int, player_max_health), 0);
-    extract_required := greatest(coalesce((raid_payload->>'extractRequired')::int, 3), 1);
+    challenge := greatest(coalesce((raid_payload->>'challenge')::int, 0), 0);
+    distance_from_extract := greatest(coalesce((raid_payload->>'distanceFromExtract')::int, 0), 0);
     extraction_combat := coalesce((raid_payload->>'extractionCombat')::boolean, false);
     equipped_weapon := game.raid_find_equipped_item(equipped_items, 0);
     equipped_weapon_name := coalesce(equipped_weapon->>'name', 'Rusty Knife');
@@ -774,30 +776,31 @@ begin
         raid_payload := jsonb_set(raid_payload, '{backpackCapacity}', to_jsonb(backpack_capacity), true);
         raid_payload := jsonb_set(raid_payload, '{ammo}', to_jsonb(greatest(ammo, 0)), true);
         raid_payload := jsonb_set(raid_payload, '{logEntries}', log_entries, true);
-    elsif action in ('continue-searching', 'move-toward-extract') then
+    elsif action = 'go-deeper' then
+        challenge := challenge + 1;
+        distance_from_extract := distance_from_extract + 1;
+        raid_payload := jsonb_set(raid_payload, '{challenge}', to_jsonb(challenge), true);
+        raid_payload := jsonb_set(raid_payload, '{distanceFromExtract}', to_jsonb(distance_from_extract), true);
+        raid_payload := jsonb_set(raid_payload, '{logEntries}', game.raid_append_log(log_entries, 'Moved deeper into the raid.'), true);
+        raid_payload := game.generate_raid_encounter(raid_payload, false);
+    elsif action = 'move-toward-extract' then
         loot_count := jsonb_array_length(discovered_loot);
         if encounter_type = 'Loot' and loot_count > 0 then
             log_entries := game.raid_append_log(log_entries, format('Moved on and left %s items behind.', loot_count));
             raid_payload := jsonb_set(raid_payload, '{logEntries}', log_entries, true);
         end if;
 
-        raid_payload := game.generate_raid_encounter(raid_payload, action = 'move-toward-extract');
+        distance_from_extract := greatest(distance_from_extract - 1, 0);
+        raid_payload := jsonb_set(raid_payload, '{distanceFromExtract}', to_jsonb(distance_from_extract), true);
+        raid_payload := game.generate_raid_encounter(raid_payload, true);
+    elsif action = 'stay-at-extract' then
+        challenge := challenge + 1;
+        raid_payload := jsonb_set(raid_payload, '{challenge}', to_jsonb(challenge), true);
+        raid_payload := game.generate_raid_encounter(raid_payload, false);
     elsif action = 'attempt-extract' then
-        if encounter_type = 'Extraction' then
-            if random() < 0.50 then
-                log_entries := game.raid_append_log(log_entries, 'Extraction ambush.');
-                raid_payload := jsonb_set(raid_payload, '{encounterType}', to_jsonb('Combat'::text), true);
-                raid_payload := jsonb_set(raid_payload, '{encounterTitle}', to_jsonb(game.encounter_title('Combat')), true);
-                raid_payload := jsonb_set(raid_payload, '{encounterDescription}', to_jsonb('Extraction ambush engaged.'::text), true);
-                raid_payload := jsonb_set(raid_payload, '{enemyName}', to_jsonb('Final Guard'::text), true);
-                raid_payload := jsonb_set(raid_payload, '{enemyHealth}', to_jsonb(22), true);
-                raid_payload := jsonb_set(raid_payload, '{enemyLoadout}', game.random_enemy_loadout(), true);
-                raid_payload := jsonb_set(raid_payload, '{extractionCombat}', 'true'::jsonb, true);
-                raid_payload := jsonb_set(raid_payload, '{logEntries}', log_entries, true);
-            else
-                raid_payload := jsonb_set(raid_payload, '{logEntries}', game.raid_append_log(log_entries, 'Extraction completed. Loot secured.'), true);
-                return game.finish_raid_session(save_payload, raid_payload, raid_profile, true, target_user_id);
-            end if;
+        if distance_from_extract = 0 then
+            raid_payload := jsonb_set(raid_payload, '{logEntries}', game.raid_append_log(log_entries, 'Extraction completed. Loot secured.'), true);
+            return game.finish_raid_session(save_payload, raid_payload, raid_profile, true, target_user_id);
         end if;
     end if;
 
@@ -809,7 +812,8 @@ begin
     raid_payload := jsonb_set(raid_payload, '{health}', to_jsonb(greatest(coalesce((raid_payload->>'health')::int, health), 0)), true);
     raid_payload := jsonb_set(raid_payload, '{backpackCapacity}', to_jsonb(game.backpack_capacity(coalesce(game.raid_find_equipped_item(coalesce(raid_payload->'equippedItems', equipped_items), 2)->>'name', ''))), true);
     raid_payload := jsonb_set(raid_payload, '{lootSlots}', to_jsonb(game.raid_current_slots(coalesce(raid_payload->'carriedLoot', carried_loot))), true);
-    raid_payload := jsonb_set(raid_payload, '{extractRequired}', to_jsonb(extract_required), true);
+    raid_payload := jsonb_set(raid_payload, '{challenge}', to_jsonb(challenge), true);
+    raid_payload := jsonb_set(raid_payload, '{distanceFromExtract}', to_jsonb(distance_from_extract), true);
 
     update public.raid_sessions
     set payload = raid_payload,

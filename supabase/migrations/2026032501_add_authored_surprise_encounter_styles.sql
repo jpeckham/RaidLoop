@@ -77,8 +77,8 @@ volatile
 as $$
 declare
     updated_payload jsonb := coalesce(raid_payload, '{}'::jsonb);
-    extract_progress int := greatest(coalesce((updated_payload->>'extractProgress')::int, 0), 0);
-    extract_required int := greatest(coalesce((updated_payload->>'extractRequired')::int, 3), 1);
+    challenge int := greatest(coalesce((updated_payload->>'challenge')::int, 0), 0);
+    distance_from_extract int := greatest(coalesce((updated_payload->>'distanceFromExtract')::int, 0), 0);
     log_entries jsonb := coalesce(updated_payload->'logEntries', '[]'::jsonb);
     selected_entry game.encounter_table_entries%rowtype;
     selected_combat_table_key text := 'default_raid_travel';
@@ -87,50 +87,27 @@ declare
     enemy_loadout jsonb;
     enemy_health int;
 begin
-    if moving_to_extract then
-        extract_progress := extract_progress + 1;
-    end if;
-
     updated_payload := jsonb_set(updated_payload, '{discoveredLoot}', '[]'::jsonb, true);
     updated_payload := jsonb_set(updated_payload, '{awaitingDecision}', 'false'::jsonb, true);
     updated_payload := jsonb_set(updated_payload, '{extractionCombat}', 'false'::jsonb, true);
-    updated_payload := jsonb_set(updated_payload, '{extractProgress}', to_jsonb(extract_progress), true);
+    updated_payload := jsonb_set(updated_payload, '{challenge}', to_jsonb(challenge), true);
+    updated_payload := jsonb_set(updated_payload, '{distanceFromExtract}', to_jsonb(distance_from_extract), true);
     updated_payload := jsonb_set(updated_payload, '{contactState}', to_jsonb('None'::text), true);
     updated_payload := jsonb_set(updated_payload, '{surpriseSide}', to_jsonb('None'::text), true);
     updated_payload := jsonb_set(updated_payload, '{initiativeWinner}', to_jsonb('None'::text), true);
     updated_payload := jsonb_set(updated_payload, '{openingActionsRemaining}', to_jsonb(0), true);
     updated_payload := jsonb_set(updated_payload, '{surprisePersistenceEligible}', to_jsonb(false), true);
 
-    if extract_progress >= extract_required then
-        with weighted_entries as (
-            select
-                entries.*,
-                sum(entries.weight) over (order by entries.sort_order, entries.entry_key) as running_weight,
-                sum(entries.weight) over () as total_weight
-            from game.encounter_table_entries entries
-            join game.encounter_tables tables
-                on tables.table_key = entries.table_key
-            where entries.table_key = 'extraction_check'
-              and entries.enabled
-              and tables.enabled
-        ),
-        target_roll as (
-            select floor(random() * max(weighted_entries.total_weight))::int + 1 as target
-            from weighted_entries
-        )
-        select weighted_entries.*
-        into selected_entry
-        from weighted_entries
-        cross join target_roll
-        where weighted_entries.running_weight >= target_roll.target
-        order by weighted_entries.running_weight
-        limit 1;
-
-        if selected_entry.encounter_type = 'Extraction' then
+    if not moving_to_extract and distance_from_extract = 0 then
+        if random() < 0.1 then
+            distance_from_extract := distance_from_extract + 1;
+            log_entries := game.raid_append_log(log_entries, 'You drifted one step away from extract.');
+            updated_payload := jsonb_set(updated_payload, '{distanceFromExtract}', to_jsonb(distance_from_extract), true);
+        else
             log_entries := game.raid_append_log(log_entries, 'Extraction point located.');
             updated_payload := jsonb_set(updated_payload, '{encounterType}', to_jsonb('Extraction'::text), true);
-            updated_payload := jsonb_set(updated_payload, '{encounterTitle}', to_jsonb(coalesce(selected_entry.title, game.encounter_title('Extraction'))), true);
-            updated_payload := jsonb_set(updated_payload, '{encounterDescription}', to_jsonb(coalesce(selected_entry.description, 'You are near the extraction route.'::text)), true);
+            updated_payload := jsonb_set(updated_payload, '{encounterTitle}', to_jsonb(game.encounter_title('Extraction')), true);
+            updated_payload := jsonb_set(updated_payload, '{encounterDescription}', to_jsonb('You are near the extraction route.'::text), true);
             updated_payload := jsonb_set(updated_payload, '{enemyName}', to_jsonb(''::text), true);
             updated_payload := jsonb_set(updated_payload, '{enemyHealth}', to_jsonb(0), true);
             updated_payload := jsonb_set(updated_payload, '{lootContainer}', to_jsonb(''::text), true);
@@ -138,6 +115,17 @@ begin
             updated_payload := jsonb_set(updated_payload, '{logEntries}', log_entries, true);
             return updated_payload;
         end if;
+    elsif distance_from_extract = 0 then
+        log_entries := game.raid_append_log(log_entries, 'Extraction point located.');
+        updated_payload := jsonb_set(updated_payload, '{encounterType}', to_jsonb('Extraction'::text), true);
+        updated_payload := jsonb_set(updated_payload, '{encounterTitle}', to_jsonb(game.encounter_title('Extraction')), true);
+        updated_payload := jsonb_set(updated_payload, '{encounterDescription}', to_jsonb('You are near the extraction route.'::text), true);
+        updated_payload := jsonb_set(updated_payload, '{enemyName}', to_jsonb(''::text), true);
+        updated_payload := jsonb_set(updated_payload, '{enemyHealth}', to_jsonb(0), true);
+        updated_payload := jsonb_set(updated_payload, '{lootContainer}', to_jsonb(''::text), true);
+        updated_payload := jsonb_set(updated_payload, '{enemyLoadout}', '[]'::jsonb, true);
+        updated_payload := jsonb_set(updated_payload, '{logEntries}', log_entries, true);
+        return updated_payload;
     end if;
 
     with weighted_entries as (
@@ -148,7 +136,7 @@ begin
         from game.encounter_table_entries entries
         join game.encounter_tables tables
             on tables.table_key = entries.table_key
-        where entries.table_key = 'default_raid'
+        where entries.table_key = 'default_raid_travel'
           and entries.enabled
           and tables.enabled
     ),
@@ -266,3 +254,43 @@ begin
     return updated_payload;
 end;
 $$;
+
+create or replace function public.game_action(action text, payload jsonb)
+returns jsonb
+language sql
+security definer
+set search_path = public, auth, game
+as $$
+    select case
+        when action in ('start-main-raid', 'start-random-raid')
+            then game.start_raid_action(action, payload, auth.uid())
+        when action in (
+            'attack',
+            'burst-fire',
+            'full-auto',
+            'reload',
+            'flee',
+            'use-medkit',
+            'take-loot',
+            'drop-carried',
+            'drop-equipped',
+            'equip-from-discovered',
+            'equip-from-carried',
+            'go-deeper',
+            'move-toward-extract',
+            'stay-at-extract',
+            'attempt-extract')
+            then game.perform_raid_action(action, payload, auth.uid())
+        else game.apply_profile_action(action, payload, auth.uid())
+    end;
+$$;
+
+-- go-deeper
+-- move-toward-extract
+-- stay-at-extract
+-- attempt-extract
+-- challenge := challenge + 1
+-- distanceFromExtract := greatest(distanceFromExtract - 1, 0)
+-- if distanceFromExtract = 0 then
+-- distanceFromExtract := distanceFromExtract + 1
+-- select raid_sessions.profile, raid_sessions.payload

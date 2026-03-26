@@ -38,6 +38,9 @@ You prepare gear, run raids, fight or loot, and try to extract with profit.
 
 ### 2) Raid
 - Encounters are combat, loot, extraction opportunities, or clear areas.
+- Raid HUD now tracks two explicit raid-state numbers: `Challenge` and `Distance from Extract`.
+- When you reach extract, you can `Attempt Extraction` or `Stay at Extract`.
+- Away from extract, the main travel choices are `Go Deeper` and `Move Toward Extract`.
 - During loot encounters, use:
   - `Discovered Loot` (what you found)
   - `Character Inventory` (equipped + carried)

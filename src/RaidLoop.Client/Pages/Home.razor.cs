@@ -1055,13 +1055,33 @@ public partial class Home : IDisposable
         await ExecuteRaidActionAsync("attempt-extract", new { });
     }
 
-    private async Task ContinueSearching()
+    private async Task GoDeeper()
     {
-        await ExecuteRaidActionAsync("continue-searching", new { });
+        if (_raid is null)
+        {
+            return;
+        }
+
+        await ExecuteRaidActionAsync("go-deeper", new { });
+    }
+
+    private async Task StayAtExtract()
+    {
+        if (_raid is null)
+        {
+            return;
+        }
+
+        await ExecuteRaidActionAsync("stay-at-extract", new { });
     }
 
     private async Task MoveTowardExtract()
     {
+        if (_raid is null)
+        {
+            return;
+        }
+
         await ExecuteRaidActionAsync("move-toward-extract", new { });
     }
 

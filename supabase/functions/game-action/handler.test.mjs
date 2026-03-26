@@ -634,11 +634,11 @@ test("game-action returns loot-resolved projections for take-loot", async () => 
   assert.deepEqual(body.projections.raid.logEntriesAdded, ["Looted Bandage."]);
 });
 
-test("game-action returns encounter-advanced projections for continue-searching", async () => {
+test("game-action returns encounter-advanced projections for go-deeper", async () => {
   const handler = createGameActionHandler({
     dispatchAction: async (accessToken, action, payload) => {
       assert.equal(accessToken, "token-123");
-      assert.equal(action, "continue-searching");
+      assert.equal(action, "go-deeper");
       assert.equal(payload.knownLogCount, 1);
       return {
         money: 500,
@@ -653,8 +653,8 @@ test("game-action returns encounter-advanced projections for continue-searching"
           weaponMalfunction: false,
           medkits: 1,
           lootSlots: 0,
-          challenge: 2,
-          distanceFromExtract: 3,
+          challenge: 4,
+          distanceFromExtract: 5,
           encounterType: "Extraction",
           encounterTitle: "Extraction Opportunity",
           encounterDescription: "You are near the extraction route.",
@@ -681,7 +681,7 @@ test("game-action returns encounter-advanced projections for continue-searching"
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      action: "continue-searching",
+      action: "go-deeper",
       payload: { knownLogCount: 1 },
     }),
   }));
@@ -689,11 +689,132 @@ test("game-action returns encounter-advanced projections for continue-searching"
   const body = await response.json();
   assert.equal(body.eventType, "EncounterAdvanced");
   assert.equal(body.projections.raid.encounterType, "Extraction");
-  assert.equal(body.projections.raid.challenge, 2);
-  assert.equal(body.projections.raid.distanceFromExtract, 3);
+  assert.equal(body.projections.raid.challenge, 4);
+  assert.equal(body.projections.raid.distanceFromExtract, 5);
   assert.equal("extractProgress" in body.projections.raid, false);
   assert.equal("extractRequired" in body.projections.raid, false);
   assert.deepEqual(body.projections.raid.logEntriesAdded, ["Extraction point located."]);
+});
+
+test("game-action returns encounter-advanced projections for move-toward-extract", async () => {
+  const handler = createGameActionHandler({
+    dispatchAction: async (accessToken, action, payload) => {
+      assert.equal(accessToken, "token-123");
+      assert.equal(action, "move-toward-extract");
+      assert.equal(payload.knownLogCount, 1);
+      return {
+        money: 500,
+        mainStash: [],
+        onPersonItems: [],
+        randomCharacterAvailableAt: "0001-01-01T00:00:00+00:00",
+        randomCharacter: null,
+        activeRaid: {
+          health: 24,
+          backpackCapacity: 3,
+          ammo: 8,
+          weaponMalfunction: false,
+          medkits: 1,
+          lootSlots: 0,
+          challenge: 3,
+          distanceFromExtract: 0,
+          encounterType: "Neutral",
+          encounterTitle: "Travel Encounter",
+          encounterDescription: "You move toward the extraction route.",
+          enemyName: "",
+          enemyHealth: 0,
+          lootContainer: "",
+          awaitingDecision: false,
+          discoveredLoot: [],
+          carriedLoot: [],
+          equippedItems: [],
+          logEntries: [
+            "Raid started as Main Character.",
+            "Moved one step closer to extract.",
+          ],
+        },
+      };
+    },
+  });
+
+  const response = await handler(new Request("https://example.test/game-action", {
+    method: "POST",
+    headers: {
+      Authorization: "Bearer token-123",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      action: "move-toward-extract",
+      payload: { knownLogCount: 1 },
+    }),
+  }));
+
+  const body = await response.json();
+  assert.equal(body.eventType, "EncounterAdvanced");
+  assert.equal(body.projections.raid.challenge, 3);
+  assert.equal(body.projections.raid.distanceFromExtract, 0);
+  assert.equal("extractProgress" in body.projections.raid, false);
+  assert.equal("extractRequired" in body.projections.raid, false);
+  assert.deepEqual(body.projections.raid.logEntriesAdded, ["Moved one step closer to extract."]);
+});
+
+test("game-action returns encounter-advanced projections for stay-at-extract", async () => {
+  const handler = createGameActionHandler({
+    dispatchAction: async (accessToken, action, payload) => {
+      assert.equal(accessToken, "token-123");
+      assert.equal(action, "stay-at-extract");
+      assert.equal(payload.knownLogCount, 0);
+      return {
+        money: 500,
+        mainStash: [],
+        onPersonItems: [],
+        randomCharacterAvailableAt: "0001-01-01T00:00:00+00:00",
+        randomCharacter: null,
+        activeRaid: {
+          health: 24,
+          backpackCapacity: 3,
+          ammo: 8,
+          weaponMalfunction: false,
+          medkits: 1,
+          lootSlots: 0,
+          challenge: 5,
+          distanceFromExtract: 1,
+          encounterType: "Extraction",
+          encounterTitle: "Extraction Opportunity",
+          encounterDescription: "You are near the extraction route.",
+          enemyName: "",
+          enemyHealth: 0,
+          lootContainer: "",
+          awaitingDecision: false,
+          discoveredLoot: [],
+          carriedLoot: [],
+          equippedItems: [],
+          logEntries: [
+            "Extraction point located.",
+          ],
+        },
+      };
+    },
+  });
+
+  const response = await handler(new Request("https://example.test/game-action", {
+    method: "POST",
+    headers: {
+      Authorization: "Bearer token-123",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      action: "stay-at-extract",
+      payload: { knownLogCount: 0 },
+    }),
+  }));
+
+  const body = await response.json();
+  assert.equal(body.eventType, "EncounterAdvanced");
+  assert.equal(body.projections.raid.encounterType, "Extraction");
+  assert.equal(body.projections.raid.challenge, 5);
+  assert.equal(body.projections.raid.distanceFromExtract, 1);
+  assert.equal("extractProgress" in body.projections.raid, false);
+  assert.equal("extractRequired" in body.projections.raid, false);
 });
 
 test("game-action returns raid-finished projections for attempt-extract", async () => {

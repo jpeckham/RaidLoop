@@ -420,8 +420,8 @@ volatile
 as $$
 declare
     updated_payload jsonb := coalesce(raid_payload, '{}'::jsonb);
-    extract_progress int := greatest(coalesce((updated_payload->>'extractProgress')::int, 0), 0);
-    extract_required int := greatest(coalesce((updated_payload->>'extractRequired')::int, 3), 1);
+    challenge int := greatest(coalesce((updated_payload->>'challenge')::int, 0), 0);
+    distance_from_extract int := greatest(coalesce((updated_payload->>'distanceFromExtract')::int, 0), 0);
     log_entries jsonb := coalesce(updated_payload->'logEntries', '[]'::jsonb);
     selected_entry game.encounter_table_entries%rowtype;
     container_name text;
@@ -430,15 +430,16 @@ declare
     enemy_health int;
 begin
     if moving_to_extract then
-        extract_progress := extract_progress + 1;
+        distance_from_extract := greatest(distance_from_extract - 1, 0);
     end if;
 
     updated_payload := jsonb_set(updated_payload, '{discoveredLoot}', '[]'::jsonb, true);
     updated_payload := jsonb_set(updated_payload, '{awaitingDecision}', 'false'::jsonb, true);
     updated_payload := jsonb_set(updated_payload, '{extractionCombat}', 'false'::jsonb, true);
-    updated_payload := jsonb_set(updated_payload, '{extractProgress}', to_jsonb(extract_progress), true);
+    updated_payload := jsonb_set(updated_payload, '{challenge}', to_jsonb(challenge), true);
+    updated_payload := jsonb_set(updated_payload, '{distanceFromExtract}', to_jsonb(distance_from_extract), true);
 
-    if extract_progress >= extract_required then
+    if distance_from_extract = 0 then
         with weighted_entries as (
             select
                 entries.*,

@@ -275,16 +275,16 @@ public sealed class ProfileMutationFlowTests
                   ]
                 }
               },
-              "raid": {
-                "health": 21,
-                "backpackCapacity": 6,
-                "ammo": 4,
-                "weaponMalfunction": true,
-                "medkits": 1,
-                "lootSlots": 0,
-                "extractProgress": 2,
-                "extractRequired": 3,
-                "encounterType": "Combat",
+                "raid": {
+                  "health": 21,
+                  "backpackCapacity": 6,
+                  "ammo": 4,
+                  "weaponMalfunction": true,
+                  "medkits": 1,
+                  "lootSlots": 0,
+                  "challenge": 2,
+                  "distanceFromExtract": 3,
+                  "encounterType": "Combat",
                 "encounterTitle": "Combat Encounter",
                 "encounterDescription": "Enemy contact on your position.",
                 "enemyName": "Scav",
@@ -327,7 +327,8 @@ public sealed class ProfileMutationFlowTests
         Assert.Equal(21, raid.Health);
         Assert.Equal(6, raid.BackpackCapacity);
         Assert.Equal(4, Assert.IsType<int>(GetField(home, "_ammo")));
-        Assert.Equal(2, Assert.IsType<int>(GetField(home, "_extractProgress")));
+        Assert.Equal(2, Assert.IsType<int>(GetField(home, "_challenge")));
+        Assert.Equal(3, Assert.IsType<int>(GetField(home, "_distanceFromExtract")));
         Assert.Equal("Scav", Assert.IsType<string>(GetField(home, "_enemyName")));
         Assert.Equal(6, Assert.IsType<int>(GetField(home, "_enemyHealth")));
         Assert.Equal("Combat", Assert.IsType<EncounterType>(GetField(home, "_encounterType")).ToString());
@@ -428,7 +429,8 @@ public sealed class ProfileMutationFlowTests
         SetField(home, "_raid", existingRaid);
         SetField(home, "_inRaid", true);
         SetField(home, "_awaitingDecision", true);
-        SetField(home, "_extractProgress", 1);
+        SetField(home, "_challenge", 1);
+        SetField(home, "_distanceFromExtract", 2);
         SetField(home, "_ammo", 5);
         SetField(home, "_encounterType", EncounterType.Loot);
         SetField(home, "_encounterDescription", "A searchable container appears.");
@@ -471,7 +473,8 @@ public sealed class ProfileMutationFlowTests
         Assert.False(raid.IsDead);
         Assert.Equal(3, Assert.IsType<int>(GetField(home, "_ammo")));
         Assert.True(Assert.IsType<bool>(GetField(home, "_awaitingDecision")));
-        Assert.Equal(1, Assert.IsType<int>(GetField(home, "_extractProgress")));
+        Assert.Equal(1, Assert.IsType<int>(GetField(home, "_challenge")));
+        Assert.Equal(2, Assert.IsType<int>(GetField(home, "_distanceFromExtract")));
         Assert.Equal(EncounterType.Loot, Assert.IsType<EncounterType>(GetField(home, "_encounterType")));
         Assert.Equal("Weapons Crate", Assert.IsType<string>(GetField(home, "_lootContainer")));
         Assert.Equal("Patrol Guard", Assert.IsType<string>(GetField(home, "_enemyName")));
@@ -487,7 +490,8 @@ public sealed class ProfileMutationFlowTests
         SetField(home, "_raid", null);
         SetField(home, "_inRaid", false);
         SetField(home, "_awaitingDecision", true);
-        SetField(home, "_extractProgress", 2);
+        SetField(home, "_challenge", 2);
+        SetField(home, "_distanceFromExtract", 1);
         SetField(home, "_ammo", 7);
         SetField(home, "_encounterType", EncounterType.Combat);
         SetField(home, "_encounterDescription", "stale encounter");
@@ -526,7 +530,8 @@ public sealed class ProfileMutationFlowTests
         Assert.Equal(0, raid.Inventory.MedkitCount);
         Assert.True(Assert.IsType<bool>(GetField(home, "_inRaid")));
         Assert.False(Assert.IsType<bool>(GetField(home, "_awaitingDecision")));
-        Assert.Equal(0, Assert.IsType<int>(GetField(home, "_extractProgress")));
+        Assert.Equal(0, Assert.IsType<int>(GetField(home, "_challenge")));
+        Assert.Equal(0, Assert.IsType<int>(GetField(home, "_distanceFromExtract")));
         Assert.Equal(0, Assert.IsType<int>(GetField(home, "_ammo")));
         Assert.Equal(EncounterType.Neutral, Assert.IsType<EncounterType>(GetField(home, "_encounterType")));
         Assert.Equal(string.Empty, Assert.IsType<string>(GetField(home, "_encounterDescription")));
@@ -590,7 +595,8 @@ public sealed class ProfileMutationFlowTests
         SetField(home, "_raid", new RaidState(24, existingInventory));
         SetField(home, "_inRaid", true);
         SetField(home, "_awaitingDecision", true);
-        SetField(home, "_extractProgress", 2);
+        SetField(home, "_challenge", 2);
+        SetField(home, "_distanceFromExtract", 1);
         SetField(home, "_ammo", 5);
         SetField(home, "_encounterType", EncounterType.Extraction);
         SetField(home, "_encounterDescription", "Extraction route open.");
@@ -627,7 +633,8 @@ public sealed class ProfileMutationFlowTests
         Assert.Null(GetField(home, "_raid"));
         Assert.False(Assert.IsType<bool>(GetField(home, "_inRaid")));
         Assert.False(Assert.IsType<bool>(GetField(home, "_awaitingDecision")));
-        Assert.Equal(0, Assert.IsType<int>(GetField(home, "_extractProgress")));
+        Assert.Equal(0, Assert.IsType<int>(GetField(home, "_challenge")));
+        Assert.Equal(0, Assert.IsType<int>(GetField(home, "_distanceFromExtract")));
         Assert.Equal(0, Assert.IsType<int>(GetField(home, "_ammo")));
         Assert.Equal(EncounterType.Neutral, Assert.IsType<EncounterType>(GetField(home, "_encounterType")));
         Assert.Equal(string.Empty, Assert.IsType<string>(GetField(home, "_encounterDescription")));
@@ -794,8 +801,8 @@ public sealed class ProfileMutationFlowTests
                     WeaponMalfunction: false,
                     Medkits: 1,
                     LootSlots: 0,
-                    ExtractProgress: 0,
-                    ExtractRequired: 3,
+                    Challenge: 0,
+                    DistanceFromExtract: 0,
                     EncounterType: "Combat",
                     EncounterTitle: "Ambush",
                     EncounterDescription: "They spotted you first.",
@@ -843,8 +850,8 @@ public sealed class ProfileMutationFlowTests
                     WeaponMalfunction: false,
                     Medkits: 1,
                     LootSlots: 0,
-                    ExtractProgress: 0,
-                    ExtractRequired: 3,
+                    Challenge: 0,
+                    DistanceFromExtract: 0,
                     EncounterType: "Combat",
                     EncounterTitle: "Ambush",
                     EncounterDescription: "They spotted you first.",

@@ -6,7 +6,8 @@
         <span>@AmmoHudText</span>
         <span>Medkits: @Medkits</span>
         <span>Loot Slots: @LootSlots / @Raid.BackpackCapacity</span>
-        <span>Extract Progress: @ExtractProgress / @ExtractRequired</span>
+        <span>Challenge: @Challenge</span>
+        <span>Distance from Extract: @DistanceFromExtract</span>
     </div>
 
     <div class="encounter">
@@ -165,8 +166,8 @@
     [Parameter, EditorRequired] public string AmmoHudText { get; set; } = string.Empty;
     [Parameter, EditorRequired] public int Medkits { get; set; }
     [Parameter, EditorRequired] public int LootSlots { get; set; }
-    [Parameter, EditorRequired] public int ExtractProgress { get; set; }
-    [Parameter, EditorRequired] public int ExtractRequired { get; set; }
+    [Parameter, EditorRequired] public int Challenge { get; set; }
+    [Parameter, EditorRequired] public int DistanceFromExtract { get; set; }
     [Parameter, EditorRequired] public EncounterType EncounterType { get; set; }
     [Parameter, EditorRequired] public string EncounterTitle { get; set; } = string.Empty;
     [Parameter, EditorRequired] public string EncounterDescription { get; set; } = string.Empty;

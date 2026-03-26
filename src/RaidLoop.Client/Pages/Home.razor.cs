@@ -9,7 +9,6 @@ namespace RaidLoop.Client.Pages;
 public partial class Home : IDisposable
 {
     private const string FallbackKnifeName = "Rusty Knife";
-    private const int ExtractRequired = 3;
     private const int MainStashCap = 30;
     private int _playerConstitution = 10;
     private int _maxHealth = 30;
@@ -53,7 +52,8 @@ public partial class Home : IDisposable
     private static readonly List<Item> EmptyItems = [];
 
     private int _ammo;
-    private int _extractProgress;
+    private int _challenge;
+    private int _distanceFromExtract;
     private string _resultMessage = string.Empty;
     private string _activeRaidId = string.Empty;
     private readonly List<string> _log = [];
@@ -432,7 +432,8 @@ public partial class Home : IDisposable
             _raid = new RaidState(_maxHealth, new RaidInventory());
             _inRaid = true;
             _awaitingDecision = false;
-            _extractProgress = 0;
+            _challenge = 0;
+            _distanceFromExtract = 0;
             _ammo = 0;
             _encounterDescription = string.Empty;
             _contactState = string.Empty;
@@ -508,9 +509,15 @@ public partial class Home : IDisposable
             hasRaidPatch = true;
         }
 
-        if (TryGetInt32(raid, "extractProgress", out var extractProgress))
+        if (TryGetInt32(raid, "challenge", out var challenge))
         {
-            _extractProgress = extractProgress;
+            _challenge = challenge;
+            hasRaidPatch = true;
+        }
+
+        if (TryGetInt32(raid, "distanceFromExtract", out var distanceFromExtract))
+        {
+            _distanceFromExtract = distanceFromExtract;
             hasRaidPatch = true;
         }
 
@@ -637,7 +644,8 @@ public partial class Home : IDisposable
         _raid = null;
         _inRaid = false;
         _awaitingDecision = false;
-        _extractProgress = 0;
+        _challenge = 0;
+        _distanceFromExtract = 0;
         _ammo = 0;
         _encounterType = EncounterType.Neutral;
         _encounterDescription = string.Empty;
@@ -1198,7 +1206,8 @@ public partial class Home : IDisposable
         _raid.Inventory.BackpackCapacity = snapshot.BackpackCapacity;
         _inRaid = true;
         _awaitingDecision = snapshot.AwaitingDecision;
-        _extractProgress = snapshot.ExtractProgress;
+        _challenge = snapshot.Challenge;
+        _distanceFromExtract = snapshot.DistanceFromExtract;
         _ammo = snapshot.Ammo;
         _encounterDescription = snapshot.EncounterDescription;
         _contactState = string.IsNullOrWhiteSpace(snapshot.ContactState) ? string.Empty : snapshot.ContactState;

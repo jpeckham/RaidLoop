@@ -44,8 +44,9 @@ const LOOT_ACTIONS = new Set([
 ]);
 
 const ENCOUNTER_ACTIONS = new Set([
-  "continue-searching",
+  "go-deeper",
   "move-toward-extract",
+  "stay-at-extract",
   "attempt-extract",
 ]);
 
@@ -237,8 +238,8 @@ function buildRaidProjectionWithLogOptions(activeRaid, { includeFullLogEntries, 
     ammo: activeRaid?.ammo ?? 0,
     medkits: activeRaid?.medkits ?? 0,
     lootSlots: activeRaid?.lootSlots ?? 0,
-    extractProgress: activeRaid?.extractProgress ?? 0,
-    extractRequired: activeRaid?.extractRequired ?? 0,
+    challenge: activeRaid?.challenge ?? 0,
+    distanceFromExtract: activeRaid?.distanceFromExtract ?? 0,
     encounterType: activeRaid?.encounterType ?? "Neutral",
     encounterTitle: activeRaid?.encounterTitle ?? "",
     encounterDescription: activeRaid?.encounterDescription ?? "",

@@ -30,8 +30,8 @@ public sealed class RaidStartApiTests
                             "weaponMalfunction": false,
                             "medkits": 1,
                             "lootSlots": 0,
-                            "extractProgress": 1,
-                            "extractRequired": 3,
+                            "challenge": 0,
+                            "distanceFromExtract": 3,
                             "encounterType": "Combat",
                             "encounterTitle": "Extract Route Ambush",
                             "encounterDescription": "You are ambushed while moving between positions.",
@@ -74,6 +74,8 @@ public sealed class RaidStartApiTests
         Assert.Single(actionClient.Requests);
         Assert.True(Assert.IsType<bool>(GetField(home, "_inRaid")));
         Assert.Equal(9, Assert.IsType<int>(GetField(home, "_ammo")));
+        Assert.Equal(0, Assert.IsType<int>(GetField(home, "_challenge")));
+        Assert.Equal(3, Assert.IsType<int>(GetField(home, "_distanceFromExtract")));
         Assert.Equal("Server Scav", Assert.IsType<string>(GetField(home, "_enemyName")));
         Assert.Equal(17, Assert.IsType<int>(GetField(home, "_enemyHealth")));
         Assert.Equal(34, Assert.IsType<int>(GetField(home, "_maxHealth")));
@@ -117,8 +119,8 @@ public sealed class RaidStartApiTests
                             "weaponMalfunction": false,
                             "medkits": 1,
                             "lootSlots": 0,
-                            "extractProgress": 1,
-                            "extractRequired": 3,
+                            "challenge": 0,
+                            "distanceFromExtract": 3,
                             "encounterType": "Combat",
                             "encounterTitle": "Roadside Contact",
                             "encounterDescription": "You and a scav patrol spot each other at the same moment.",
@@ -157,6 +159,8 @@ public sealed class RaidStartApiTests
         Assert.Single(actionClient.Requests);
         Assert.True(Assert.IsType<bool>(GetField(home, "_inRaid")));
         Assert.Equal(EncounterType.Combat, Assert.IsType<EncounterType>(GetField(home, "_encounterType")));
+        Assert.Equal(0, Assert.IsType<int>(GetField(home, "_challenge")));
+        Assert.Equal(3, Assert.IsType<int>(GetField(home, "_distanceFromExtract")));
         Assert.Equal("MutualContact", Assert.IsType<string>(GetField(home, "_contactState")));
         Assert.Equal("None", Assert.IsType<string>(GetField(home, "_surpriseSide")));
         Assert.Equal("Player", Assert.IsType<string>(GetField(home, "_initiativeWinner")));
@@ -195,8 +199,8 @@ public sealed class RaidStartApiTests
                             "weaponMalfunction": false,
                             "medkits": 1,
                             "lootSlots": 0,
-                            "extractProgress": 1,
-                            "extractRequired": 3,
+                            "challenge": 0,
+                            "distanceFromExtract": 3,
                             "encounterType": "Loot",
                             "encounterTitle": "Server Encounter",
                             "encounterDescription": "Server loot",
@@ -235,6 +239,8 @@ public sealed class RaidStartApiTests
         Assert.Single(actionClient.Requests);
         Assert.True(Assert.IsType<bool>(GetField(home, "_inRaid")));
         Assert.Equal(EncounterType.Loot, Assert.IsType<EncounterType>(GetField(home, "_encounterType")));
+        Assert.Equal(0, Assert.IsType<int>(GetField(home, "_challenge")));
+        Assert.Equal(3, Assert.IsType<int>(GetField(home, "_distanceFromExtract")));
         Assert.Equal("Server loot", Assert.IsType<string>(GetField(home, "_encounterDescription")));
         Assert.Equal(8, Assert.IsType<int>(GetField(home, "_ammo")));
         Assert.Equal(34, Assert.IsType<int>(GetField(home, "_maxHealth")));

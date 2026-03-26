@@ -106,9 +106,9 @@ public sealed class RaidActionApiTests
     }
 
     [Fact]
-    public async Task ContinueSearching_CallsBackend_And_AppliesReturnedRaidSnapshot()
+    public async Task GoDeeper_CallsBackend_And_AppliesReturnedRaidSnapshot()
     {
-        var actionClient = CreateActionClient("continue-searching", _ =>
+        var actionClient = CreateActionClient("go-deeper", _ =>
             CreateRaidResult("""
                 {
                   "raid": {
@@ -126,6 +126,8 @@ public sealed class RaidActionApiTests
                     "enemyHealth": 0,
                     "lootContainer": "Dead Body",
                     "awaitingDecision": false,
+                    "challenge": 3,
+                    "distanceFromExtract": 4,
                     "discoveredLoot": [
                       { "name": "Scrap Metal", "type": 5, "value": 18, "slots": 1, "rarity": 0, "displayRarity": 0 }
                     ],
@@ -141,13 +143,103 @@ public sealed class RaidActionApiTests
         var home = CreateHome(actionClient);
         SeedRaid(home);
 
-        InvokePrivate(home, "ContinueSearching");
+        InvokePrivate(home, "GoDeeper");
 
         Assert.Single(actionClient.Requests);
         Assert.Equal(EncounterType.Loot, Assert.IsType<EncounterType>(GetField(home, "_encounterType")));
+        Assert.Equal(3, Assert.IsType<int>(GetField(home, "_challenge")));
+        Assert.Equal(4, Assert.IsType<int>(GetField(home, "_distanceFromExtract")));
         var raid = Assert.IsType<RaidState>(GetField(home, "_raid"));
         Assert.Equal("Scrap Metal", Assert.Single(raid.Inventory.DiscoveredLoot).Name);
         AssertOpeningPhaseFields(home, "None", "None", "None", 0, false);
+    }
+
+    [Fact]
+    public async Task MoveTowardExtract_CallsBackend_And_AppliesReturnedRaidSnapshot()
+    {
+        var actionClient = CreateActionClient("move-toward-extract", _ =>
+            CreateRaidResult("""
+                {
+                  "raid": {
+                    "health": 28,
+                    "ammo": 8,
+                    "weaponMalfunction": false,
+                    "encounterType": "Neutral",
+                    "encounterDescription": "Server travel",
+                    "contactState": "None",
+                    "surpriseSide": "None",
+                    "initiativeWinner": "None",
+                    "openingActionsRemaining": 0,
+                    "surprisePersistenceEligible": false,
+                    "enemyName": "",
+                    "enemyHealth": 0,
+                    "lootContainer": "",
+                    "awaitingDecision": false,
+                    "challenge": 3,
+                    "distanceFromExtract": 0,
+                    "discoveredLoot": [],
+                    "carriedLoot": [],
+                    "equippedItems": [
+                      { "name": "AK74", "type": 0, "value": 320, "slots": 1, "rarity": 2, "displayRarity": 3 },
+                      { "name": "Small Backpack", "type": 2, "value": 75, "slots": 2, "rarity": 2, "displayRarity": 3 }
+                    ],
+                    "logEntries": ["Moved one step closer to extract."]
+                  }
+                }
+                """));
+        var home = CreateHome(actionClient);
+        SeedRaid(home);
+
+        await InvokePrivateAsync(home, "MoveTowardExtract");
+
+        Assert.Single(actionClient.Requests);
+        Assert.Equal(EncounterType.Neutral, Assert.IsType<EncounterType>(GetField(home, "_encounterType")));
+        Assert.Equal(3, Assert.IsType<int>(GetField(home, "_challenge")));
+        Assert.Equal(0, Assert.IsType<int>(GetField(home, "_distanceFromExtract")));
+    }
+
+    [Fact]
+    public async Task StayAtExtract_CallsBackend_And_AppliesReturnedRaidSnapshot()
+    {
+        var actionClient = CreateActionClient("stay-at-extract", _ =>
+            CreateRaidResult("""
+                {
+                  "raid": {
+                    "health": 28,
+                    "ammo": 8,
+                    "weaponMalfunction": false,
+                    "encounterType": "Extraction",
+                    "encounterDescription": "Server extraction pressure",
+                    "contactState": "None",
+                    "surpriseSide": "None",
+                    "initiativeWinner": "None",
+                    "openingActionsRemaining": 0,
+                    "surprisePersistenceEligible": false,
+                    "enemyName": "",
+                    "enemyHealth": 0,
+                    "lootContainer": "",
+                    "awaitingDecision": false,
+                    "challenge": 5,
+                    "distanceFromExtract": 1,
+                    "discoveredLoot": [],
+                    "carriedLoot": [],
+                    "equippedItems": [
+                      { "name": "AK74", "type": 0, "value": 320, "slots": 1, "rarity": 2, "displayRarity": 3 },
+                      { "name": "Small Backpack", "type": 2, "value": 75, "slots": 2, "rarity": 2, "displayRarity": 3 }
+                    ],
+                    "logEntries": ["You drifted one step away from extract."]
+                  }
+                }
+                """));
+        var home = CreateHome(actionClient);
+        SeedRaid(home);
+
+        await InvokePrivateAsync(home, "StayAtExtract");
+
+        Assert.Single(actionClient.Requests);
+        Assert.Equal(EncounterType.Extraction, Assert.IsType<EncounterType>(GetField(home, "_encounterType")));
+        Assert.Equal(5, Assert.IsType<int>(GetField(home, "_challenge")));
+        Assert.Equal(1, Assert.IsType<int>(GetField(home, "_distanceFromExtract")));
     }
 
     [Fact]
@@ -171,6 +263,8 @@ public sealed class RaidActionApiTests
                     "enemyHealth": 0,
                     "lootContainer": "Dead Body",
                     "awaitingDecision": false,
+                    "challenge": 5,
+                    "distanceFromExtract": 0,
                     "discoveredLoot": [],
                     "carriedLoot": [],
                     "equippedItems": [
@@ -189,7 +283,23 @@ public sealed class RaidActionApiTests
         Assert.Single(actionClient.Requests);
         Assert.Equal(EncounterType.Extraction, Assert.IsType<EncounterType>(GetField(home, "_encounterType")));
         Assert.Equal("Server extraction", Assert.IsType<string>(GetField(home, "_encounterDescription")));
+        Assert.Equal(5, Assert.IsType<int>(GetField(home, "_challenge")));
+        Assert.Equal(0, Assert.IsType<int>(GetField(home, "_distanceFromExtract")));
         AssertOpeningPhaseFields(home, "None", "None", "None", 0, false);
+    }
+
+    [Fact]
+    public async Task RaidMovementActions_DoNotDispatch_WhenRaidIsMissing()
+    {
+        var actionClient = CreateActionClient("unused", _ => throw new InvalidOperationException("Should not dispatch."));
+        var home = CreateHome(actionClient);
+
+        await InvokePrivateAsync(home, "GoDeeper");
+        await InvokePrivateAsync(home, "StayAtExtract");
+        await InvokePrivateAsync(home, "MoveTowardExtract");
+        await InvokePrivateAsync(home, "AttemptExtractAsync");
+
+        Assert.Empty(actionClient.Requests);
     }
 
     private static Home CreateHome(FakeGameActionApiClient actionClient)

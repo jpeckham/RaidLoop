@@ -236,7 +236,7 @@ test("game-action returns raid-started projections for start-main-raid", async (
           weaponMalfunction: false,
           medkits: 1,
           lootSlots: 0,
-          challenge: 1,
+          challenge: 0,
           distanceFromExtract: 3,
           encounterType: "Combat",
           encounterTitle: "Combat Encounter",
@@ -273,6 +273,8 @@ test("game-action returns raid-started projections for start-main-raid", async (
   assert.equal(body.eventType, "RaidStarted");
   assert.deepEqual(body.event, { action: "start-main-raid" });
   assert.equal(body.projections.raid.health, 27);
+  assert.equal(body.projections.raid.challenge, 0);
+  assert.equal(body.projections.raid.distanceFromExtract, 3);
   assert.equal(body.projections.raid.ammo, 9);
   assert.equal(body.projections.raid.contactState, "None");
   assert.equal(body.projections.raid.surpriseSide, "None");
@@ -309,7 +311,7 @@ test("game-action returns raid-started projections for start-random-raid", async
           weaponMalfunction: false,
           medkits: 1,
           lootSlots: 0,
-          challenge: 1,
+          challenge: 0,
           distanceFromExtract: 3,
           encounterType: "Loot",
           encounterTitle: "Loot Encounter",
@@ -346,6 +348,8 @@ test("game-action returns raid-started projections for start-random-raid", async
   assert.deepEqual(body.event, { action: "start-random-raid" });
   assert.equal(body.projections.luckRun.randomCharacter.name, "Ghost-101");
   assert.equal(body.projections.raid.encounterType, "Loot");
+  assert.equal(body.projections.raid.challenge, 0);
+  assert.equal(body.projections.raid.distanceFromExtract, 3);
   assert.equal(body.projections.raid.contactState, "None");
   assert.equal(body.projections.raid.surpriseSide, "None");
   assert.equal(body.projections.raid.initiativeWinner, "None");

@@ -531,7 +531,7 @@ public sealed class ProfileMutationFlowTests
         Assert.True(Assert.IsType<bool>(GetField(home, "_inRaid")));
         Assert.False(Assert.IsType<bool>(GetField(home, "_awaitingDecision")));
         Assert.Equal(0, Assert.IsType<int>(GetField(home, "_challenge")));
-        Assert.Equal(0, Assert.IsType<int>(GetField(home, "_distanceFromExtract")));
+        Assert.Equal(3, Assert.IsType<int>(GetField(home, "_distanceFromExtract")));
         Assert.Equal(0, Assert.IsType<int>(GetField(home, "_ammo")));
         Assert.Equal(EncounterType.Neutral, Assert.IsType<EncounterType>(GetField(home, "_encounterType")));
         Assert.Equal(string.Empty, Assert.IsType<string>(GetField(home, "_encounterDescription")));

@@ -433,7 +433,7 @@ public partial class Home : IDisposable
             _inRaid = true;
             _awaitingDecision = false;
             _challenge = 0;
-            _distanceFromExtract = 0;
+            _distanceFromExtract = 3;
             _ammo = 0;
             _encounterDescription = string.Empty;
             _contactState = string.Empty;

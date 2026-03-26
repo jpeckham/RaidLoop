@@ -147,7 +147,7 @@ begin
         'medkits', medkits,
         'lootSlots', 0,
         'challenge', 0,
-        'distanceFromExtract', 0,
+        'distanceFromExtract', 3,
         'encounterType', encounter_type,
         'encounterTitle', encounter_title,
         'encounterDescription', encounter_description,

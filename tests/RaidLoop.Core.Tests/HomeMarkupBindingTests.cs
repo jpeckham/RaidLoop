@@ -47,6 +47,8 @@ public sealed class HomeMarkupBindingTests
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026032402_add_combat_outcome_flavor.sql"));
     private static readonly string AuthoredSurpriseEncounterStylesMigrationPath = Path.GetFullPath(
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026032501_add_authored_surprise_encounter_styles.sql"));
+    private static readonly string ChallengeDistanceProdUpgradeMigrationPath = Path.GetFullPath(
+        Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026032601_fix_challenge_distance_prod_upgrade.sql"));
     private static readonly string SupabaseAuthServicePath = Path.GetFullPath(
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "RaidLoop.Client", "Services", "SupabaseAuthService.cs"));
     private static readonly string ClientTelemetryServicePath = Path.GetFullPath(
@@ -827,6 +829,25 @@ public sealed class HomeMarkupBindingTests
         Assert.Contains("selected_combat_table_key := 'loot_interruption';", migration);
         Assert.Contains("selected_combat_table_key := 'default_raid_travel';", migration);
         Assert.Contains("where entries.table_key = selected_combat_table_key", migration);
+    }
+
+    [Fact]
+    public void ChallengeDistanceProdUpgradeMigrationPinsForwardUpgradeForLiveEnvironments()
+    {
+        Assert.True(File.Exists(ChallengeDistanceProdUpgradeMigrationPath));
+
+        var migration = File.ReadAllText(ChallengeDistanceProdUpgradeMigrationPath);
+
+        Assert.Contains("create or replace function game.build_raid_snapshot", migration);
+        Assert.Contains("'challenge', 0", migration);
+        Assert.Contains("'distanceFromExtract', 3", migration);
+        Assert.Contains("create or replace function game.generate_raid_encounter", migration);
+        Assert.Contains("create or replace function game.perform_raid_action", migration);
+        Assert.Contains("action = 'go-deeper'", migration);
+        Assert.Contains("action = 'stay-at-extract'", migration);
+        Assert.Contains("distance_from_extract = 0", migration);
+        Assert.Contains("create or replace function public.game_action", migration);
+        Assert.Contains("'stay-at-extract'", migration);
     }
 
     [Fact]

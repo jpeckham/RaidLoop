@@ -27,6 +27,8 @@ public sealed class ContractsTests
                 ActiveRaid: new RaidSnapshot(
                     Health: 30,
                     BackpackCapacity: 3,
+                    Encumbrance: 19,
+                    MaxEncumbrance: 40,
                     Ammo: 8,
                     WeaponMalfunction: false,
                     Medkits: 1,
@@ -68,6 +70,8 @@ public sealed class ContractsTests
         Assert.True(roundTrip.Snapshot.StatsAccepted);
         Assert.Equal(10, roundTrip.Snapshot.PlayerConstitution);
         Assert.Equal(30, roundTrip.Snapshot.PlayerMaxHealth);
+        Assert.Equal(19, roundTrip.Snapshot.ActiveRaid!.Encumbrance);
+        Assert.Equal(40, roundTrip.Snapshot.ActiveRaid.MaxEncumbrance);
         Assert.Equal("Neutral", roundTrip.Snapshot.ActiveRaid!.EncounterType);
         Assert.Equal("PlayerAmbush", roundTrip.Snapshot.ActiveRaid.ContactState);
         Assert.Equal("Player", roundTrip.Snapshot.ActiveRaid.SurpriseSide);

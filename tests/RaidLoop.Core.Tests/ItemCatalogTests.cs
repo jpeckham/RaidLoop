@@ -20,6 +20,30 @@ public sealed class ItemCatalogTests
     }
 
     [Fact]
+    public void AuthoredItems_HaveRequestedWeights()
+    {
+        Assert.Equal(2, ItemCatalog.Get("Rusty Knife").Weight);
+        Assert.Equal(4, ItemCatalog.Get("Makarov").Weight);
+        Assert.Equal(8, ItemCatalog.Get("PPSH").Weight);
+        Assert.Equal(9, ItemCatalog.Get("AK74").Weight);
+        Assert.Equal(18, ItemCatalog.Get("6B13 assault armor").Weight);
+        Assert.Equal(3, ItemCatalog.Get("Medkit").Weight);
+    }
+
+    [Fact]
+    public void HeavierGear_HasHigherWeightThanLighterGear()
+    {
+        var knife = ItemCatalog.Get("Rusty Knife");
+        var ak74 = ItemCatalog.Get("AK74");
+        var tacticalBackpack = ItemCatalog.Get("Tactical Backpack");
+        var raidBackpack = ItemCatalog.Get("6Sh118");
+
+        Assert.True(ak74.Weight > knife.Weight);
+        Assert.True(tacticalBackpack.Weight > ItemCatalog.Get("Small Backpack").Weight);
+        Assert.True(raidBackpack.Weight > tacticalBackpack.Weight);
+    }
+
+    [Fact]
     public void LargerBackpacks_CostMoreThanSmallerBackpacks()
     {
         var smallBackpack = ItemCatalog.Get("Small Backpack");
@@ -215,6 +239,20 @@ public sealed class ItemCatalogTests
 
         Assert.Equal(2, extractableMedkits.Count);
         Assert.All(extractableMedkits, medkit => Assert.Equal(ItemCatalog.Get("Medkit"), medkit));
+    }
+
+    [Fact]
+    public void Medkit_Weight_IsIncludedInEncumbrance()
+    {
+        var items = new[]
+        {
+            ItemCatalog.Get("Rusty Knife"),
+            ItemCatalog.Get("Medkit")
+        };
+
+        var totalEncumbrance = CombatBalance.GetTotalEncumbrance(items);
+
+        Assert.Equal(5, totalEncumbrance);
     }
 
     private static T InvokePrivate<T>(object instance, string methodName)

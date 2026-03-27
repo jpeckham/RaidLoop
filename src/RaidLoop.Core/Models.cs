@@ -36,6 +36,7 @@ public sealed record OpeningPhaseContext(
 public sealed record Item(
     string Name,
     ItemType Type,
+    int Weight,
     int Value = 1,
     int Slots = 1,
     Rarity Rarity = Rarity.Common,

@@ -62,6 +62,11 @@ public static class CombatBalance
         return 10 + Math.Max(0, strength - PlayerStatRules.MinimumScore);
     }
 
+    public static int GetMaxEncumbranceFromStrength(int strength)
+    {
+        return 40 + (5 * Math.Max(0, strength - PlayerStatRules.MinimumScore));
+    }
+
     public static int GetCharismaModifier(int charisma)
     {
         return GetAbilityModifier(charisma);
@@ -255,6 +260,12 @@ public static class CombatBalance
             "Small Backpack" => 3,
             _ => 2
         };
+    }
+
+    public static int GetTotalEncumbrance(IEnumerable<Item> items)
+    {
+        var total = items.Sum(item => Math.Max(0, item.Weight));
+        return total;
     }
 
     public static string NormalizeItemName(string itemName)

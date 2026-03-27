@@ -930,6 +930,8 @@ public partial class Home : IDisposable
             return false;
         }
 
+        // Authored items intentionally hydrate from the catalog here so their canonical weight stays aligned
+        // until backend encumbrance projections are rolled out everywhere.
         if (ItemCatalog.TryGet(name, out var catalogItem))
         {
             parsedItem = catalogItem!;
@@ -946,6 +948,12 @@ public partial class Home : IDisposable
             : TryGetInt32(item, "Value", out var parsedValueUpperCase)
                 ? parsedValueUpperCase
                 : 1;
+        if (!TryGetInt32(item, "weight", out var parsedWeight)
+            && !TryGetInt32(item, "Weight", out parsedWeight))
+        {
+            parsedItem = default!;
+            return false;
+        }
         var slots = TryGetInt32(item, "slots", out var parsedSlots)
             ? parsedSlots
             : TryGetInt32(item, "Slots", out var parsedSlotsUpperCase)
@@ -962,7 +970,7 @@ public partial class Home : IDisposable
                 ? (DisplayRarity)parsedDisplayRarityUpperCase
             : DisplayRarity.Common;
 
-        parsedItem = new Item(name, type, value, slots, rarity, displayRarity);
+        parsedItem = new Item(name, type, parsedWeight, value, slots, rarity, displayRarity);
         return true;
     }
 

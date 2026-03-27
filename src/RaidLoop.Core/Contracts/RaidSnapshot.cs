@@ -27,4 +27,6 @@ public sealed record RaidSnapshot(
     IReadOnlyList<Item> DiscoveredLoot,
     IReadOnlyList<Item> CarriedLoot,
     IReadOnlyList<Item> EquippedItems,
-    IReadOnlyList<string> LogEntries);
+    IReadOnlyList<string> LogEntries,
+    int Encumbrance = 0,
+    int MaxEncumbrance = 0);

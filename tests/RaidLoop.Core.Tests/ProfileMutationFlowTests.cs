@@ -1,5 +1,6 @@
 using System.Net;
 using System.Reflection;
+using System.Text.Json;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.Options;
 using Microsoft.JSInterop;
@@ -1148,6 +1149,28 @@ public sealed class ProfileMutationFlowTests
         Assert.Equal(string.Empty, Assert.IsType<string>(GetField(home, "_initiativeWinner")));
         Assert.Equal(0, Assert.IsType<int>(GetField(home, "_openingActionsRemaining")));
         Assert.False(Assert.IsType<bool>(GetField(home, "_surprisePersistenceEligible")));
+    }
+
+    [Fact]
+    public void TryReadItem_KnownAuthoredItemWithoutWeight_UsesCatalogWeight()
+    {
+        using var document = JsonDocument.Parse("""
+        {
+            "name": "Makarov",
+            "type": 123,
+            "value": 456,
+            "slots": 789
+        }
+        """);
+
+        var method = typeof(Home).GetMethod("TryReadItem", BindingFlags.Static | BindingFlags.NonPublic);
+        Assert.NotNull(method);
+
+        var args = new object?[] { document.RootElement, null };
+        var parsed = Assert.IsType<bool>(method!.Invoke(null, args));
+
+        Assert.True(parsed);
+        Assert.Equal(ItemCatalog.Get("Makarov"), Assert.IsType<Item>(args[1]));
     }
 
     private static Home CreateHome(

@@ -296,6 +296,34 @@ public class RaidEngineTests
         Assert.True(highStrengthCapacity > lowStrengthCapacity);
     }
 
+    [Fact]
+    public void CombatBalance_StrengthMaxEncumbrance_GrowsWithStrength()
+    {
+        var lowStrengthLimit = CombatBalance.GetMaxEncumbranceFromStrength(8);
+        var highStrengthLimit = CombatBalance.GetMaxEncumbranceFromStrength(18);
+
+        Assert.Equal(40, lowStrengthLimit);
+        Assert.Equal(90, highStrengthLimit);
+        Assert.True(highStrengthLimit > lowStrengthLimit);
+    }
+
+    [Fact]
+    public void CombatBalance_TotalEncumbrance_IncludesItemsAndMedkits()
+    {
+        var items = new[]
+        {
+            ItemCatalog.Get("Rusty Knife"),
+            ItemCatalog.Get("Makarov"),
+            ItemCatalog.Get("6B2 body armor"),
+            ItemCatalog.Get("Medkit"),
+            ItemCatalog.Get("Medkit")
+        };
+
+        var totalEncumbrance = CombatBalance.GetTotalEncumbrance(items);
+
+        Assert.Equal(20, totalEncumbrance);
+    }
+
     [Theory]
     [InlineData(8, 240)]
     [InlineData(12, 228)]
@@ -325,10 +353,10 @@ public class RaidEngineTests
     {
         var discovered = new List<Item>
         {
-            new("Old Loot", ItemType.Sellable, Slots: 1)
+            new("Old Loot", ItemType.Sellable, Weight: 1, Slots: 1)
         };
 
-        EncounterLoot.StartLootEncounter(discovered, [new Item("New Loot", ItemType.Material, Slots: 1)]);
+        EncounterLoot.StartLootEncounter(discovered, [new Item("New Loot", ItemType.Material, Weight: 1, Slots: 1)]);
 
         Assert.Single(discovered);
         Assert.Equal("New Loot", discovered[0].Name);
@@ -339,10 +367,10 @@ public class RaidEngineTests
     {
         var discovered = new List<Item>
         {
-            new("First", ItemType.Material, Slots: 1)
+            new("First", ItemType.Material, Weight: 1, Slots: 1)
         };
 
-        EncounterLoot.AppendDiscoveredLoot(discovered, [new Item("Second", ItemType.Weapon, Slots: 1)]);
+        EncounterLoot.AppendDiscoveredLoot(discovered, [new Item("Second", ItemType.Weapon, Weight: 1, Slots: 1)]);
 
         Assert.Equal(2, discovered.Count);
         Assert.Equal("First", discovered[0].Name);
@@ -426,8 +454,8 @@ public class RaidEngineTests
             broughtItems: [],
             raidLoot: []);
 
-        var addedFirst = RaidEngine.TryAddLoot(state, new Item("Bandage", ItemType.Sellable, Slots: 1));
-        var addedSecond = RaidEngine.TryAddLoot(state, new Item("Rifle", ItemType.Weapon, Slots: 2));
+        var addedFirst = RaidEngine.TryAddLoot(state, new Item("Bandage", ItemType.Sellable, Weight: 1, Slots: 1));
+        var addedSecond = RaidEngine.TryAddLoot(state, new Item("Rifle", ItemType.Weapon, Weight: 1, Slots: 2));
 
         Assert.True(addedFirst);
         Assert.False(addedSecond);
@@ -443,7 +471,7 @@ public class RaidEngineTests
             broughtItems: [],
             raidLoot: []);
 
-        var added = RaidEngine.TryAddLoot(state, new Item("Ammo Box", ItemType.Sellable, Slots: 1));
+        var added = RaidEngine.TryAddLoot(state, new Item("Ammo Box", ItemType.Sellable, Weight: 2, Slots: 1));
 
         Assert.True(added);
         Assert.Single(state.RaidLoot);
@@ -458,7 +486,7 @@ public class RaidEngineTests
             broughtItems: [],
             raidLoot: []);
 
-        RaidEngine.StartDiscoveredLootEncounter(state, [new Item("Medkit", ItemType.Consumable, Slots: 1)]);
+        RaidEngine.StartDiscoveredLootEncounter(state, [new Item("Medkit", ItemType.Consumable, Weight: 3, Slots: 1)]);
 
         var looted = RaidEngine.TryLootFromDiscovered(state, state.Inventory.DiscoveredLoot[0]);
 
@@ -474,10 +502,10 @@ public class RaidEngineTests
         var state = new RaidState(
             health: 30,
             backpackCapacity: 2,
-            broughtItems: [new Item("Makarov", ItemType.Weapon, Slots: 1)],
+            broughtItems: [new Item("Makarov", ItemType.Weapon, Weight: 4, Slots: 1)],
             raidLoot: []);
 
-        RaidEngine.StartDiscoveredLootEncounter(state, [new Item("AK74", ItemType.Weapon, Slots: 1)]);
+        RaidEngine.StartDiscoveredLootEncounter(state, [new Item("AK74", ItemType.Weapon, Weight: 9, Slots: 1)]);
 
         var equipped = RaidEngine.TryEquipFromDiscovered(state, state.Inventory.DiscoveredLoot[0]);
 
@@ -495,13 +523,13 @@ public class RaidEngineTests
             backpackCapacity: 6,
             broughtItems:
             [
-                new Item("Makarov", ItemType.Weapon, Slots: 1),
-                new Item("Tactical Backpack", ItemType.Backpack, Slots: 1)
+                new Item("Makarov", ItemType.Weapon, Weight: 4, Slots: 1),
+                new Item("Tactical Backpack", ItemType.Backpack, Weight: 8, Slots: 1)
             ],
             raidLoot:
             [
-                new Item("Scrap Metal", ItemType.Material, Slots: 1),
-                new Item("Rare Scope", ItemType.Material, Slots: 1)
+                new Item("Scrap Metal", ItemType.Material, Weight: 3, Slots: 1),
+                new Item("Rare Scope", ItemType.Material, Weight: 2, Slots: 1)
             ]);
 
         var dropped = RaidEngine.TryDropEquippedToDiscovered(state, ItemType.Backpack);
@@ -518,14 +546,14 @@ public class RaidEngineTests
     [Fact]
     public void FinalizeRaid_Success_TransfersBroughtItemsAndLootToStash()
     {
-        var game = new GameState([new Item("Spare Knife", ItemType.Weapon, Slots: 1)]);
+        var game = new GameState([new Item("Spare Knife", ItemType.Weapon, Weight: 1, Slots: 1)]);
         var loadout = new List<Item>
         {
-            new("Pistol", ItemType.Weapon, Slots: 1),
-            new("Light Armor", ItemType.Armor, Slots: 1)
+            new("Pistol", ItemType.Weapon, Weight: 1, Slots: 1),
+            new("Light Armor", ItemType.Armor, Weight: 1, Slots: 1)
         };
         var raid = RaidEngine.StartRaid(game, loadout, backpackCapacity: 4, startingHealth: 30);
-        RaidEngine.TryAddLoot(raid, new Item("Medkit", ItemType.Consumable, Slots: 1));
+        RaidEngine.TryAddLoot(raid, new Item("Medkit", ItemType.Consumable, Weight: 3, Slots: 1));
 
         RaidEngine.FinalizeRaid(game, raid, extracted: true);
 
@@ -538,8 +566,8 @@ public class RaidEngineTests
     [Fact]
     public void StartRaid_RemovesLoadoutFromStash()
     {
-        var pistol = new Item("Pistol", ItemType.Weapon, Slots: 1);
-        var backpack = new Item("Backpack", ItemType.Backpack, Slots: 1);
+        var pistol = new Item("Pistol", ItemType.Weapon, Weight: 1, Slots: 1);
+        var backpack = new Item("Backpack", ItemType.Backpack, Weight: 1, Slots: 1);
         var game = new GameState([pistol, backpack]);
 
         _ = RaidEngine.StartRaid(game, [pistol, backpack], backpackCapacity: 3, startingHealth: 20);
@@ -550,14 +578,14 @@ public class RaidEngineTests
     [Fact]
     public void FinalizeRaid_Death_LosesBroughtItemsAndRaidLoot()
     {
-        var game = new GameState([new Item("Spare Knife", ItemType.Weapon, Slots: 1)]);
+        var game = new GameState([new Item("Spare Knife", ItemType.Weapon, Weight: 1, Slots: 1)]);
         var loadout = new List<Item>
         {
-            new("Pistol", ItemType.Weapon, Slots: 1),
-            new("Backpack", ItemType.Backpack, Slots: 1)
+            new("Pistol", ItemType.Weapon, Weight: 1, Slots: 1),
+            new("Backpack", ItemType.Backpack, Weight: 1, Slots: 1)
         };
         var raid = RaidEngine.StartRaid(game, loadout, backpackCapacity: 2, startingHealth: 10);
-        RaidEngine.TryAddLoot(raid, new Item("Ammo", ItemType.Material, Slots: 1));
+        RaidEngine.TryAddLoot(raid, new Item("Ammo", ItemType.Material, Weight: 1, Slots: 1));
 
         RaidEngine.FinalizeRaid(game, raid, extracted: false);
 

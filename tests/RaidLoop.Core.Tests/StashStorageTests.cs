@@ -13,15 +13,15 @@ public sealed class StashStorageTests
         var raw = JsonSerializer.Serialize(new GameSave(
             MainStash:
             [
-                new Item("Makarov", ItemType.Weapon, Value: 1, Slots: 1),
-                new Item("Bandage", ItemType.Sellable, Value: 1, Slots: 1)
+                new Item("Makarov", ItemType.Weapon, Weight: 4, Value: 1, Slots: 1),
+                new Item("Bandage", ItemType.Sellable, Weight: 1, Value: 1, Slots: 1)
             ],
             RandomCharacterAvailableAt: DateTimeOffset.MinValue,
             RandomCharacter: null,
             Money: 500,
             OnPersonItems:
             [
-                new OnPersonEntry(new Item("Medkit", ItemType.Consumable, Value: 1, Slots: 1), false)
+                new OnPersonEntry(new Item("Medkit", ItemType.Consumable, Weight: 3, Value: 1, Slots: 1), false)
             ]));
 
         var storage = new StashStorage(new FakeJsRuntime(raw));
@@ -39,7 +39,7 @@ public sealed class StashStorageTests
         var raw = JsonSerializer.Serialize(new GameSave(
             MainStash:
             [
-                new Item("Hunting Rifle", ItemType.Weapon, Value: 1, Slots: 1)
+                new Item("Hunting Rifle", ItemType.Weapon, Weight: 1, Value: 1, Slots: 1)
             ],
             RandomCharacterAvailableAt: DateTimeOffset.MinValue,
             RandomCharacter: null,

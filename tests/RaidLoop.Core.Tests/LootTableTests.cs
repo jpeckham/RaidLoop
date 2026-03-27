@@ -10,7 +10,7 @@ public class LootTableTests
     {
         var table = new LootTable(
         [
-            (new Item("Bandage", ItemType.Sellable, Value: 1, Slots: 1, Rarity: Rarity.Common), 4)
+            (new Item("Bandage", ItemType.Sellable, Weight: 1, Value: 1, Slots: 1, Rarity: Rarity.Common), 4)
         ]);
 
         var drawn = table.Draw(new TestSequenceRng([0]), 0);
@@ -23,9 +23,9 @@ public class LootTableTests
     {
         var table = new LootTable(
         [
-            (new Item("Bandage", ItemType.Sellable, Value: 1, Slots: 1, Rarity: Rarity.Common), 10),
-            (new Item("Medkit", ItemType.Consumable, Value: 1, Slots: 1, Rarity: Rarity.Uncommon), 10),
-            (new Item("AK74", ItemType.Weapon, Value: 1, Slots: 1, Rarity: Rarity.Rare), 10)
+            (new Item("Bandage", ItemType.Sellable, Weight: 1, Value: 1, Slots: 1, Rarity: Rarity.Common), 10),
+            (new Item("Medkit", ItemType.Consumable, Weight: 3, Value: 1, Slots: 1, Rarity: Rarity.Uncommon), 10),
+            (new Item("AK74", ItemType.Weapon, Weight: 9, Value: 1, Slots: 1, Rarity: Rarity.Rare), 10)
         ]);
 
         var drawn = table.Draw(new TestSequenceRng([0, 0, 0]), 3);
@@ -39,8 +39,8 @@ public class LootTableTests
     {
         var table = new LootTable(
         [
-            (new Item("Bandage", ItemType.Sellable, Value: 1, Slots: 1, Rarity: Rarity.Common), 10),
-            (new Item("Medkit", ItemType.Consumable, Value: 1, Slots: 1, Rarity: Rarity.Uncommon), 10)
+            (new Item("Bandage", ItemType.Sellable, Weight: 1, Value: 1, Slots: 1, Rarity: Rarity.Common), 10),
+            (new Item("Medkit", ItemType.Consumable, Weight: 3, Value: 1, Slots: 1, Rarity: Rarity.Uncommon), 10)
         ]);
 
         var drawn = table.Draw(new TestSequenceRng([0, 0, 0]), 5);

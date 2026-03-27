@@ -33,7 +33,7 @@ public static class CombatBalance
 {
     public static int GetAbilityModifier(int score)
     {
-        return (int)Math.Floor((score - 10) / 2.0);
+        return PlayerStatRules.GetAbilityModifier(score);
     }
 
     public static int GetRangedAttackBonusFromDexterity(int dexterity)
@@ -41,14 +41,52 @@ public static class CombatBalance
         return GetAbilityModifier(dexterity);
     }
 
-    public static int GetDefenseFromDexterity(int dexterity)
+    public static int GetDefenseFromDexterity(int dexterity, int? maxDexBonus = null)
     {
-        return 10 + GetAbilityModifier(dexterity);
+        var dexterityBonus = GetAbilityModifier(dexterity);
+        if (maxDexBonus.HasValue)
+        {
+            dexterityBonus = Math.Min(dexterityBonus, maxDexBonus.Value);
+        }
+
+        return 10 + dexterityBonus;
     }
 
     public static int GetMaxHealthFromConstitution(int constitution)
     {
         return 10 + (2 * Math.Max(0, constitution));
+    }
+
+    public static int GetCarryCapacityFromStrength(int strength)
+    {
+        return 10 + Math.Max(0, strength - PlayerStatRules.MinimumScore);
+    }
+
+    public static int GetCharismaModifier(int charisma)
+    {
+        return GetAbilityModifier(charisma);
+    }
+
+    public static Rarity GetMaxShopRarityFromChaBonus(int charismaModifier)
+    {
+        return charismaModifier switch
+        {
+            >= 4 => Rarity.Legendary,
+            3 => Rarity.Epic,
+            2 => Rarity.Rare,
+            1 => Rarity.Uncommon,
+            _ => Rarity.Common
+        };
+    }
+
+    public static int GetShopPrice(int basePrice, int charismaModifier, bool isBuying)
+    {
+        var modifier = Math.Max(0, charismaModifier);
+        var multiplier = isBuying
+            ? 1m - (0.05m * modifier)
+            : 1m + (0.05m * modifier);
+
+        return Math.Max(1, (int)Math.Round(basePrice * multiplier, MidpointRounding.AwayFromZero));
     }
 
     public static bool ResolveAttackRoll(int roll, int attackBonus, int defense)

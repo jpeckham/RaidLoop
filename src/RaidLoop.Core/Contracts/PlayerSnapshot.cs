@@ -6,13 +6,49 @@ public sealed record OnPersonSnapshot(Item Item, bool IsEquipped);
 
 public sealed record RandomCharacterSnapshot(string Name, IReadOnlyList<Item> Inventory);
 
-public sealed record PlayerSnapshot(
-    int Money,
-    IReadOnlyList<Item> MainStash,
-    IReadOnlyList<OnPersonSnapshot> OnPersonItems,
-    int PlayerConstitution,
-    int PlayerMaxHealth,
-    [property: JsonConverter(typeof(FlexibleDateTimeOffsetJsonConverter))]
-    DateTimeOffset RandomCharacterAvailableAt,
-    RandomCharacterSnapshot? RandomCharacter,
-    RaidSnapshot? ActiveRaid);
+public sealed record PlayerSnapshot
+{
+    public PlayerSnapshot(
+        int Money,
+        IReadOnlyList<Item> MainStash,
+        IReadOnlyList<OnPersonSnapshot> OnPersonItems,
+        int PlayerConstitution,
+        int PlayerMaxHealth,
+        DateTimeOffset RandomCharacterAvailableAt,
+        RandomCharacterSnapshot? RandomCharacter,
+        RaidSnapshot? ActiveRaid,
+        PlayerStats? AcceptedStats = null,
+        PlayerStats? DraftStats = null,
+        int AvailableStatPoints = PlayerStatRules.StartingPool,
+        bool StatsAccepted = false)
+    {
+        this.Money = Money;
+        this.MainStash = MainStash;
+        this.OnPersonItems = OnPersonItems;
+        this.PlayerConstitution = PlayerConstitution;
+        this.PlayerMaxHealth = PlayerMaxHealth;
+        this.RandomCharacterAvailableAt = RandomCharacterAvailableAt;
+        this.RandomCharacter = RandomCharacter;
+        this.ActiveRaid = ActiveRaid;
+        this.AcceptedStats = AcceptedStats ?? PlayerStats.Default;
+        this.DraftStats = DraftStats ?? PlayerStats.Default;
+        this.AvailableStatPoints = AvailableStatPoints;
+        this.StatsAccepted = StatsAccepted;
+    }
+
+    public int Money { get; init; }
+    public IReadOnlyList<Item> MainStash { get; init; }
+    public IReadOnlyList<OnPersonSnapshot> OnPersonItems { get; init; }
+    public int PlayerConstitution { get; init; }
+    public int PlayerMaxHealth { get; init; }
+
+    [JsonConverter(typeof(FlexibleDateTimeOffsetJsonConverter))]
+    public DateTimeOffset RandomCharacterAvailableAt { get; init; }
+
+    public RandomCharacterSnapshot? RandomCharacter { get; init; }
+    public RaidSnapshot? ActiveRaid { get; init; }
+    public PlayerStats AcceptedStats { get; init; }
+    public PlayerStats DraftStats { get; init; }
+    public int AvailableStatPoints { get; init; }
+    public bool StatsAccepted { get; init; }
+}

@@ -22,6 +22,10 @@ public sealed class ProfileApiClientTests
                     Money: 640,
                     MainStash: [ItemCatalog.Create("Makarov")],
                     OnPersonItems: [new OnPersonSnapshot(ItemCatalog.Create("Small Backpack"), true)],
+                    AcceptedStats: new PlayerStats(8, 12, 10, 9, 11, 14),
+                    DraftStats: new PlayerStats(8, 13, 10, 9, 11, 14),
+                    AvailableStatPoints: 6,
+                    StatsAccepted: false,
                     PlayerConstitution: 10,
                     PlayerMaxHealth: 30,
                     RandomCharacterAvailableAt: DateTimeOffset.MinValue,
@@ -53,6 +57,10 @@ public sealed class ProfileApiClientTests
         Assert.True(response.IsAuthenticated);
         Assert.Equal(640, response.Snapshot.Money);
         Assert.Equal("Small Backpack", Assert.Single(response.Snapshot.OnPersonItems).Item.Name);
+        Assert.Equal(12, response.Snapshot.AcceptedStats.Dexterity);
+        Assert.Equal(13, response.Snapshot.DraftStats.Dexterity);
+        Assert.Equal(6, response.Snapshot.AvailableStatPoints);
+        Assert.False(response.Snapshot.StatsAccepted);
     }
 
     private static HttpResponseMessage JsonResponse<T>(HttpStatusCode statusCode, T body)

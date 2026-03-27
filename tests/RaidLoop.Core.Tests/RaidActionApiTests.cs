@@ -318,6 +318,82 @@ public sealed class RaidActionApiTests
     }
 
     [Fact]
+    public void RaidLootAndEquipActions_UseAuthoritativeEncumbranceProjectionWhenAvailable()
+    {
+        var home = CreateHome(new FakeGameActionApiClient());
+        SeedRaid(home);
+
+        var raid = Assert.IsType<RaidState>(GetField(home, "_raid"));
+        raid.MaxEncumbrance = 100;
+
+        InvokePrivate(
+            home,
+            "ApplyActionResult",
+            new GameActionResult(
+                "RaidUpdated",
+                null,
+                JsonDocument.Parse("""
+                    {
+                      "raid": {
+                        "encumbrance": 98,
+                        "maxEncumbrance": 100
+                      }
+                    }
+                    """).RootElement.Clone(),
+                null));
+
+        Assert.Equal("98/100 lbs", InvokePrivate<string>(home, "GetRaidEncumbranceText"));
+        Assert.False(InvokePrivateBool(home, "CanLootItem", ItemCatalog.Create("6B13 assault armor")));
+        Assert.False(InvokePrivateBool(home, "CanEquipRaidItem", ItemCatalog.Create("6B13 assault armor")));
+    }
+
+    [Fact]
+    public void RaidProjection_InvalidatesCachedEncumbrance_WhenInventoryChangesWithoutAProjection()
+    {
+        var home = CreateHome(new FakeGameActionApiClient());
+        SeedRaid(home);
+
+        InvokePrivate(
+            home,
+            "ApplyActionResult",
+            new GameActionResult(
+                "RaidUpdated",
+                null,
+                JsonDocument.Parse("""
+                    {
+                      "raid": {
+                        "encumbrance": 98,
+                        "maxEncumbrance": 100
+                      }
+                    }
+                    """).RootElement.Clone(),
+                null));
+
+        InvokePrivate(
+            home,
+            "ApplyActionResult",
+            new GameActionResult(
+                "RaidUpdated",
+                null,
+                JsonDocument.Parse("""
+                    {
+                      "raid": {
+                        "carriedLoot": [
+                          { "name": "Bandage", "type": 3, "value": 15, "slots": 1, "rarity": 0, "displayRarity": 0, "weight": 1 }
+                        ],
+                        "equippedItems": [
+                          { "name": "AK74", "type": 0, "value": 320, "slots": 1, "rarity": 2, "displayRarity": 3, "weight": 9 },
+                          { "name": "Small Backpack", "type": 2, "value": 75, "slots": 2, "rarity": 2, "displayRarity": 3, "weight": 4 }
+                        ]
+                      }
+                    }
+                    """).RootElement.Clone(),
+                null));
+
+        Assert.Equal("14/100 lbs", InvokePrivate<string>(home, "GetRaidEncumbranceText"));
+    }
+
+    [Fact]
     public void CanEquipRaidItem_DoesNotConsumeEqualButDistinctCarriedItem_WhenEvaluatingDiscoveredLoot()
     {
         var home = CreateHome(new FakeGameActionApiClient());
@@ -430,6 +506,13 @@ public sealed class RaidActionApiTests
         var method = instance.GetType().GetMethod(methodName, BindingFlags.Instance | BindingFlags.NonPublic);
         Assert.NotNull(method);
         method!.Invoke(instance, args);
+    }
+
+    private static T InvokePrivate<T>(object instance, string methodName, params object[] args)
+    {
+        var method = instance.GetType().GetMethod(methodName, BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.NotNull(method);
+        return Assert.IsType<T>(method!.Invoke(instance, args));
     }
 
     private static bool InvokePrivateBool(object instance, string methodName, params object[] args)

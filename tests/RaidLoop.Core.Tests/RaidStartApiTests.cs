@@ -26,6 +26,8 @@ public sealed class RaidStartApiTests
                           "raid": {
                             "health": 27,
                             "backpackCapacity": 3,
+                            "encumbrance": 40,
+                            "maxEncumbrance": 100,
                             "ammo": 9,
                             "weaponMalfunction": false,
                             "medkits": 1,
@@ -88,6 +90,7 @@ public sealed class RaidStartApiTests
         var raid = Assert.IsType<RaidState>(GetField(home, "_raid"));
         Assert.Equal("AK74", raid.Inventory.EquippedWeapon?.Name);
         Assert.Equal("Small Backpack", raid.Inventory.EquippedBackpack?.Name);
+        Assert.Equal("40/100 lbs", InvokePrivate<string>(home, "GetRaidEncumbranceText"));
     }
 
     [Fact]
@@ -123,6 +126,8 @@ public sealed class RaidStartApiTests
                           "raid": {
                             "health": 27,
                             "backpackCapacity": 3,
+                            "encumbrance": 38,
+                            "maxEncumbrance": 90,
                             "ammo": 8,
                             "weaponMalfunction": false,
                             "medkits": 1,
@@ -177,6 +182,7 @@ public sealed class RaidStartApiTests
         Assert.Equal("Road Scav", Assert.IsType<string>(GetField(home, "_enemyName")));
         Assert.Equal(14, Assert.IsType<int>(GetField(home, "_enemyHealth")));
         AssertRandomCharacterStats(GetField(home, "_randomCharacter"), new PlayerStats(12, 11, 10, 9, 8, 13));
+        Assert.Equal("38/90 lbs", InvokePrivate<string>(home, "GetRaidEncumbranceText"));
     }
 
     [Fact]
@@ -307,6 +313,13 @@ public sealed class RaidStartApiTests
         var task = method!.Invoke(instance, args) as Task;
         Assert.NotNull(task);
         await task!;
+    }
+
+    private static T InvokePrivate<T>(object instance, string methodName, params object[] args)
+    {
+        var method = instance.GetType().GetMethod(methodName, BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.NotNull(method);
+        return Assert.IsType<T>(method!.Invoke(instance, args));
     }
 
     private static void InvokePrivateVoid(object instance, string methodName, params object[] args)

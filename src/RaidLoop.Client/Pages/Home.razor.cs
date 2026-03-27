@@ -36,6 +36,8 @@ public partial class Home : IDisposable
     private bool _isLoading = true;
     private bool _inRaid;
     private bool _awaitingDecision;
+    private int? _raidEncumbrance;
+    private int? _raidMaxEncumbrance;
     private EncounterType _encounterType = EncounterType.Neutral;
     private string _encounterDescription = string.Empty;
     private string _contactState = string.Empty;
@@ -636,8 +638,13 @@ public partial class Home : IDisposable
     private void ApplyRaidProjection(JsonElement raid)
     {
         var freshRaid = _raid is null;
+        var raidEncumbranceProjected = false;
+        var raidMaxEncumbranceProjected = false;
+        var inventoryChanged = false;
         if (freshRaid)
         {
+            _raidEncumbrance = null;
+            _raidMaxEncumbrance = null;
             _raid = new RaidState(_maxHealth, new RaidInventory());
             _inRaid = true;
             _awaitingDecision = false;
@@ -678,6 +685,21 @@ public partial class Home : IDisposable
             hasRaidPatch = true;
         }
 
+        if (TryGetInt32(raid, "encumbrance", out var parsedEncumbrance))
+        {
+            _raidEncumbrance = parsedEncumbrance;
+            raidEncumbranceProjected = true;
+            hasRaidPatch = true;
+        }
+
+        if (TryGetInt32(raid, "maxEncumbrance", out var parsedMaxEncumbrance))
+        {
+            _raidMaxEncumbrance = parsedMaxEncumbrance;
+            raidState.MaxEncumbrance = parsedMaxEncumbrance;
+            raidMaxEncumbranceProjected = true;
+            hasRaidPatch = true;
+        }
+
         if (TryGetProjection(raid, "equippedItems", out var equippedItems))
         {
             if (TryReadItemList(equippedItems, out var items))
@@ -685,6 +707,7 @@ public partial class Home : IDisposable
                 inventory.EquippedWeapon = items.FirstOrDefault(item => item.Type == ItemType.Weapon);
                 inventory.EquippedArmor = items.FirstOrDefault(item => item.Type == ItemType.Armor);
                 inventory.EquippedBackpack = items.FirstOrDefault(item => item.Type == ItemType.Backpack);
+                inventoryChanged = true;
                 hasRaidPatch = true;
             }
         }
@@ -695,6 +718,7 @@ public partial class Home : IDisposable
             {
                 inventory.CarriedItems.Clear();
                 inventory.CarriedItems.AddRange(items);
+                inventoryChanged = true;
                 hasRaidPatch = true;
             }
         }
@@ -705,6 +729,7 @@ public partial class Home : IDisposable
             {
                 inventory.DiscoveredLoot.Clear();
                 inventory.DiscoveredLoot.AddRange(items);
+                inventoryChanged = true;
                 hasRaidPatch = true;
             }
         }
@@ -712,6 +737,7 @@ public partial class Home : IDisposable
         if (TryGetInt32(raid, "medkits", out var medkits))
         {
             inventory.MedkitCount = medkits;
+            inventoryChanged = true;
             hasRaidPatch = true;
         }
 
@@ -840,6 +866,16 @@ public partial class Home : IDisposable
         raidState.Health = health;
         raidState.BackpackCapacity = backpackCapacity;
 
+        if (inventoryChanged && !raidEncumbranceProjected)
+        {
+            _raidEncumbrance = null;
+        }
+
+        if (inventoryChanged && !raidMaxEncumbranceProjected)
+        {
+            _raidMaxEncumbrance = null;
+        }
+
         if (!freshRaid && hasRaidPatch)
         {
             _raid = raidState;
@@ -872,6 +908,8 @@ public partial class Home : IDisposable
     private void ClearRaidState()
     {
         _raid = null;
+        _raidEncumbrance = null;
+        _raidMaxEncumbrance = null;
         _inRaid = false;
         _awaitingDecision = false;
         _challenge = 0;
@@ -1314,12 +1352,17 @@ public partial class Home : IDisposable
             return 0;
         }
 
-        return CombatBalance.GetTotalEncumbrance(_raid.Inventory.GetExtractableItems());
+        return _raidEncumbrance ?? CombatBalance.GetTotalEncumbrance(_raid.Inventory.GetExtractableItems());
     }
 
     private int GetRaidMaxEncumbrance()
     {
-        return _raid?.MaxEncumbrance ?? 0;
+        if (_raid is null)
+        {
+            return 0;
+        }
+
+        return _raidMaxEncumbrance ?? _raid.MaxEncumbrance;
     }
 
     private string GetRaidEncumbranceText()
@@ -1339,37 +1382,43 @@ public partial class Home : IDisposable
             return false;
         }
 
-        var equippedItems = GetEquippedItems()
-            .Where(existing => existing.Type != item.Type)
-            .ToList();
-
         var carriedItems = CurrentCarriedLoot.ToList();
         var carriedIndex = carriedItems.FindIndex(current => ReferenceEquals(current, item));
+        var itemWasCarried = carriedIndex >= 0;
         if (carriedIndex >= 0)
         {
             carriedItems.RemoveAt(carriedIndex);
         }
-        equippedItems.Add(item);
+        var currentEncumbrance = GetRaidEncumbrance();
+        var projectedEncumbrance = currentEncumbrance;
+        var replacedItem = GetEquippedItems().FirstOrDefault(existing => existing.Type == item.Type);
+        if (replacedItem is not null)
+        {
+            projectedEncumbrance -= Math.Max(0, replacedItem.Weight);
+        }
 
         if (item.Type == ItemType.Backpack)
         {
             var backpackCapacity = CombatBalance.GetBackpackCapacity(item.Name);
             var currentSlots = carriedItems.Sum(x => x.Slots);
+            var spilledWeight = 0;
             while (currentSlots > backpackCapacity && carriedItems.Count > 0)
             {
                 var spill = carriedItems[^1];
                 carriedItems.RemoveAt(carriedItems.Count - 1);
                 currentSlots -= spill.Slots;
+                spilledWeight += Math.Max(0, spill.Weight);
             }
+
+            projectedEncumbrance -= spilledWeight;
         }
 
-        var prospectiveItems = equippedItems.Concat(carriedItems).ToList();
-        for (var i = 0; i < CurrentMedkits; i++)
+        if (!itemWasCarried)
         {
-            prospectiveItems.Add(ItemCatalog.Create("Medkit"));
+            projectedEncumbrance += Math.Max(0, item.Weight);
         }
 
-        return CombatBalance.GetTotalEncumbrance(prospectiveItems) <= GetRaidMaxEncumbrance();
+        return projectedEncumbrance <= GetRaidMaxEncumbrance();
     }
 
     private IEnumerable<Item> GetEquippedItems()
@@ -1561,6 +1610,8 @@ public partial class Home : IDisposable
         _onPersonItems = snapshot.OnPersonItems
             .Select(entry => new OnPersonEntry(entry.Item, entry.IsEquipped))
             .ToList();
+        _raidEncumbrance = null;
+        _raidMaxEncumbrance = null;
 
         if (snapshot.ActiveRaid is null)
         {
@@ -1588,6 +1639,12 @@ public partial class Home : IDisposable
         _raid.Inventory.DiscoveredLoot.AddRange(snapshot.DiscoveredLoot);
         _raid.Inventory.MedkitCount = snapshot.Medkits;
         _raid.Inventory.BackpackCapacity = snapshot.BackpackCapacity;
+        _raidEncumbrance = snapshot.Encumbrance > 0 || snapshot.MaxEncumbrance > 0 ? snapshot.Encumbrance : null;
+        _raidMaxEncumbrance = snapshot.MaxEncumbrance > 0 ? snapshot.MaxEncumbrance : null;
+        if (_raidMaxEncumbrance is not null)
+        {
+            _raid.MaxEncumbrance = _raidMaxEncumbrance.Value;
+        }
         _inRaid = true;
         _awaitingDecision = snapshot.AwaitingDecision;
         _challenge = snapshot.Challenge;

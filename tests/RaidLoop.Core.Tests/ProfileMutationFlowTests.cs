@@ -629,6 +629,8 @@ public sealed class ProfileMutationFlowTests
                 "raid": {
                   "health": 21,
                   "backpackCapacity": 6,
+                  "encumbrance": 40,
+                  "maxEncumbrance": 100,
                   "ammo": 4,
                   "weaponMalfunction": true,
                   "medkits": 1,
@@ -678,6 +680,7 @@ public sealed class ProfileMutationFlowTests
         var raid = Assert.IsType<RaidState>(GetField(home, "_raid"));
         Assert.Equal(21, raid.Health);
         Assert.Equal(6, raid.BackpackCapacity);
+        Assert.Equal("40/100 lbs", InvokePrivate<string>(home, "GetRaidEncumbranceText"));
         Assert.Equal(4, Assert.IsType<int>(GetField(home, "_ammo")));
         Assert.Equal(2, Assert.IsType<int>(GetField(home, "_challenge")));
         Assert.Equal(3, Assert.IsType<int>(GetField(home, "_distanceFromExtract")));
@@ -1459,6 +1462,13 @@ public sealed class ProfileMutationFlowTests
         var method = instance.GetType().GetMethod(methodName, BindingFlags.Instance | BindingFlags.NonPublic);
         Assert.NotNull(method);
         return Assert.IsType<bool>(method!.Invoke(instance, args));
+    }
+
+    private static T InvokePrivate<T>(object instance, string methodName, params object[] args)
+    {
+        var method = instance.GetType().GetMethod(methodName, BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.NotNull(method);
+        return Assert.IsType<T>(method!.Invoke(instance, args));
     }
 
     private static async Task InvokePrivateAsync(object instance, string methodName, params object[] args)

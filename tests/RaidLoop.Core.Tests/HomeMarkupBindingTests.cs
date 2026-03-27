@@ -52,6 +52,8 @@ public sealed class HomeMarkupBindingTests
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026032603_add_player_stat_system.sql"));
     private static readonly string RaidSessionPersistenceHotfixMigrationPath = Path.GetFullPath(
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026032606_restore_raid_session_persistence_for_stat_aware_raid_start.sql"));
+    private static readonly string StrengthEncumbranceMigrationPath = Path.GetFullPath(
+        Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026032701_add_strength_encumbrance.sql"));
     private static readonly string SupabaseAuthServicePath = Path.GetFullPath(
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "RaidLoop.Client", "Services", "SupabaseAuthService.cs"));
     private static readonly string ClientTelemetryServicePath = Path.GetFullPath(
@@ -248,6 +250,32 @@ public sealed class HomeMarkupBindingTests
         Assert.Contains("@if (!string.IsNullOrWhiteSpace(_resultMessage))", topBarSection);
         Assert.Contains("<span class=\"status status-strip\">@_resultMessage</span>", topBarSection);
         Assert.DoesNotContain("<p class=\"status\">@_resultMessage</p>", homeMarkup);
+    }
+
+    [Fact]
+    public void StrengthEncumbranceMigration_WiresWeightLookupEncumbranceAndOverweightChecks()
+    {
+        var migration = File.ReadAllText(StrengthEncumbranceMigrationPath);
+
+        Assert.Contains("alter table game.item_defs", migration);
+        Assert.Contains("add column if not exists weight int not null default 0", migration);
+        Assert.Contains("create or replace function game.item_weight(item_name text)", migration);
+        Assert.Contains("create or replace function game.max_encumbrance(strength int)", migration);
+        Assert.Contains("create or replace function game.current_encumbrance(items jsonb, medkits int default 0)", migration);
+        Assert.Contains("create or replace function game.random_luck_run_stats()", migration);
+        Assert.Contains("create or replace function game.random_luck_run_loadout_valid(loadout jsonb, stats jsonb)", migration);
+        Assert.Contains("create or replace function game.random_luck_run_character()", migration);
+        Assert.Contains("create or replace function game.build_raid_snapshot(loadout jsonb, raider_name text, player_max_health int, accepted_stats jsonb default null)", migration);
+        Assert.Contains("'encumbrance', game.current_encumbrance(equipped_items || carried_loot, medkits)", migration);
+        Assert.Contains("'maxEncumbrance', game.max_encumbrance(coalesce((resolved_stats->>'strength')::int, 8))", migration);
+        Assert.Contains("if action = 'take-loot' then", migration);
+        Assert.Contains("prospective_encumbrance := current_encumbrance + game.item_weight(coalesce(selected_item->>'name', item_name));", migration);
+        Assert.Contains("elsif action in ('equip-from-discovered', 'equip-from-carried') then", migration);
+        Assert.Matches(@"if action = 'equip-from-discovered' then\s+prospective_encumbrance := current_encumbrance\s+\+\s+game\.item_weight\(coalesce\(selected_item->>'name', item_name\)\)\s+-\s+coalesce\(game\.item_weight\(previous_item->>'name'\), 0\);", migration);
+        Assert.Matches(@"else\s+prospective_encumbrance := current_encumbrance\s+-\s+coalesce\(game\.item_weight\(previous_item->>'name'\), 0\);", migration);
+        Assert.Contains("create or replace function game.perform_raid_action_with_encumbrance(action text, payload jsonb, target_user_id uuid default auth.uid())", migration);
+        Assert.Contains("when action in ('start-main-raid', 'start-random-raid')", migration);
+        Assert.Contains("then game.perform_raid_action_with_encumbrance(action, payload, auth.uid())", migration);
     }
 
     [Fact]

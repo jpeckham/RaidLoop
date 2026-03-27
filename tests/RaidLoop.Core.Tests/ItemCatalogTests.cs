@@ -10,6 +10,8 @@ public sealed class ItemCatalogTests
 {
     private static readonly string RaidStartMigrationPath = Path.GetFullPath(
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026031807_game_raid_start_functions.sql"));
+    private static readonly string StrengthEncumbranceMigrationPath = Path.GetFullPath(
+        Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026032701_add_strength_encumbrance.sql"));
 
     [Fact]
     public void KeyItems_HaveAuthoredValuesGreaterThanOne()
@@ -253,6 +255,26 @@ public sealed class ItemCatalogTests
         var totalEncumbrance = CombatBalance.GetTotalEncumbrance(items);
 
         Assert.Equal(5, totalEncumbrance);
+    }
+
+    [Fact]
+    public void StrengthEncumbranceMigration_UsesAuthoredWeightsAndLuckRunValidation()
+    {
+        var migration = File.ReadAllText(StrengthEncumbranceMigrationPath);
+
+        Assert.Contains("update game.item_defs", migration);
+        Assert.Contains("game.authored_item('Makarov')", migration);
+        Assert.Contains("game.authored_item('Small Backpack')", migration);
+        Assert.Contains("game.authored_item('Tactical Backpack')", migration);
+        Assert.Contains("game.authored_item('Medkit')", migration);
+        Assert.Contains("game.authored_item('Bandage')", migration);
+        Assert.Contains("game.authored_item('Ammo Box')", migration);
+        Assert.DoesNotContain("jsonb_build_object('name', 'Makarov'", migration);
+        Assert.DoesNotContain("jsonb_build_object('name', 'Medkit'", migration);
+        Assert.Contains("create or replace function game.item_weight(item_name text)", migration);
+        Assert.Contains("create or replace function game.random_luck_run_stats()", migration);
+        Assert.Contains("create or replace function game.random_luck_run_loadout_valid(loadout jsonb, stats jsonb)", migration);
+        Assert.Contains("create or replace function game.random_luck_run_character()", migration);
     }
 
     private static T InvokePrivate<T>(object instance, string methodName)

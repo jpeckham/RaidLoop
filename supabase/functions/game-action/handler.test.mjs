@@ -215,6 +215,87 @@ test("game-action returns profile-mutated projections for sell-luck-run-item", a
   assert.equal(body.projections.luckRun.randomCharacter, null);
 });
 
+test("game-action returns profile-mutated player projections for accept-stats", async () => {
+  const handler = createGameActionHandler({
+    dispatchAction: async (accessToken, action, payload) => {
+      assert.equal(accessToken, "token-123");
+      assert.equal(action, "accept-stats");
+      assert.equal(payload.draftStats.dexterity, 14);
+      return {
+        money: 500,
+        mainStash: [],
+        onPersonItems: [{ item: { name: "AK74", type: 0, value: 320, slots: 1, rarity: 2, displayRarity: 3 }, isEquipped: true }],
+        acceptedStats: { strength: 8, dexterity: 14, constitution: 12, intelligence: 10, wisdom: 9, charisma: 16 },
+        draftStats: { strength: 8, dexterity: 14, constitution: 12, intelligence: 10, wisdom: 9, charisma: 16 },
+        availableStatPoints: 0,
+        statsAccepted: true,
+        randomCharacterAvailableAt: "0001-01-01T00:00:00+00:00",
+        randomCharacter: null,
+        activeRaid: null,
+      };
+    },
+  });
+
+  const response = await handler(new Request("https://example.test/game-action", {
+    method: "POST",
+    headers: {
+      Authorization: "Bearer token-123",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      action: "accept-stats",
+      payload: { draftStats: { dexterity: 14 } },
+    }),
+  }));
+
+  const body = await response.json();
+  assert.equal(body.eventType, "ProfileMutated");
+  assert.equal(body.projections.player.acceptedStats.dexterity, 14);
+  assert.equal(body.projections.player.availableStatPoints, 0);
+  assert.equal(body.projections.player.statsAccepted, true);
+  assert.equal(body.snapshot, undefined);
+});
+
+test("game-action returns profile-mutated player projections for reallocate-stats", async () => {
+  const handler = createGameActionHandler({
+    dispatchAction: async (accessToken, action, payload) => {
+      assert.equal(accessToken, "token-123");
+      assert.equal(action, "reallocate-stats");
+      assert.deepEqual(payload, {});
+      return {
+        money: 5000,
+        mainStash: [],
+        onPersonItems: [],
+        acceptedStats: { strength: 8, dexterity: 8, constitution: 8, intelligence: 8, wisdom: 8, charisma: 8 },
+        draftStats: { strength: 8, dexterity: 8, constitution: 8, intelligence: 8, wisdom: 8, charisma: 8 },
+        availableStatPoints: 27,
+        statsAccepted: false,
+        randomCharacterAvailableAt: "0001-01-01T00:00:00+00:00",
+        randomCharacter: null,
+        activeRaid: null,
+      };
+    },
+  });
+
+  const response = await handler(new Request("https://example.test/game-action", {
+    method: "POST",
+    headers: {
+      Authorization: "Bearer token-123",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      action: "reallocate-stats",
+      payload: {},
+    }),
+  }));
+
+  const body = await response.json();
+  assert.equal(body.eventType, "ProfileMutated");
+  assert.equal(body.projections.economy.money, 5000);
+  assert.equal(body.projections.player.availableStatPoints, 27);
+  assert.equal(body.projections.player.statsAccepted, false);
+});
+
 test("game-action returns raid-started projections for start-main-raid", async () => {
   const handler = createGameActionHandler({
     dispatchAction: async (accessToken, action, payload) => {

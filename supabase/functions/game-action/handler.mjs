@@ -19,6 +19,8 @@ const PROFILE_MUTATION_ACTIONS = new Set([
   "store-luck-run-item",
   "move-luck-run-item-to-on-person",
   "sell-luck-run-item",
+  "accept-stats",
+  "reallocate-stats",
 ]);
 
 const RAID_START_ACTIONS = new Set([
@@ -155,7 +157,8 @@ function buildProfileMutationProjections(action, snapshot) {
     || action === "move-stash-to-on-person"
     || action === "sell-on-person-item"
     || action === "buy-from-shop"
-    || action === "sell-luck-run-item") {
+    || action === "sell-luck-run-item"
+    || action === "reallocate-stats") {
     projections.economy = buildEconomyProjection(snapshot);
   }
 
@@ -166,7 +169,9 @@ function buildProfileMutationProjections(action, snapshot) {
     || action === "equip-on-person-item"
     || action === "unequip-on-person-item"
     || action === "buy-from-shop"
-    || action === "move-luck-run-item-to-on-person") {
+    || action === "move-luck-run-item-to-on-person"
+    || action === "accept-stats"
+    || action === "reallocate-stats") {
     projections.loadout = buildLoadoutProjection(snapshot);
   }
 
@@ -181,6 +186,10 @@ function buildProfileMutationProjections(action, snapshot) {
     || action === "move-luck-run-item-to-on-person"
     || action === "sell-luck-run-item") {
     projections.luckRun = buildLuckRunProjection(snapshot);
+  }
+
+  if (action === "accept-stats" || action === "reallocate-stats") {
+    projections.player = buildPlayerProjection(snapshot);
   }
 
   return projections;
@@ -208,6 +217,15 @@ function buildLuckRunProjection(snapshot) {
   return {
     randomCharacterAvailableAt: snapshot?.randomCharacterAvailableAt ?? null,
     randomCharacter: snapshot?.randomCharacter ?? null,
+  };
+}
+
+function buildPlayerProjection(snapshot) {
+  return {
+    acceptedStats: snapshot?.acceptedStats ?? null,
+    draftStats: snapshot?.draftStats ?? null,
+    availableStatPoints: snapshot?.availableStatPoints ?? 0,
+    statsAccepted: snapshot?.statsAccepted ?? false,
   };
 }
 

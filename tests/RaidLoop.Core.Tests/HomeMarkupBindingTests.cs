@@ -768,6 +768,14 @@ public sealed class HomeMarkupBindingTests
         Assert.Contains("if not coalesce((save_payload->>'statsAccepted')::boolean, false) then", migration);
         Assert.Contains("return save_payload;", migration);
         Assert.Contains("accepted_stats := coalesce(save_payload->'acceptedStats', jsonb_build_object(", migration);
+        Assert.Contains("create or replace function game.apply_profile_action(action text, payload jsonb, target_user_id uuid default auth.uid())", migration);
+        Assert.Contains("when 'accept-stats' then", migration);
+        Assert.Contains("save_payload := jsonb_set(save_payload, '{acceptedStats}', normalized_draft_stats, true);", migration);
+        Assert.Contains("save_payload := jsonb_set(save_payload, '{statsAccepted}', 'true'::jsonb, true);", migration);
+        Assert.Contains("when 'reallocate-stats' then", migration);
+        Assert.Contains("coalesce((save_payload->>'money')::int, 0) >= 5000", migration);
+        Assert.Contains("save_payload := jsonb_set(save_payload, '{availableStatPoints}', to_jsonb(27), true);", migration);
+        Assert.Contains("save_payload := jsonb_set(save_payload, '{statsAccepted}', 'false'::jsonb, true);", migration);
     }
 
     [Fact]

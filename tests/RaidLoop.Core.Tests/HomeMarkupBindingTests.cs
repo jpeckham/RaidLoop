@@ -285,6 +285,19 @@ public sealed class HomeMarkupBindingTests
     }
 
     [Fact]
+    public void HomePassesRaidEncumbranceAndWeightWarningsToRaidHud()
+    {
+        var homeMarkup = File.ReadAllText(HomeMarkupPath);
+        var raidHudMarkup = File.ReadAllText(RaidHudPath);
+
+        Assert.Contains("RaidEncumbranceText=\"@GetRaidEncumbranceText()\"", homeMarkup);
+        Assert.Contains("CanEquipItem=\"CanEquipRaidItem\"", homeMarkup);
+        Assert.Contains("@RaidEncumbranceText", raidHudMarkup);
+        Assert.Contains("Too heavy to carry", raidHudMarkup);
+        Assert.Contains("Too heavy to equip", raidHudMarkup);
+    }
+
+    [Fact]
     public void ShopPanelUsesCharismaAwarePriceDelegateAndRarityGate()
     {
         var homeMarkup = File.ReadAllText(HomeMarkupPath);

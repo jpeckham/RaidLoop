@@ -1296,9 +1296,69 @@ public partial class Home : IDisposable
         return ExecuteLootActionAsync("equip-from-carried", item, "player.equip");
     }
 
-    private static bool CanEquipItem(Item item)
+    private int GetRaidEncumbrance()
+    {
+        if (_raid is null)
+        {
+            return 0;
+        }
+
+        return CombatBalance.GetTotalEncumbrance(_raid.Inventory.GetExtractableItems());
+    }
+
+    private int GetRaidMaxEncumbrance()
+    {
+        return _raid?.MaxEncumbrance ?? 0;
+    }
+
+    private string GetRaidEncumbranceText()
+    {
+        return $"{GetRaidEncumbrance()}/{GetRaidMaxEncumbrance()} lbs";
+    }
+
+    private static bool IsEquipableRaidItem(Item item)
     {
         return item.Type is ItemType.Weapon or ItemType.Armor or ItemType.Backpack;
+    }
+
+    private bool CanEquipRaidItem(Item item)
+    {
+        if (_raid is null || !IsEquipableRaidItem(item))
+        {
+            return false;
+        }
+
+        var equippedItems = GetEquippedItems()
+            .Where(existing => existing.Type != item.Type)
+            .ToList();
+
+        var carriedItems = CurrentCarriedLoot.ToList();
+        var carriedIndex = carriedItems.FindIndex(current => ReferenceEquals(current, item));
+        if (carriedIndex >= 0)
+        {
+            carriedItems.RemoveAt(carriedIndex);
+        }
+        equippedItems.Add(item);
+
+        if (item.Type == ItemType.Backpack)
+        {
+            var backpackCapacity = CombatBalance.GetBackpackCapacity(item.Name);
+            var currentSlots = carriedItems.Sum(x => x.Slots);
+            while (currentSlots > backpackCapacity && carriedItems.Count > 0)
+            {
+                var spill = carriedItems[^1];
+                carriedItems.RemoveAt(carriedItems.Count - 1);
+                currentSlots -= spill.Slots;
+            }
+        }
+
+        var prospectiveItems = equippedItems.Concat(carriedItems).ToList();
+        for (var i = 0; i < CurrentMedkits; i++)
+        {
+            prospectiveItems.Add(ItemCatalog.Create("Medkit"));
+        }
+
+        return CombatBalance.GetTotalEncumbrance(prospectiveItems) <= GetRaidMaxEncumbrance();
     }
 
     private IEnumerable<Item> GetEquippedItems()
@@ -1409,6 +1469,12 @@ public partial class Home : IDisposable
     private bool CanLootItem(Item item)
     {
         if (_raid is null)
+        {
+            return false;
+        }
+
+        var currentEncumbrance = GetRaidEncumbrance();
+        if (currentEncumbrance + Math.Max(0, item.Weight) > GetRaidMaxEncumbrance())
         {
             return false;
         }

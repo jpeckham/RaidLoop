@@ -6,6 +6,7 @@
         <span>@AmmoHudText</span>
         <span>Medkits: @Medkits</span>
         <span>Loot Slots: @LootSlots / @Raid.BackpackCapacity</span>
+        <span>@RaidEncumbranceText</span>
         <span>Challenge: @Challenge</span>
         <span>Distance from Extract: @DistanceFromExtract</span>
     </div>
@@ -64,9 +65,9 @@
                                         <ItemTypeIcon Type="lootItem.Type" />
                                         <span class="item-name rarity-@lootItem.DisplayRarity.ToString().ToLower()">@lootItem.Name</span>
                                         <div class="row-actions">
-                                            @if (CanEquipItem(lootItem))
+                                            @if (IsEquipable(lootItem))
                                             {
-                                                <button class="action" @onclick="() => OnEquipFromDiscovered.InvokeAsync(lootItem)">Equip</button>
+                                                <button class="action" disabled="@(!CanEquipItem(lootItem))" @onclick="() => OnEquipFromDiscovered.InvokeAsync(lootItem)">Equip</button>
                                             }
                                             <button class="action" disabled="@(!CanLootItem(lootItem))" @onclick="() => OnTakeLoot.InvokeAsync(lootItem)">Loot</button>
                                         </div>
@@ -75,7 +76,11 @@
                             }
                         </ul>
                     }
-                    @if (DiscoveredLoot.Any(item => !CanLootItem(item)))
+                    @if (DiscoveredLoot.Any(item => IsTooHeavyToCarry(item)))
+                    {
+                        <p>Too heavy to carry.</p>
+                    }
+                    @if (DiscoveredLoot.Any(IsBlockedByLootSlots))
                     {
                         <p>Backpack full for some items.</p>
                     }
@@ -108,12 +113,16 @@
                                 <span class="item-name rarity-@carried.DisplayRarity.ToString().ToLower()">@carried.Name</span>
                                 <div class="row-actions">
                                     <button class="action" @onclick="() => OnDropCarried.InvokeAsync(carried)">Drop</button>
-                                    @if (CanEquipItem(carried))
+                                    @if (IsEquipable(carried))
                                     {
-                                        <button class="action" @onclick="() => OnEquipFromCarried.InvokeAsync(carried)">Equip</button>
+                                        <button class="action" disabled="@(!CanEquipItem(carried))" @onclick="() => OnEquipFromCarried.InvokeAsync(carried)">Equip</button>
                                     }
                                 </div>
                             </div>
+                        }
+                        @if (CarriedLoot.Any(item => IsEquipable(item) && !CanEquipItem(item)))
+                        {
+                            <p>Too heavy to equip.</p>
                         }
                     }
                 </div>
@@ -166,6 +175,7 @@
     [Parameter, EditorRequired] public string AmmoHudText { get; set; } = string.Empty;
     [Parameter, EditorRequired] public int Medkits { get; set; }
     [Parameter, EditorRequired] public int LootSlots { get; set; }
+    [Parameter, EditorRequired] public string RaidEncumbranceText { get; set; } = string.Empty;
     [Parameter, EditorRequired] public int Challenge { get; set; }
     [Parameter, EditorRequired] public int DistanceFromExtract { get; set; }
     [Parameter, EditorRequired] public EncounterType EncounterType { get; set; }
@@ -248,5 +258,25 @@
     private static bool Matches(string value, string expected)
     {
         return string.Equals(value, expected, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool IsEquipable(Item item)
+    {
+        return item.Type is ItemType.Weapon or ItemType.Armor or ItemType.Backpack;
+    }
+
+    private bool IsTooHeavyToCarry(Item item)
+    {
+        return RaidEncumbrance() + Math.Max(0, item.Weight) > Raid.MaxEncumbrance;
+    }
+
+    private bool IsBlockedByLootSlots(Item item)
+    {
+        return LootSlots + item.Slots > Raid.BackpackCapacity;
+    }
+
+    private int RaidEncumbrance()
+    {
+        return CombatBalance.GetTotalEncumbrance(Raid.Inventory.GetExtractableItems());
     }
 }

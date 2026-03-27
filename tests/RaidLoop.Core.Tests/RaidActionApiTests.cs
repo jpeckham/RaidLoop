@@ -302,6 +302,37 @@ public sealed class RaidActionApiTests
         Assert.Empty(actionClient.Requests);
     }
 
+    [Fact]
+    public void RaidLootAndEquipActions_RejectItemsThatWouldExceedWeightBudget()
+    {
+        var home = CreateHome(new FakeGameActionApiClient());
+        var raid = new RaidState(
+            30,
+            RaidInventory.FromItems([ItemCatalog.Create("Makarov"), ItemCatalog.Create("Small Backpack")], [], 3));
+        raid.MaxEncumbrance = 10;
+
+        SetField(home, "_raid", raid);
+
+        Assert.False(InvokePrivateBool(home, "CanLootItem", ItemCatalog.Create("6B13 assault armor")));
+        Assert.False(InvokePrivateBool(home, "CanEquipRaidItem", ItemCatalog.Create("6B13 assault armor")));
+    }
+
+    [Fact]
+    public void CanEquipRaidItem_DoesNotConsumeEqualButDistinctCarriedItem_WhenEvaluatingDiscoveredLoot()
+    {
+        var home = CreateHome(new FakeGameActionApiClient());
+        var carriedArmor = ItemCatalog.Create("6B13 assault armor");
+        var discoveredArmor = ItemCatalog.Create("6B13 assault armor");
+        var raid = new RaidState(
+            30,
+            RaidInventory.FromItems([ItemCatalog.Create("Makarov"), ItemCatalog.Create("Small Backpack")], [carriedArmor], 3));
+        raid.MaxEncumbrance = 30;
+
+        SetField(home, "_raid", raid);
+
+        Assert.False(InvokePrivateBool(home, "CanEquipRaidItem", discoveredArmor));
+    }
+
     private static Home CreateHome(FakeGameActionApiClient actionClient)
     {
         var home = new Home();
@@ -399,6 +430,13 @@ public sealed class RaidActionApiTests
         var method = instance.GetType().GetMethod(methodName, BindingFlags.Instance | BindingFlags.NonPublic);
         Assert.NotNull(method);
         method!.Invoke(instance, args);
+    }
+
+    private static bool InvokePrivateBool(object instance, string methodName, params object[] args)
+    {
+        var method = instance.GetType().GetMethod(methodName, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Static);
+        Assert.NotNull(method);
+        return (bool)method!.Invoke(instance, args)!;
     }
 
     private sealed class FakeProfileApiClient : IProfileApiClient

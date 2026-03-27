@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Microsoft.JSInterop;
@@ -256,7 +257,7 @@ public sealed class StashStorage
         }
     }
 
-    private static bool TryGetNodeProperty(JsonObject root, string propertyName, out JsonNode? value)
+    private static bool TryGetNodeProperty(JsonObject root, string propertyName, [NotNullWhen(true)] out JsonNode? value)
     {
         foreach (var entry in root)
         {
@@ -273,7 +274,7 @@ public sealed class StashStorage
         return false;
     }
 
-    private static bool TryGetString(JsonObject root, string propertyName, out string value)
+    private static bool TryGetString(JsonObject root, string propertyName, [NotNullWhen(true)] out string? value)
     {
         foreach (var entry in root)
         {
@@ -282,8 +283,11 @@ public sealed class StashStorage
                 continue;
             }
 
-            if (entry.Value is JsonValue jsonValue && jsonValue.TryGetValue<string>(out value))
+            if (entry.Value is JsonValue jsonValue
+                && jsonValue.TryGetValue<string>(out var parsedValue)
+                && parsedValue is not null)
             {
+                value = parsedValue;
                 return true;
             }
 

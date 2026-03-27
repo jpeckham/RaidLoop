@@ -48,6 +48,8 @@ public sealed class HomeMarkupBindingTests
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026032501_add_authored_surprise_encounter_styles.sql"));
     private static readonly string ChallengeDistanceProdUpgradeMigrationPath = Path.GetFullPath(
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026032601_fix_challenge_distance_prod_upgrade.sql"));
+    private static readonly string PlayerStatSystemMigrationPath = Path.GetFullPath(
+        Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026032603_add_player_stat_system.sql"));
     private static readonly string SupabaseAuthServicePath = Path.GetFullPath(
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "RaidLoop.Client", "Services", "SupabaseAuthService.cs"));
     private static readonly string ClientTelemetryServicePath = Path.GetFullPath(
@@ -185,6 +187,54 @@ public sealed class HomeMarkupBindingTests
 
         Assert.Contains("Buy ($@GetBuyPrice(stock.Item.Name))", markup);
         Assert.DoesNotContain("<small>$@GetBuyPrice(stock.Item.Name)</small>", markup);
+    }
+
+    [Fact]
+    public void PreRaidUiShowsEditableStatsAcceptAndReallocateControls()
+    {
+        var homeMarkup = File.ReadAllText(HomeMarkupPath);
+        var preRaidMarkup = File.ReadAllText(PreRaidPanelPath);
+
+        Assert.Contains("AcceptedStats=\"_acceptedStats\"", homeMarkup);
+        Assert.Contains("DraftStats=\"_draftStats\"", homeMarkup);
+        Assert.Contains("AvailableStatPoints=\"_availableStatPoints\"", homeMarkup);
+        Assert.Contains("StatsAccepted=\"_statsAccepted\"", homeMarkup);
+        Assert.Contains("OnAcceptStats=\"AcceptStatsAsync\"", homeMarkup);
+        Assert.Contains("OnReallocateStats=\"ReallocateStatsAsync\"", homeMarkup);
+        Assert.Contains("STR", preRaidMarkup);
+        Assert.Contains("DEX", preRaidMarkup);
+        Assert.Contains("CON", preRaidMarkup);
+        Assert.Contains("INT", preRaidMarkup);
+        Assert.Contains("WIS", preRaidMarkup);
+        Assert.Contains("CHA", preRaidMarkup);
+        Assert.Contains("Remaining Points", preRaidMarkup);
+        Assert.Contains("Accept Stats", preRaidMarkup);
+        Assert.Contains("Re-Allocate Stats ($5000)", preRaidMarkup);
+    }
+
+    [Fact]
+    public void RaidHudShowsAcceptedStatsSummaryDuringRaid()
+    {
+        var homeMarkup = File.ReadAllText(HomeMarkupPath);
+        var raidHudMarkup = File.ReadAllText(RaidHudPath);
+
+        Assert.Contains("AcceptedStats=\"_acceptedStats\"", homeMarkup);
+        Assert.Contains("STR @AcceptedStats.Strength", raidHudMarkup);
+        Assert.Contains("DEX @AcceptedStats.Dexterity", raidHudMarkup);
+        Assert.Contains("CON @AcceptedStats.Constitution", raidHudMarkup);
+        Assert.Contains("INT @AcceptedStats.Intelligence", raidHudMarkup);
+        Assert.Contains("WIS @AcceptedStats.Wisdom", raidHudMarkup);
+        Assert.Contains("CHA @AcceptedStats.Charisma", raidHudMarkup);
+    }
+
+    [Fact]
+    public void ShopPanelUsesCharismaAwarePriceDelegateAndRarityGate()
+    {
+        var homeMarkup = File.ReadAllText(HomeMarkupPath);
+        var shopMarkup = File.ReadAllText(ShopPanelPath);
+
+        Assert.Contains("CanBuyItem=\"CanBuyItem\"", homeMarkup);
+        Assert.Contains("disabled=\"@(!CanBuyItem(stock.Item) || Money < GetBuyPrice(stock.Item.Name))\"", shopMarkup);
     }
 
     [Fact]
@@ -689,6 +739,35 @@ public sealed class HomeMarkupBindingTests
         Assert.Contains("update public.game_saves", migration);
         Assert.Contains("payload = game.normalize_save_payload(payload)", migration);
         Assert.Contains("payload is distinct from game.normalize_save_payload(payload)", migration);
+    }
+
+    [Fact]
+    public void PlayerStatSystemMigrationBackfillsEditableStatPayloadAndRaidAcceptanceGate()
+    {
+        Assert.True(File.Exists(PlayerStatSystemMigrationPath));
+
+        var migration = File.ReadAllText(PlayerStatSystemMigrationPath);
+
+        Assert.Contains("create or replace function game.normalize_save_payload(payload jsonb)", migration);
+        Assert.Contains("'acceptedStats', coalesce(payload->'acceptedStats', payload->'AcceptedStats', jsonb_build_object(", migration);
+        Assert.Contains("'draftStats', coalesce(payload->'draftStats', payload->'DraftStats', jsonb_build_object(", migration);
+        Assert.Contains("'strength', 8", migration);
+        Assert.Contains("'dexterity', 8", migration);
+        Assert.Contains("'constitution', 8", migration);
+        Assert.Contains("'intelligence', 8", migration);
+        Assert.Contains("'wisdom', 8", migration);
+        Assert.Contains("'charisma', 8", migration);
+        Assert.Contains("'availableStatPoints', coalesce((payload->>'availableStatPoints')::int, (payload->>'AvailableStatPoints')::int, 27)", migration);
+        Assert.Contains("'statsAccepted', coalesce((payload->>'statsAccepted')::boolean, (payload->>'StatsAccepted')::boolean, false)", migration);
+        Assert.Contains("create or replace function game.default_save_payload()", migration);
+        Assert.Contains("'availableStatPoints', 27", migration);
+        Assert.Contains("'statsAccepted', false", migration);
+        Assert.Contains("update public.game_saves", migration);
+        Assert.Contains("payload = game.normalize_save_payload(payload)", migration);
+        Assert.Contains("payload is distinct from game.normalize_save_payload(payload)", migration);
+        Assert.Contains("if not coalesce((save_payload->>'statsAccepted')::boolean, false) then", migration);
+        Assert.Contains("return save_payload;", migration);
+        Assert.Contains("accepted_stats := coalesce(save_payload->'acceptedStats', jsonb_build_object(", migration);
     }
 
     [Fact]

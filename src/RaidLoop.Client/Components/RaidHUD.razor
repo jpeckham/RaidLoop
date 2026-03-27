@@ -9,6 +9,14 @@
         <span>Challenge: @Challenge</span>
         <span>Distance from Extract: @DistanceFromExtract</span>
     </div>
+    <div class="hud">
+        <span>STR @AcceptedStats.Strength</span>
+        <span>DEX @AcceptedStats.Dexterity</span>
+        <span>CON @AcceptedStats.Constitution</span>
+        <span>INT @AcceptedStats.Intelligence</span>
+        <span>WIS @AcceptedStats.Wisdom</span>
+        <span>CHA @AcceptedStats.Charisma</span>
+    </div>
 
     <div class="encounter">
         <h3>@EncounterTitle</h3>
@@ -179,6 +187,7 @@
     [Parameter] public string EnemyName { get; set; } = string.Empty;
     [Parameter, EditorRequired] public int EnemyHealth { get; set; }
     [Parameter] public string LootContainer { get; set; } = string.Empty;
+    [Parameter, EditorRequired] public PlayerStats AcceptedStats { get; set; } = PlayerStats.Default;
     [Parameter, EditorRequired] public IReadOnlyList<Item> DiscoveredLoot { get; set; } = [];
     [Parameter, EditorRequired] public IReadOnlyList<Item> CarriedLoot { get; set; } = [];
     [Parameter, EditorRequired] public IReadOnlyList<Item> EquippedItems { get; set; } = [];

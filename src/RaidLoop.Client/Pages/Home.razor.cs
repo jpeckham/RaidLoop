@@ -28,6 +28,10 @@ public partial class Home : IDisposable
     private GameState _mainGame = new([]);
     private List<OnPersonEntry> _onPersonItems = [];
     private int _money;
+    private PlayerStats _acceptedStats = PlayerStats.Default;
+    private PlayerStats _draftStats = PlayerStats.Default;
+    private int _availableStatPoints = PlayerStatRules.StartingPool;
+    private bool _statsAccepted;
 
     private RandomCharacterState? _randomCharacter;
     private DateTimeOffset _randomCharacterAvailableAt = DateTimeOffset.MinValue;
@@ -96,15 +100,19 @@ public partial class Home : IDisposable
 
     private bool HasUnequippedOnPersonItems => _onPersonItems.Any(x => IsSlotType(x.Item.Type) && !x.IsEquipped);
     private bool HasEquippedWeapon => _onPersonItems.Any(x => x.IsEquipped && x.Item.Type == ItemType.Weapon);
-    private bool CanStartMainRaid => !HasUnprocessedLuckRunLoot && !HasUnequippedOnPersonItems && HasEquippedWeapon;
-    private bool CanStartLuckRunRaid => !HasUnprocessedLuckRunLoot && IsRandomCharacterReady;
+    private bool CanStartMainRaid => _statsAccepted && !HasUnprocessedLuckRunLoot && !HasUnequippedOnPersonItems && HasEquippedWeapon;
+    private bool CanStartLuckRunRaid => _statsAccepted && !HasUnprocessedLuckRunLoot && IsRandomCharacterReady;
     private string? RaidBlockReason => HasUnprocessedLuckRunLoot
         ? "Luck Run loot must be sold, stored, or moved to For Raid before entering a raid."
+        : !_statsAccepted
+            ? "Accept Stats before entering a raid."
         : HasUnequippedOnPersonItems
             ? "You need to move your unequipped items to stash or sell them."
             : !HasEquippedWeapon ? "You don't have a weapon equipped." : null;
     private string? LuckRunBlockReason => HasUnprocessedLuckRunLoot
         ? "Luck Run loot must be sold, stored, or moved to For Raid before entering a raid."
+        : !_statsAccepted
+            ? "Accept Stats before entering a raid."
         : null;
     private bool CanStashOnPersonItem => _mainGame.Stash.Count < MainStashCap;
     private bool EquippedWeaponUsesAmmo => CombatBalance.WeaponUsesAmmo(GetEquippedWeaponName());
@@ -123,6 +131,7 @@ public partial class Home : IDisposable
     private int CurrentMedkits => _raid?.Inventory.MedkitCount ?? 0;
     private List<Item> CurrentDiscoveredLoot => _raid?.Inventory.DiscoveredLoot ?? EmptyItems;
     private List<Item> CurrentCarriedLoot => _raid?.Inventory.CarriedItems ?? EmptyItems;
+    private bool CanReallocateStats => _raid is null && _statsAccepted && _money >= 5000;
 
     private static bool IsSlotType(ItemType type)
     {
@@ -238,6 +247,110 @@ public partial class Home : IDisposable
         }
 
         await ExecuteProfileActionAsync("buy-from-shop", new { itemName = stock.Item.Name });
+    }
+
+    private async Task AcceptStatsAsync()
+    {
+        if (_statsAccepted)
+        {
+            return;
+        }
+
+        await ExecuteProfileActionAsync("accept-stats", new { draftStats = _draftStats });
+    }
+
+    private async Task ReallocateStatsAsync()
+    {
+        if (_raid is not null || !_statsAccepted || _money < 5000)
+        {
+            return;
+        }
+
+        await ExecuteProfileActionAsync("reallocate-stats", new { });
+    }
+
+    private void IncrementDraftStat(string statKey)
+    {
+        if (_raid is not null)
+        {
+            return;
+        }
+
+        var current = GetDraftStatValue(statKey);
+        var cost = PlayerStatRules.GetRaiseCost(current);
+        if (current >= PlayerStatRules.MaximumScore || cost <= 0 || _availableStatPoints < cost)
+        {
+            return;
+        }
+
+        SetDraftStatValue(statKey, current + 1);
+        _availableStatPoints -= cost;
+    }
+
+    private void DecrementDraftStat(string statKey)
+    {
+        if (_raid is not null)
+        {
+            return;
+        }
+
+        var current = GetDraftStatValue(statKey);
+        var refund = PlayerStatRules.GetLowerRefund(current);
+        if (current <= PlayerStatRules.MinimumScore || refund <= 0)
+        {
+            return;
+        }
+
+        SetDraftStatValue(statKey, current - 1);
+        _availableStatPoints += refund;
+    }
+
+    private int GetDraftStatValue(string statKey)
+    {
+        return statKey switch
+        {
+            "STR" => _draftStats.Strength,
+            "DEX" => _draftStats.Dexterity,
+            "CON" => _draftStats.Constitution,
+            "INT" => _draftStats.Intelligence,
+            "WIS" => _draftStats.Wisdom,
+            "CHA" => _draftStats.Charisma,
+            _ => PlayerStatRules.MinimumScore
+        };
+    }
+
+    private int GetDraftModifier(string statKey)
+    {
+        return PlayerStatRules.GetAbilityModifier(GetDraftStatValue(statKey));
+    }
+
+    private bool CanIncreaseDraftStat(string statKey)
+    {
+        var current = GetDraftStatValue(statKey);
+        var cost = PlayerStatRules.GetRaiseCost(current);
+        return _raid is null
+            && current < PlayerStatRules.MaximumScore
+            && cost > 0
+            && _availableStatPoints >= cost;
+    }
+
+    private bool CanDecreaseDraftStat(string statKey)
+    {
+        return _raid is null && GetDraftStatValue(statKey) > PlayerStatRules.MinimumScore;
+    }
+
+    private void SetDraftStatValue(string statKey, int value)
+    {
+        _draftStats = statKey switch
+        {
+            "STR" => _draftStats with { Strength = value },
+            "DEX" => _draftStats with { Dexterity = value },
+            "CON" => _draftStats with { Constitution = value },
+            "INT" => _draftStats with { Intelligence = value },
+            "WIS" => _draftStats with { Wisdom = value },
+            "CHA" => _draftStats with { Charisma = value },
+            _ => _draftStats
+        };
     }
 
     private async Task StartMainRaidAsync()
@@ -383,6 +496,11 @@ public partial class Home : IDisposable
             }
         }
 
+        if (TryGetProjection(projections, "player", out var playerProjection))
+        {
+            ApplyPlayerProjection(playerProjection);
+        }
+
         if (TryGetProjection(projections, "luckRun", out var luckRun))
         {
             if (TryGetString(luckRun, "randomCharacterAvailableAt", out var availableAtText)
@@ -424,6 +542,32 @@ public partial class Home : IDisposable
         if (updatedLoadout)
         {
             NormalizeEquippedSlots();
+        }
+    }
+
+    private void ApplyPlayerProjection(JsonElement playerProjection)
+    {
+        if (TryGetProjection(playerProjection, "acceptedStats", out var acceptedStats)
+            && TryReadPlayerStats(acceptedStats, out var parsedAcceptedStats))
+        {
+            _acceptedStats = parsedAcceptedStats;
+            _playerConstitution = parsedAcceptedStats.Constitution;
+        }
+
+        if (TryGetProjection(playerProjection, "draftStats", out var draftStats)
+            && TryReadPlayerStats(draftStats, out var parsedDraftStats))
+        {
+            _draftStats = parsedDraftStats;
+        }
+
+        if (TryGetInt32(playerProjection, "availableStatPoints", out var availableStatPoints))
+        {
+            _availableStatPoints = availableStatPoints;
+        }
+
+        if (TryGetBool(playerProjection, "statsAccepted", out var statsAccepted))
+        {
+            _statsAccepted = statsAccepted;
         }
     }
 
@@ -818,6 +962,43 @@ public partial class Home : IDisposable
         return true;
     }
 
+    private static bool TryReadPlayerStats(JsonElement statsElement, out PlayerStats parsedStats)
+    {
+        var strength = TryGetInt32(statsElement, "strength", out var parsedStrength)
+            ? parsedStrength
+            : TryGetInt32(statsElement, "Strength", out var parsedStrengthUpper)
+                ? parsedStrengthUpper
+                : PlayerStatRules.MinimumScore;
+        var dexterity = TryGetInt32(statsElement, "dexterity", out var parsedDexterity)
+            ? parsedDexterity
+            : TryGetInt32(statsElement, "Dexterity", out var parsedDexterityUpper)
+                ? parsedDexterityUpper
+                : PlayerStatRules.MinimumScore;
+        var constitution = TryGetInt32(statsElement, "constitution", out var parsedConstitution)
+            ? parsedConstitution
+            : TryGetInt32(statsElement, "Constitution", out var parsedConstitutionUpper)
+                ? parsedConstitutionUpper
+                : PlayerStatRules.MinimumScore;
+        var intelligence = TryGetInt32(statsElement, "intelligence", out var parsedIntelligence)
+            ? parsedIntelligence
+            : TryGetInt32(statsElement, "Intelligence", out var parsedIntelligenceUpper)
+                ? parsedIntelligenceUpper
+                : PlayerStatRules.MinimumScore;
+        var wisdom = TryGetInt32(statsElement, "wisdom", out var parsedWisdom)
+            ? parsedWisdom
+            : TryGetInt32(statsElement, "Wisdom", out var parsedWisdomUpper)
+                ? parsedWisdomUpper
+                : PlayerStatRules.MinimumScore;
+        var charisma = TryGetInt32(statsElement, "charisma", out var parsedCharisma)
+            ? parsedCharisma
+            : TryGetInt32(statsElement, "Charisma", out var parsedCharismaUpper)
+                ? parsedCharismaUpper
+                : PlayerStatRules.MinimumScore;
+
+        parsedStats = new PlayerStats(strength, dexterity, constitution, intelligence, wisdom, charisma);
+        return true;
+    }
+
     private static List<string> ReadStringListFromProperty(JsonElement parent, string propertyName)
     {
         if (!TryGetProjection(parent, propertyName, out var items) || items.ValueKind != JsonValueKind.Array)
@@ -1133,7 +1314,16 @@ public partial class Home : IDisposable
 
     private int GetBuyPrice(string itemName)
     {
-        return CombatBalance.GetBuyPrice(itemName);
+        return CombatBalance.GetShopPrice(
+            CombatBalance.GetBuyPrice(itemName),
+            CombatBalance.GetCharismaModifier(_acceptedStats.Charisma),
+            isBuying: true);
+    }
+
+    private bool CanBuyItem(Item item)
+    {
+        return item.Rarity <= CombatBalance.GetMaxShopRarityFromChaBonus(
+            CombatBalance.GetCharismaModifier(_acceptedStats.Charisma));
     }
 
     private int GetSellPrice(Item item)
@@ -1219,7 +1409,11 @@ public partial class Home : IDisposable
         }
 
         _money = snapshot.Money;
-        _playerConstitution = snapshot.PlayerConstitution;
+        _acceptedStats = snapshot.AcceptedStats;
+        _draftStats = snapshot.DraftStats;
+        _availableStatPoints = snapshot.AvailableStatPoints;
+        _statsAccepted = snapshot.StatsAccepted;
+        _playerConstitution = snapshot.AcceptedStats.Constitution;
         _maxHealth = snapshot.PlayerMaxHealth;
         _onPersonItems = snapshot.OnPersonItems
             .Select(entry => new OnPersonEntry(entry.Item, entry.IsEquipped))

@@ -1,4 +1,25 @@
 <section class="panel top-gap">
+    <h2>Stats</h2>
+    <p>Remaining Points: @AvailableStatPoints</p>
+    <div class="stat-grid">
+        @foreach (var statKey in StatOrder)
+        {
+            <div class="row-item">
+                <span>@statKey @GetStatValue(statKey) (@FormatModifier(GetDraftModifier(statKey)))</span>
+                <div class="row-actions">
+                    <button class="action" disabled="@(!CanDecreaseDraftStat(statKey))" @onclick="() => OnDecrementStat.InvokeAsync(statKey)">▼</button>
+                    <button class="action" disabled="@(!CanIncreaseDraftStat(statKey))" @onclick="() => OnIncrementStat.InvokeAsync(statKey)">▲</button>
+                </div>
+            </div>
+        }
+    </div>
+    <div class="actions top-gap">
+        <button class="action" disabled="@StatsAccepted" @onclick="() => OnAcceptStats.InvokeAsync()">Accept Stats</button>
+        <button class="action" disabled="@(!CanReallocateStats)" @onclick="() => OnReallocateStats.InvokeAsync()">Re-Allocate Stats ($5000)</button>
+    </div>
+</section>
+
+<section class="panel top-gap">
     <h2>Luck Run</h2>
     <p>Available once every 5 minutes. Generates a random kit to raid with. Keep what you extract.</p>
 
@@ -53,10 +74,43 @@
     [Parameter] public string? LuckRunBlockReason { get; set; }
     [Parameter, EditorRequired] public string RandomCooldownText { get; set; } = string.Empty;
     [Parameter, EditorRequired] public bool IsStashFull { get; set; }
+    [Parameter, EditorRequired] public PlayerStats AcceptedStats { get; set; } = PlayerStats.Default;
+    [Parameter, EditorRequired] public PlayerStats DraftStats { get; set; } = PlayerStats.Default;
+    [Parameter, EditorRequired] public int AvailableStatPoints { get; set; }
+    [Parameter, EditorRequired] public bool StatsAccepted { get; set; }
+    [Parameter, EditorRequired] public bool CanReallocateStats { get; set; }
+    [Parameter, EditorRequired] public Func<string, int> GetDraftModifier { get; set; } = _ => 0;
+    [Parameter, EditorRequired] public Func<string, bool> CanIncreaseDraftStat { get; set; } = _ => false;
+    [Parameter, EditorRequired] public Func<string, bool> CanDecreaseDraftStat { get; set; } = _ => false;
     [Parameter, EditorRequired] public Func<Item, bool> CanSellItem { get; set; } = _ => false;
     [Parameter, EditorRequired] public Func<Item, int> GetSellPrice { get; set; } = _ => 0;
+    [Parameter, EditorRequired] public EventCallback<string> OnIncrementStat { get; set; }
+    [Parameter, EditorRequired] public EventCallback<string> OnDecrementStat { get; set; }
+    [Parameter, EditorRequired] public EventCallback OnAcceptStats { get; set; }
+    [Parameter, EditorRequired] public EventCallback OnReallocateStats { get; set; }
     [Parameter, EditorRequired] public EventCallback OnStartLuckRun { get; set; }
     [Parameter, EditorRequired] public EventCallback<int> OnStoreLuckRunItem { get; set; }
     [Parameter, EditorRequired] public EventCallback<int> OnMoveToForRaid { get; set; }
     [Parameter, EditorRequired] public EventCallback<int> OnSellLuckRunItem { get; set; }
+
+    private static readonly string[] StatOrder = ["STR", "DEX", "CON", "INT", "WIS", "CHA"];
+
+    private int GetStatValue(string statKey)
+    {
+        return statKey switch
+        {
+            "STR" => DraftStats.Strength,
+            "DEX" => DraftStats.Dexterity,
+            "CON" => DraftStats.Constitution,
+            "INT" => DraftStats.Intelligence,
+            "WIS" => DraftStats.Wisdom,
+            "CHA" => DraftStats.Charisma,
+            _ => 0
+        };
+    }
+
+    private static string FormatModifier(int modifier)
+    {
+        return modifier >= 0 ? $"+{modifier}" : modifier.ToString();
+    }
 }

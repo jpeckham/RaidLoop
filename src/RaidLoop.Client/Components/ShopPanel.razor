@@ -1,12 +1,12 @@
 <section class="panel top-gap">
     <h2>Shopkeeper</h2>
-    <p>Basic supplies and a light weapon.</p>
+    <p>Stock expands by charisma tier.</p>
     @foreach (var stock in Stock)
     {
         <div class="row-item">
             <span class="item-name rarity-@stock.Item.DisplayRarity.ToString().ToLower()">@stock.Item.Name</span>
             <div class="row-actions">
-                <button class="action" disabled="@(Money < GetBuyPrice(stock.Item.Name))" @onclick="() => OnBuy.InvokeAsync(stock)">Buy ($@GetBuyPrice(stock.Item.Name))</button>
+                <button class="action" disabled="@(!CanBuyItem(stock.Item) || Money < GetBuyPrice(stock.Item.Name))" @onclick="() => OnBuy.InvokeAsync(stock)">Buy ($@GetBuyPrice(stock.Item.Name))</button>
             </div>
         </div>
     }
@@ -16,5 +16,6 @@
     [Parameter, EditorRequired] public IReadOnlyList<ShopStock> Stock { get; set; } = [];
     [Parameter, EditorRequired] public int Money { get; set; }
     [Parameter, EditorRequired] public Func<string, int> GetBuyPrice { get; set; } = _ => 0;
+    [Parameter, EditorRequired] public Func<Item, bool> CanBuyItem { get; set; } = _ => false;
     [Parameter, EditorRequired] public EventCallback<ShopStock> OnBuy { get; set; }
 }

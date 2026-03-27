@@ -58,6 +58,7 @@ test("profile-bootstrap returns hydrated snapshot payload", async () => {
         Money: 500,
         MainStash: [{ Name: "Makarov", Type: 0, Value: 12, Slots: 1, Rarity: 0, DisplayRarity: 1 }],
         OnPersonItems: [],
+        ShopStock: [{ Name: "Makarov", Type: 0, Value: 12, Slots: 1, Rarity: 0, DisplayRarity: 1 }],
         RandomCharacterAvailableAt: "0001-01-01T00:00:00+00:00",
         RandomCharacter: null,
       };
@@ -77,4 +78,5 @@ test("profile-bootstrap returns hydrated snapshot payload", async () => {
   assert.equal(body.userEmail, "raider@example.com");
   assert.equal(body.snapshot.money, 500);
   assert.equal(body.snapshot.mainStash[0].name, "Makarov");
+  assert.equal(body.snapshot.shopStock[0].name, "Makarov");
 });

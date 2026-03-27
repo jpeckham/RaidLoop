@@ -33,7 +33,7 @@ public static class CombatBalance
 {
     public static int GetAbilityModifier(int score)
     {
-        return (int)Math.Floor((score - 10) / 2.0);
+        return PlayerStatRules.GetAbilityModifier(score);
     }
 
     public static int GetRangedAttackBonusFromDexterity(int dexterity)
@@ -41,14 +41,52 @@ public static class CombatBalance
         return GetAbilityModifier(dexterity);
     }
 
-    public static int GetDefenseFromDexterity(int dexterity)
+    public static int GetDefenseFromDexterity(int dexterity, int? maxDexBonus = null)
     {
-        return 10 + GetAbilityModifier(dexterity);
+        var dexterityBonus = GetAbilityModifier(dexterity);
+        if (maxDexBonus.HasValue)
+        {
+            dexterityBonus = Math.Min(dexterityBonus, maxDexBonus.Value);
+        }
+
+        return 10 + dexterityBonus;
     }
 
     public static int GetMaxHealthFromConstitution(int constitution)
     {
         return 10 + (2 * Math.Max(0, constitution));
+    }
+
+    public static int GetCarryCapacityFromStrength(int strength)
+    {
+        return 10 + Math.Max(0, strength - PlayerStatRules.MinimumScore);
+    }
+
+    public static int GetCharismaModifier(int charisma)
+    {
+        return GetAbilityModifier(charisma);
+    }
+
+    public static Rarity GetMaxShopRarityFromChaBonus(int charismaModifier)
+    {
+        return charismaModifier switch
+        {
+            >= 4 => Rarity.Legendary,
+            3 => Rarity.Epic,
+            2 => Rarity.Rare,
+            1 => Rarity.Uncommon,
+            _ => Rarity.Common
+        };
+    }
+
+    public static int GetShopPrice(int basePrice, int charismaModifier, bool isBuying)
+    {
+        var modifier = Math.Max(0, charismaModifier);
+        var multiplier = isBuying
+            ? 1m - (0.05m * modifier)
+            : 1m + (0.05m * modifier);
+
+        return Math.Max(1, (int)Math.Round(basePrice * multiplier, MidpointRounding.AwayFromZero));
     }
 
     public static bool ResolveAttackRoll(int roll, int attackBonus, int defense)
@@ -146,6 +184,7 @@ public static class CombatBalance
             "6B43 Zabralo-Sh body armor" => 5,
             "FORT Defender-2" => 4,
             "6B13 assault armor" => 3,
+            "BNTI Kirasa-N" => 2,
             "6B2 body armor" => 1,
             _ => 0
         };
@@ -172,10 +211,14 @@ public static class CombatBalance
             "AK47" => 1500,
             "PKP" => 3200,
             "6B2 body armor" => 380,
+            "BNTI Kirasa-N" => 640,
             "6B13 assault armor" => 900,
             "FORT Defender-2" => 1500,
             "6B43 Zabralo-Sh body armor" => 1800,
             "NFM THOR" => 2600,
+            "Small Backpack" => 100,
+            "Large Backpack" => 200,
+            "Tactical Backpack" => 300,
             "Tasmanian Tiger Trooper 35" => 1600,
             "6Sh118" => 2400,
             _ => 100
@@ -208,6 +251,7 @@ public static class CombatBalance
             "6Sh118" => 10,
             "Tasmanian Tiger Trooper 35" => 8,
             "Tactical Backpack" => 6,
+            "Large Backpack" => 4,
             "Small Backpack" => 3,
             _ => 2
         };

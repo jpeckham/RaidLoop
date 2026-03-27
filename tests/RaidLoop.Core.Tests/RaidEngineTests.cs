@@ -4,6 +4,46 @@ namespace RaidLoop.Core.Tests;
 
 public class RaidEngineTests
 {
+    [Fact]
+    public void PlayerStatRules_DefaultAllocation_StartsAtEightWithTwentySevenPoints()
+    {
+        var allocation = PlayerStatAllocation.CreateDefault();
+
+        Assert.Equal(8, allocation.Stats.Strength);
+        Assert.Equal(8, allocation.Stats.Dexterity);
+        Assert.Equal(8, allocation.Stats.Constitution);
+        Assert.Equal(8, allocation.Stats.Intelligence);
+        Assert.Equal(8, allocation.Stats.Wisdom);
+        Assert.Equal(8, allocation.Stats.Charisma);
+        Assert.Equal(27, allocation.AvailablePoints);
+    }
+
+    [Theory]
+    [InlineData(8, 1)]
+    [InlineData(12, 1)]
+    [InlineData(13, 2)]
+    [InlineData(14, 2)]
+    [InlineData(15, 3)]
+    [InlineData(16, 3)]
+    [InlineData(17, 4)]
+    public void PlayerStatRules_RaiseCost_FollowsEscalatingPointBuy(int currentScore, int expectedCost)
+    {
+        Assert.Equal(expectedCost, PlayerStatRules.GetRaiseCost(currentScore));
+    }
+
+    [Theory]
+    [InlineData(9, 1)]
+    [InlineData(13, 1)]
+    [InlineData(14, 2)]
+    [InlineData(15, 2)]
+    [InlineData(16, 3)]
+    [InlineData(17, 3)]
+    [InlineData(18, 4)]
+    public void PlayerStatRules_LowerRefund_MirrorsPurchaseCost(int currentScore, int expectedRefund)
+    {
+        Assert.Equal(expectedRefund, PlayerStatRules.GetLowerRefund(currentScore));
+    }
+
     [Theory]
     [InlineData("Makarov", AttackMode.Standard, 2, 12)]
     [InlineData("PPSH", AttackMode.Standard, 2, 8)]
@@ -29,6 +69,7 @@ public class RaidEngineTests
 
     [Theory]
     [InlineData("6B2 body armor", 1)]
+    [InlineData("BNTI Kirasa-N", 2)]
     [InlineData("6B13 assault armor", 3)]
     [InlineData("FORT Defender-2", 4)]
     [InlineData("6B43 Zabralo-Sh body armor", 5)]
@@ -95,6 +136,8 @@ public class RaidEngineTests
     [InlineData(11, 0)]
     [InlineData(12, 1)]
     [InlineData(14, 2)]
+    [InlineData(18, 4)]
+    [InlineData(9, -1)]
     public void CombatBalance_AbilityModifier_UsesD20Flooring(int score, int expected)
     {
         Assert.Equal(expected, CombatBalance.GetAbilityModifier(score));
@@ -129,6 +172,16 @@ public class RaidEngineTests
         Assert.Equal(10, lowDexDefense);
         Assert.Equal(12, highDexDefense);
         Assert.True(highDexDefense > lowDexDefense);
+    }
+
+    [Fact]
+    public void CombatBalance_DefenseFromDexterity_RespectsArmorCap()
+    {
+        var uncapped = CombatBalance.GetDefenseFromDexterity(18, maxDexBonus: null);
+        var capped = CombatBalance.GetDefenseFromDexterity(18, maxDexBonus: 2);
+
+        Assert.Equal(14, uncapped);
+        Assert.Equal(12, capped);
     }
 
     [Fact]
@@ -181,10 +234,13 @@ public class RaidEngineTests
     [InlineData("AK47", 1500)]
     [InlineData("PKP", 3200)]
     [InlineData("6B2 body armor", 380)]
+    [InlineData("BNTI Kirasa-N", 640)]
     [InlineData("6B13 assault armor", 900)]
     [InlineData("FORT Defender-2", 1500)]
     [InlineData("6B43 Zabralo-Sh body armor", 1800)]
     [InlineData("NFM THOR", 2600)]
+    [InlineData("Small Backpack", 100)]
+    [InlineData("Large Backpack", 200)]
     [InlineData("Tasmanian Tiger Trooper 35", 1600)]
     [InlineData("6Sh118", 2400)]
     public void CombatBalance_Prices_AreConfigured(string itemName, int buyPrice)
@@ -221,6 +277,7 @@ public class RaidEngineTests
 
     [Theory]
     [InlineData("Small Backpack", 3)]
+    [InlineData("Large Backpack", 4)]
     [InlineData("Tactical Backpack", 6)]
     [InlineData("Tasmanian Tiger Trooper 35", 8)]
     [InlineData("6Sh118", 10)]
@@ -228,6 +285,39 @@ public class RaidEngineTests
     public void CombatBalance_BackpackCapacity_ByBackpack(string? backpackName, int capacity)
     {
         Assert.Equal(capacity, CombatBalance.GetBackpackCapacity(backpackName));
+    }
+
+    [Fact]
+    public void CombatBalance_StrengthCarryCapacity_ProvidesFutureEncumbranceSeam()
+    {
+        var lowStrengthCapacity = CombatBalance.GetCarryCapacityFromStrength(8);
+        var highStrengthCapacity = CombatBalance.GetCarryCapacityFromStrength(18);
+
+        Assert.True(highStrengthCapacity > lowStrengthCapacity);
+    }
+
+    [Theory]
+    [InlineData(8, 240)]
+    [InlineData(12, 228)]
+    [InlineData(18, 192)]
+    public void CombatBalance_CharismaMod_ReducesBuyPrices(int charisma, int expectedPrice)
+    {
+        var price = CombatBalance.GetShopPrice(240, charismaModifier: CombatBalance.GetCharismaModifier(charisma), isBuying: true);
+
+        Assert.Equal(expectedPrice, price);
+    }
+
+    [Theory]
+    [InlineData(8, Rarity.Common)]
+    [InlineData(12, Rarity.Uncommon)]
+    [InlineData(14, Rarity.Rare)]
+    [InlineData(16, Rarity.Epic)]
+    [InlineData(18, Rarity.Legendary)]
+    public void CombatBalance_CharismaMod_UnlocksExpectedShopRarity(int charisma, Rarity expectedRarity)
+    {
+        var maxRarity = CombatBalance.GetMaxShopRarityFromChaBonus(CombatBalance.GetCharismaModifier(charisma));
+
+        Assert.Equal(expectedRarity, maxRarity);
     }
 
     [Fact]

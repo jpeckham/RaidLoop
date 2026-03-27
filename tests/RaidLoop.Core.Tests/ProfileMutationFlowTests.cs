@@ -137,6 +137,269 @@ public sealed class ProfileMutationFlowTests
     }
 
     [Fact]
+    public void ShopStock_ContainsTieredWeaponAndArmorChoicesForCharismaUnlocks()
+    {
+        var home = CreateHome(new FakeGameActionApiClient());
+
+        InvokePrivateVoid(
+            home,
+            "ApplySnapshot",
+            new PlayerSnapshot(
+                Money: 500,
+                MainStash: [],
+                OnPersonItems: [new OnPersonSnapshot(ItemCatalog.Create("AK74"), true)],
+                ShopStock:
+                [
+                    ItemCatalog.Create("Medkit"),
+                    ItemCatalog.Create("Makarov"),
+                    ItemCatalog.Create("6B2 body armor"),
+                    ItemCatalog.Create("BNTI Kirasa-N"),
+                    ItemCatalog.Create("PPSH"),
+                    ItemCatalog.Create("Small Backpack"),
+                    ItemCatalog.Create("Large Backpack"),
+                    ItemCatalog.Create("AK74"),
+                    ItemCatalog.Create("6B13 assault armor")
+                ],
+                PlayerConstitution: 12,
+                PlayerMaxHealth: 34,
+                RandomCharacterAvailableAt: DateTimeOffset.MinValue,
+                RandomCharacter: null,
+                ActiveRaid: null));
+
+        var shopStock = Assert.IsType<List<ShopStock>>(GetField(home, "_shopStock"));
+        var itemNames = shopStock.Select(stock => stock.Item.Name).ToArray();
+
+        Assert.Contains("PPSH", itemNames);
+        Assert.Contains("6B2 body armor", itemNames);
+        Assert.Contains("BNTI Kirasa-N", itemNames);
+        Assert.Contains("Large Backpack", itemNames);
+        Assert.Contains("6B13 assault armor", itemNames);
+    }
+
+    [Fact]
+    public void ApplySnapshot_ReplacesShopStockFromBootstrapSnapshot()
+    {
+        var home = CreateHome(new FakeGameActionApiClient());
+
+        InvokePrivateVoid(
+            home,
+            "ApplySnapshot",
+            new PlayerSnapshot(
+                Money: 500,
+                MainStash: [],
+                OnPersonItems: [new OnPersonSnapshot(ItemCatalog.Create("AK74"), true)],
+                ShopStock: [ItemCatalog.Create("Makarov"), ItemCatalog.Create("PPSH"), ItemCatalog.Create("6B2 body armor")],
+                PlayerConstitution: 12,
+                PlayerMaxHealth: 34,
+                RandomCharacterAvailableAt: DateTimeOffset.MinValue,
+                RandomCharacter: null,
+                ActiveRaid: null));
+
+        var shopStock = Assert.IsType<List<ShopStock>>(GetField(home, "_shopStock"));
+        Assert.Equal(["Makarov", "PPSH", "6B2 body armor"], shopStock.Select(stock => stock.Item.Name).ToArray());
+    }
+
+    [Fact]
+    public void VisibleShopStock_FiltersOutItemsAboveCurrentCharismaTier()
+    {
+        var home = CreateHome(new FakeGameActionApiClient());
+
+        InvokePrivateVoid(
+            home,
+            "ApplySnapshot",
+            new PlayerSnapshot(
+                Money: 500,
+                MainStash: [],
+                OnPersonItems: [new OnPersonSnapshot(ItemCatalog.Create("AK74"), true)],
+                ShopStock:
+                [
+                    ItemCatalog.Create("Makarov"),
+                    ItemCatalog.Create("6B2 body armor"),
+                    ItemCatalog.Create("BNTI Kirasa-N"),
+                    ItemCatalog.Create("PPSH"),
+                    ItemCatalog.Create("Small Backpack"),
+                    ItemCatalog.Create("Large Backpack"),
+                    ItemCatalog.Create("AK74"),
+                    ItemCatalog.Create("6B13 assault armor")
+                ],
+                AcceptedStats: new PlayerStats(8, 8, 8, 8, 8, 12),
+                DraftStats: new PlayerStats(8, 8, 8, 8, 8, 12),
+                AvailableStatPoints: 0,
+                StatsAccepted: true,
+                PlayerConstitution: 8,
+                PlayerMaxHealth: 26,
+                RandomCharacterAvailableAt: DateTimeOffset.MinValue,
+                RandomCharacter: null,
+                ActiveRaid: null));
+
+        var visibleShopStock = Assert.IsAssignableFrom<IReadOnlyList<ShopStock>>(GetPrivatePropertyValue(home, "VisibleShopStock"));
+        Assert.Equal(["Makarov", "6B2 body armor", "BNTI Kirasa-N", "PPSH", "Small Backpack", "Large Backpack"], visibleShopStock.Select(stock => stock.Item.Name).ToArray());
+    }
+
+    [Fact]
+    public void ApplySnapshot_LoadsAcceptedAndDraftStatsAndAvailablePoints()
+    {
+        var home = CreateHome(new FakeGameActionApiClient());
+
+        InvokePrivateVoid(
+            home,
+            "ApplySnapshot",
+            new PlayerSnapshot(
+                Money: 500,
+                MainStash: [],
+                OnPersonItems: [new OnPersonSnapshot(ItemCatalog.Create("AK74"), true)],
+                PlayerConstitution: 12,
+                PlayerMaxHealth: 34,
+                RandomCharacterAvailableAt: DateTimeOffset.MinValue,
+                RandomCharacter: null,
+                ActiveRaid: null,
+                AcceptedStats: new PlayerStats(8, 14, 12, 10, 9, 16),
+                DraftStats: new PlayerStats(8, 15, 12, 10, 9, 16),
+                AvailableStatPoints: 5,
+                StatsAccepted: true));
+
+        Assert.Equal(new PlayerStats(8, 14, 12, 10, 9, 16), Assert.IsType<PlayerStats>(GetField(home, "_acceptedStats")));
+        Assert.Equal(new PlayerStats(8, 15, 12, 10, 9, 16), Assert.IsType<PlayerStats>(GetField(home, "_draftStats")));
+        Assert.Equal(5, Assert.IsType<int>(GetField(home, "_availableStatPoints")));
+        Assert.True(Assert.IsType<bool>(GetField(home, "_statsAccepted")));
+    }
+
+    [Fact]
+    public void ApplySnapshot_NormalizesMissingStatPayloadToEditableDefaults()
+    {
+        var home = CreateHome(new FakeGameActionApiClient());
+
+        InvokePrivateVoid(
+            home,
+            "ApplySnapshot",
+            new PlayerSnapshot(
+                Money: 500,
+                MainStash: [],
+                OnPersonItems: [new OnPersonSnapshot(ItemCatalog.Create("AK74"), true)],
+                PlayerConstitution: 8,
+                PlayerMaxHealth: 26,
+                RandomCharacterAvailableAt: DateTimeOffset.MinValue,
+                RandomCharacter: null,
+                ActiveRaid: null));
+
+        Assert.Equal(PlayerStats.Default, Assert.IsType<PlayerStats>(GetField(home, "_acceptedStats")));
+        Assert.Equal(PlayerStats.Default, Assert.IsType<PlayerStats>(GetField(home, "_draftStats")));
+        Assert.Equal(27, Assert.IsType<int>(GetField(home, "_availableStatPoints")));
+        Assert.False(Assert.IsType<bool>(GetField(home, "_statsAccepted")));
+    }
+
+    [Fact]
+    public void CanStartMainRaid_IsBlockedUntilStatsAreAccepted()
+    {
+        var home = CreateHome(new FakeGameActionApiClient());
+
+        SetField(home, "_onPersonItems", new List<OnPersonEntry> { new(ItemCatalog.Create("AK74"), true) });
+        SetField(home, "_statsAccepted", false);
+
+        Assert.False(GetPrivateProperty<bool>(home, "CanStartMainRaid"));
+
+        SetField(home, "_statsAccepted", true);
+
+        Assert.True(GetPrivateProperty<bool>(home, "CanStartMainRaid"));
+    }
+
+    [Fact]
+    public async Task AcceptStatsAsync_DelegatesToProfileActionApi_And_AppliesReturnedStatProjection()
+    {
+        var actionClient = new FakeGameActionApiClient
+        {
+            ResponseFactory = request =>
+            {
+                Assert.Equal("accept-stats", request.Action);
+                return Response(
+                    money: 500,
+                    mainStash: [],
+                    onPersonItems: [new OnPersonSnapshot(ItemCatalog.Create("AK74"), true)],
+                    acceptedStats: new PlayerStats(8, 14, 12, 10, 9, 16),
+                    draftStats: new PlayerStats(8, 14, 12, 10, 9, 16),
+                    availableStatPoints: 0,
+                    statsAccepted: true);
+            }
+        };
+        var home = CreateHome(actionClient);
+
+        SetField(home, "_draftStats", new PlayerStats(8, 14, 12, 10, 9, 16));
+        SetField(home, "_acceptedStats", PlayerStats.Default);
+        SetField(home, "_availableStatPoints", 0);
+        SetField(home, "_statsAccepted", false);
+
+        await InvokePrivateAsync(home, "AcceptStatsAsync");
+
+        Assert.True(Assert.IsType<bool>(GetField(home, "_statsAccepted")));
+        Assert.Equal(new PlayerStats(8, 14, 12, 10, 9, 16), Assert.IsType<PlayerStats>(GetField(home, "_acceptedStats")));
+    }
+
+    [Fact]
+    public void DraftStatEditing_IsDisabledAfterStatsAccepted()
+    {
+        var home = CreateHome(new FakeGameActionApiClient());
+
+        SetField(home, "_statsAccepted", true);
+        SetField(home, "_raid", null);
+        SetField(home, "_availableStatPoints", 10);
+        SetField(home, "_draftStats", new PlayerStats(8, 14, 12, 10, 9, 16));
+
+        Assert.False(InvokePrivateBool(home, "CanIncreaseDraftStat", "STR"));
+        Assert.False(InvokePrivateBool(home, "CanDecreaseDraftStat", "DEX"));
+    }
+
+    [Fact]
+    public void CanReallocateStats_IsEnabledAfterAcceptanceWhenNotInRaidAndPlayerCanAffordIt()
+    {
+        var home = CreateHome(new FakeGameActionApiClient());
+
+        SetField(home, "_raid", null);
+        SetField(home, "_statsAccepted", true);
+        SetField(home, "_money", 5000);
+
+        Assert.True(GetPrivateProperty<bool>(home, "CanReallocateStats"));
+    }
+
+    [Fact]
+    public async Task ReallocateStatsAsync_IsBlockedInRaid_And_ChargesWhenAllowed()
+    {
+        var actionClient = new FakeGameActionApiClient
+        {
+            ResponseFactory = request =>
+            {
+                Assert.Equal("reallocate-stats", request.Action);
+                return Response(
+                    money: 5000,
+                    mainStash: [],
+                    onPersonItems: [new OnPersonSnapshot(ItemCatalog.Create("AK74"), true)],
+                    acceptedStats: PlayerStats.Default,
+                    draftStats: PlayerStats.Default,
+                    availableStatPoints: 27,
+                    statsAccepted: false);
+            }
+        };
+        var home = CreateHome(actionClient);
+
+        SetField(home, "_money", 10000);
+        SetField(home, "_statsAccepted", true);
+        SetField(home, "_acceptedStats", new PlayerStats(8, 14, 12, 10, 9, 16));
+        SetField(home, "_draftStats", new PlayerStats(8, 14, 12, 10, 9, 16));
+        SetField(home, "_raid", new RaidState(26, new RaidInventory()));
+
+        await InvokePrivateAsync(home, "ReallocateStatsAsync");
+
+        Assert.Empty(actionClient.Requests);
+
+        SetField(home, "_raid", null);
+
+        await InvokePrivateAsync(home, "ReallocateStatsAsync");
+
+        Assert.Single(actionClient.Requests);
+        Assert.False(Assert.IsType<bool>(GetField(home, "_statsAccepted")));
+        Assert.Equal(27, Assert.IsType<int>(GetField(home, "_availableStatPoints")));
+    }
+
+    [Fact]
     public async Task SellLuckRunItemAsync_DelegatesToActionApi_And_AppliesReturnedProjections()
     {
         var cooldown = DateTimeOffset.Parse("2026-03-18T06:00:00Z");
@@ -632,7 +895,7 @@ public sealed class ProfileMutationFlowTests
                       }
                     }
                     """).RootElement.Clone(),
-                null));
+                "Killed in raid. Loadout lost."));
 
         Assert.Null(GetField(home, "_raid"));
         Assert.False(Assert.IsType<bool>(GetField(home, "_inRaid")));
@@ -651,6 +914,7 @@ public sealed class ProfileMutationFlowTests
         Assert.Equal(0, Assert.IsType<int>(GetField(home, "_enemyHealth")));
         Assert.Equal(string.Empty, Assert.IsType<string>(GetField(home, "_lootContainer")));
         Assert.Empty(Assert.IsType<List<string>>(GetField(home, "_log")));
+        Assert.Equal("Killed in raid. Loadout lost.", Assert.IsType<string>(GetField(home, "_resultMessage")));
 
         var onPersonItems = Assert.IsType<List<OnPersonEntry>>(GetField(home, "_onPersonItems"));
         Assert.Equal(["AK74", "Bandage"], onPersonItems.Select(entry => entry.Item.Name).ToArray());
@@ -921,6 +1185,10 @@ public sealed class ProfileMutationFlowTests
         int money,
         IReadOnlyList<Item> mainStash,
         IReadOnlyList<OnPersonSnapshot> onPersonItems,
+        PlayerStats? acceptedStats = null,
+        PlayerStats? draftStats = null,
+        int? availableStatPoints = null,
+        bool? statsAccepted = null,
         DateTimeOffset? randomCharacterAvailableAt = null,
         RandomCharacterSnapshot? randomCharacter = null)
     {
@@ -937,6 +1205,13 @@ public sealed class ProfileMutationFlowTests
             ["loadout"] = new Dictionary<string, object?>
             {
                 ["onPersonItems"] = onPersonItems
+            },
+            ["player"] = new Dictionary<string, object?>
+            {
+                ["acceptedStats"] = acceptedStats,
+                ["draftStats"] = draftStats,
+                ["availableStatPoints"] = availableStatPoints,
+                ["statsAccepted"] = statsAccepted
             }
         };
 
@@ -982,6 +1257,20 @@ public sealed class ProfileMutationFlowTests
         var property = instance.GetType().GetProperty(propertyName, BindingFlags.Instance | BindingFlags.NonPublic);
         Assert.NotNull(property);
         return Assert.IsType<T>(property!.GetValue(instance));
+    }
+
+    private static object? GetPrivatePropertyValue(object instance, string propertyName)
+    {
+        var property = instance.GetType().GetProperty(propertyName, BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.NotNull(property);
+        return property!.GetValue(instance);
+    }
+
+    private static bool InvokePrivateBool(object instance, string methodName, params object[] args)
+    {
+        var method = instance.GetType().GetMethod(methodName, BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.NotNull(method);
+        return Assert.IsType<bool>(method!.Invoke(instance, args));
     }
 
     private static async Task InvokePrivateAsync(object instance, string methodName, params object[] args)

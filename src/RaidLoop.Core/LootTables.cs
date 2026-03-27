@@ -49,6 +49,8 @@ public static class LootTables
         [
             ItemCatalog.Create("6B2 body armor"),
             ItemCatalog.Create("Small Backpack"),
+            ItemCatalog.Create("BNTI Kirasa-N"),
+            ItemCatalog.Create("Large Backpack"),
             ItemCatalog.Create("6B13 assault armor"),
             ItemCatalog.Create("Tactical Backpack"),
             ItemCatalog.Create("FORT Defender-2"),
@@ -83,6 +85,7 @@ public static class LootTables
             ItemCatalog.Create("Bandage"),
             ItemCatalog.Create("PPSH"),
             ItemCatalog.Create("6B2 body armor"),
+            ItemCatalog.Create("BNTI Kirasa-N"),
             ItemCatalog.Create("AK74"),
             ItemCatalog.Create("6B13 assault armor"),
             ItemCatalog.Create("SVDS"),

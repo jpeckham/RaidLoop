@@ -22,21 +22,52 @@
 }
 else if (!_inRaid)
 {
+    <section class="panel top-status-bar">
+        @if (!string.IsNullOrWhiteSpace(_resultMessage))
+        {
+            <span class="status status-strip">@_resultMessage</span>
+        }
+        <div class="account-strip">
+            @if (!string.IsNullOrWhiteSpace(AuthService.UserEmail))
+            {
+                <span><strong>Signed in:</strong> @AuthService.UserEmail</span>
+            }
+            <button class="action" @onclick="SignOutAsync">Sign out</button>
+        </div>
+    </section>
     <section class="panel">
-        <h2>Preparing for Raid</h2>
-        <p>If your stash is wiped, you still get a knife run.</p>
-        <p><strong>Money:</strong> $@_money | <strong>Storage:</strong> @_mainGame.Stash.Count/@MainStashCap</p>
+        <div class="prep-header">
+            <div class="prep-header-copy">
+                <h2>Preparing for Raid</h2>
+                <p>If your stash is wiped, you still get a knife run.</p>
+                <p><strong>Money:</strong> $@_money | <strong>Storage:</strong> @_mainGame.Stash.Count/@MainStashCap</p>
+            </div>
+            <div class="prep-header-stats">
+                <div class="stat-strip-inline">
+                    <span class="stat-points-inline">Remaining: @_availableStatPoints</span>
+                    @foreach (var statKey in StatOrder)
+                    {
+                        <div class="stat-column">
+                            <button class="stat-adjust stat-adjust-up" disabled="@(!CanIncreaseDraftStat(statKey))" @onclick="() => IncrementDraftStat(statKey)" aria-label="Raise @statKey">▲</button>
+                            <div class="stat-readout">
+                                <span class="stat-label">@statKey</span>
+                                <span class="stat-value">@GetDraftStatValue(statKey)</span>
+                            </div>
+                            <button class="stat-adjust stat-adjust-down" disabled="@(!CanDecreaseDraftStat(statKey))" @onclick="() => DecrementDraftStat(statKey)" aria-label="Lower @statKey">▼</button>
+                        </div>
+                    }
+                    <button class="action" disabled="@_statsAccepted" @onclick="AcceptStatsAsync">Accept Stats</button>
+                    <button class="action" disabled="@(!CanReallocateStats)" @onclick="ReallocateStatsAsync">Re-Allocate ($5000)</button>
+                </div>
+            </div>
+        </div>
         <div class="grid-two">
             <LoadoutPanel OnPersonItems="_onPersonItems" CanStashItem="CanStashOnPersonItem" CanStartRaid="CanStartMainRaid" RaidBlockReason="@RaidBlockReason" CanSellItem="CanSellItem" GetSellPrice="GetSellPrice" IsSlotType="IsSlotType" OnEquip="EquipOnPersonItemAsync" OnUnequip="UnequipOnPersonItemAsync" OnStore="StashOnPersonItemAsync" OnSell="SellOnPersonItemAsync" OnStartRaid="StartMainRaidAsync" />
             <StashPanel Items="_mainGame.Stash" GetPrimaryActionLabel="GetStashPrimaryActionLabel" CanSellItem="CanSellItem" GetSellPrice="GetSellPrice" OnMoveToLoadout="MoveStashToOnPersonAsync" OnSell="SellStashItemAsync" />
         </div>
     </section>
-    <ShopPanel Stock="_shopStock" Money="_money" GetBuyPrice="GetBuyPrice" OnBuy="BuyFromShopAsync" />
-    <PreRaidPanel RandomCharacter="_randomCharacter" IsRandomCharacterReady="IsRandomCharacterReady" CanStartLuckRunRaid="CanStartLuckRunRaid" LuckRunBlockReason="@LuckRunBlockReason" RandomCooldownText="@GetRandomCooldownText()" IsStashFull="@(_mainGame.Stash.Count >= MainStashCap)" CanSellItem="CanSellItem" GetSellPrice="GetSellPrice" OnStartLuckRun="StartRandomRaidAsync" OnStoreLuckRunItem="StoreLuckRunItemAsync" OnMoveToForRaid="MoveLuckRunItemToForRaidAsync" OnSellLuckRunItem="SellLuckRunItemAsync" />
-    @if (!string.IsNullOrWhiteSpace(_resultMessage))
-    {
-        <p class="status">@_resultMessage</p>
-    }
+    <ShopPanel Stock="VisibleShopStock" Money="_money" GetBuyPrice="GetBuyPrice" CanBuyItem="CanBuyItem" OnBuy="BuyFromShopAsync" />
+    <PreRaidPanel RandomCharacter="_randomCharacter" IsRandomCharacterReady="IsRandomCharacterReady" CanStartLuckRunRaid="CanStartLuckRunRaid" LuckRunBlockReason="@LuckRunBlockReason" RandomCooldownText="@GetRandomCooldownText()" IsStashFull="@(_mainGame.Stash.Count >= MainStashCap)" CanSellItem="CanSellItem" GetSellPrice="GetSellPrice" AcceptedStats="_acceptedStats" DraftStats="_draftStats" AvailableStatPoints="_availableStatPoints" StatsAccepted="_statsAccepted" CanReallocateStats="CanReallocateStats" GetDraftModifier="GetDraftModifier" CanIncreaseDraftStat="CanIncreaseDraftStat" CanDecreaseDraftStat="CanDecreaseDraftStat" OnIncrementStat="IncrementDraftStat" OnDecrementStat="DecrementDraftStat" OnAcceptStats="AcceptStatsAsync" OnReallocateStats="ReallocateStatsAsync" OnStartLuckRun="StartRandomRaidAsync" OnStoreLuckRunItem="StoreLuckRunItemAsync" OnMoveToForRaid="MoveLuckRunItemToForRaidAsync" OnSellLuckRunItem="SellLuckRunItemAsync" />
 }
 else
 {

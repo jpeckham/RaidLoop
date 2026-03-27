@@ -15,6 +15,11 @@ public sealed class ContractsTests
                 Money: 500,
                 MainStash: [ItemCatalog.Create("Makarov")],
                 OnPersonItems: [new OnPersonSnapshot(ItemCatalog.Create("Small Backpack"), true)],
+                ShopStock: [ItemCatalog.Create("Makarov"), ItemCatalog.Create("PPSH")],
+                AcceptedStats: new PlayerStats(8, 14, 12, 10, 13, 16),
+                DraftStats: new PlayerStats(8, 15, 12, 10, 13, 16),
+                AvailableStatPoints: 5,
+                StatsAccepted: true,
                 PlayerConstitution: 10,
                 PlayerMaxHealth: 30,
                 RandomCharacterAvailableAt: DateTimeOffset.Parse("2026-03-18T00:00:00Z"),
@@ -56,6 +61,11 @@ public sealed class ContractsTests
         Assert.Equal("player@example.com", roundTrip.UserEmail);
         Assert.Equal(500, roundTrip.Snapshot.Money);
         Assert.Equal("Makarov", Assert.Single(roundTrip.Snapshot.MainStash).Name);
+        Assert.Equal(["Makarov", "PPSH"], roundTrip.Snapshot.ShopStock.Select(item => item.Name).ToArray());
+        Assert.Equal(14, roundTrip.Snapshot.AcceptedStats.Dexterity);
+        Assert.Equal(15, roundTrip.Snapshot.DraftStats.Dexterity);
+        Assert.Equal(5, roundTrip.Snapshot.AvailableStatPoints);
+        Assert.True(roundTrip.Snapshot.StatsAccepted);
         Assert.Equal(10, roundTrip.Snapshot.PlayerConstitution);
         Assert.Equal(30, roundTrip.Snapshot.PlayerMaxHealth);
         Assert.Equal("Neutral", roundTrip.Snapshot.ActiveRaid!.EncounterType);

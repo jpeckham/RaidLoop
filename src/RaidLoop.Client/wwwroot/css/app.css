@@ -128,12 +128,138 @@ h2, h3 {
     margin-top: 0.75rem;
 }
 
+.top-status-bar {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem 0.75rem;
+    padding: 0.65rem 0.8rem;
+}
+
+.account-strip {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 0.75rem;
+}
+
 .hud {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
     gap: 0.4rem;
     margin-bottom: 1rem;
     color: #cbd5e1;
+}
+
+.stat-strip-inline {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.35rem;
+}
+
+.prep-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem 1rem;
+    margin-bottom: 0.75rem;
+}
+
+.prep-header-copy {
+    flex: 1 1 18rem;
+    min-width: 0;
+}
+
+.prep-header-copy h2,
+.prep-header-copy p {
+    margin-top: 0;
+}
+
+.prep-header-copy p:last-child {
+    margin-bottom: 0;
+}
+
+.prep-header-stats {
+    flex: 0 1 auto;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.stat-column {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.2rem;
+    padding: 0.15rem 0.1rem;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    background: rgba(15, 23, 42, 0.5);
+}
+
+.stat-points-inline {
+    margin-right: 0.25rem;
+    color: #cbd5e1;
+    white-space: nowrap;
+}
+
+.stat-readout {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+    text-align: center;
+    line-height: 1.1;
+}
+
+.stat-label {
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
+    color: #94a3b8;
+}
+
+.stat-value {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #f8fafc;
+}
+
+.stat-mod {
+    font-size: 0.75rem;
+    color: #cbd5e1;
+}
+
+.stat-adjust {
+    min-width: 0;
+    width: 1.65rem;
+    height: 1.1rem;
+    padding: 0;
+    border-radius: 6px;
+    font-size: 0.6rem;
+    line-height: 1;
+}
+
+.stat-adjust-up,
+.stat-adjust-down {
+    align-self: center;
+}
+
+@media (max-width: 980px) {
+    .prep-header {
+        flex-direction: column;
+    }
+
+    .prep-header-stats {
+        order: -1;
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    .stat-strip-inline {
+        justify-content: flex-start;
+    }
 }
 
 .encounter {
@@ -145,6 +271,13 @@ h2, h3 {
     margin-top: 1rem;
     color: #86efac;
     font-weight: 600;
+}
+
+.status-strip {
+    margin-top: 0;
+    display: inline-flex;
+    align-items: center;
+    min-height: 2rem;
 }
 
 #blazor-error-ui {

@@ -108,8 +108,16 @@ public sealed class RaidStartApiTests
                             "randomCharacter": {
                               "name": "Ghost-101",
                               "inventory": [
-                                { "name": "Makarov", "type": 0, "value": 60, "slots": 1, "rarity": 0, "displayRarity": 1 }
-                              ]
+                                { "name": "Makarov", "type": 0, "value": 60, "slots": 1, "rarity": 0, "displayRarity": 1, "weight": 4 }
+                              ],
+                              "stats": {
+                                "strength": 12,
+                                "dexterity": 11,
+                                "constitution": 10,
+                                "intelligence": 9,
+                                "wisdom": 8,
+                                "charisma": 13
+                              }
                             }
                           },
                           "raid": {
@@ -168,6 +176,7 @@ public sealed class RaidStartApiTests
         Assert.False(Assert.IsType<bool>(GetField(home, "_surprisePersistenceEligible")));
         Assert.Equal("Road Scav", Assert.IsType<string>(GetField(home, "_enemyName")));
         Assert.Equal(14, Assert.IsType<int>(GetField(home, "_enemyHealth")));
+        AssertRandomCharacterStats(GetField(home, "_randomCharacter"), new PlayerStats(12, 11, 10, 9, 8, 13));
     }
 
     [Fact]
@@ -188,8 +197,16 @@ public sealed class RaidStartApiTests
                             "randomCharacter": {
                               "name": "Ghost-101",
                               "inventory": [
-                                { "name": "Makarov", "type": 0, "value": 60, "slots": 1, "rarity": 0, "displayRarity": 1 }
-                              ]
+                                { "name": "Makarov", "type": 0, "value": 60, "slots": 1, "rarity": 0, "displayRarity": 1, "weight": 4 }
+                              ],
+                              "stats": {
+                                "strength": 12,
+                                "dexterity": 11,
+                                "constitution": 10,
+                                "intelligence": 9,
+                                "wisdom": 8,
+                                "charisma": 13
+                              }
                             }
                           },
                           "raid": {
@@ -251,6 +268,7 @@ public sealed class RaidStartApiTests
         Assert.False(Assert.IsType<bool>(GetField(home, "_surprisePersistenceEligible")));
         var raid = Assert.IsType<RaidState>(GetField(home, "_raid"));
         Assert.Equal("Makarov", raid.Inventory.EquippedWeapon?.Name);
+        AssertRandomCharacterStats(GetField(home, "_randomCharacter"), new PlayerStats(12, 11, 10, 9, 8, 13));
     }
 
     private static Home CreateHome(FakeGameActionApiClient actionClient)
@@ -296,6 +314,14 @@ public sealed class RaidStartApiTests
         var method = instance.GetType().GetMethod(methodName, BindingFlags.Instance | BindingFlags.NonPublic);
         Assert.NotNull(method);
         method!.Invoke(instance, args);
+    }
+
+    private static void AssertRandomCharacterStats(object? randomCharacter, PlayerStats expectedStats)
+    {
+        Assert.NotNull(randomCharacter);
+        var statsProperty = randomCharacter!.GetType().GetProperty("Stats", BindingFlags.Instance | BindingFlags.Public);
+        Assert.NotNull(statsProperty);
+        Assert.Equal(expectedStats, Assert.IsType<PlayerStats>(statsProperty!.GetValue(randomCharacter)));
     }
 
     private sealed class FakeProfileApiClient : IProfileApiClient

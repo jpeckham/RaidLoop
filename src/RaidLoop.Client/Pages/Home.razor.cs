@@ -568,9 +568,14 @@ public partial class Home : IDisposable
 
             if (TryGetProjection(luckRun, "randomCharacter", out var randomCharacter))
             {
-                _randomCharacter = randomCharacter.ValueKind == JsonValueKind.Null
-                    ? null
-                    : ReadRandomCharacter(randomCharacter);
+                if (randomCharacter.ValueKind == JsonValueKind.Null)
+                {
+                    _randomCharacter = null;
+                }
+                else if (TryReadRandomCharacter(randomCharacter, out var parsedRandomCharacter))
+                {
+                    _randomCharacter = parsedRandomCharacter;
+                }
 
                 if (_randomCharacter is not null && _randomCharacter.Inventory.Count == 0)
                 {
@@ -934,8 +939,9 @@ public partial class Home : IDisposable
         return hasValidEntry || onPersonItems.GetArrayLength() == 0;
     }
 
-    private static RandomCharacterState ReadRandomCharacter(JsonElement randomCharacter)
+    private static bool TryReadRandomCharacter(JsonElement randomCharacter, out RandomCharacterState parsedRandomCharacter)
     {
+        parsedRandomCharacter = null!;
         var name = TryGetString(randomCharacter, "name", out var randomCharacterName)
             ? randomCharacterName
             : string.Empty;
@@ -943,8 +949,13 @@ public partial class Home : IDisposable
             && TryReadItemList(inventoryItems, out var parsedInventory)
             ? parsedInventory
             : [];
+        if (!TryGetProjection(randomCharacter, "stats", out var statsElement) || !TryReadPlayerStats(statsElement, out var parsedStats))
+        {
+            return false;
+        }
 
-        return new RandomCharacterState(name, inventory);
+        parsedRandomCharacter = new RandomCharacterState(name, inventory, parsedStats);
+        return true;
     }
 
     private static bool TryReadItemList(JsonElement items, out List<Item> parsedItems)
@@ -1531,7 +1542,7 @@ public partial class Home : IDisposable
         _mainGame = new GameState([.. snapshot.MainStash]);
         _randomCharacter = snapshot.RandomCharacter is null
             ? null
-            : new RandomCharacterState(snapshot.RandomCharacter.Name, [.. snapshot.RandomCharacter.Inventory]);
+            : new RandomCharacterState(snapshot.RandomCharacter.Name, [.. snapshot.RandomCharacter.Inventory], snapshot.RandomCharacter.Stats);
         _randomCharacterAvailableAt = snapshot.RandomCharacterAvailableAt;
 
         if (_randomCharacter is not null && _randomCharacter.Inventory.Count == 0)

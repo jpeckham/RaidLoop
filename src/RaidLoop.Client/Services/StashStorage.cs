@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using Microsoft.JSInterop;
 using RaidLoop.Core;
 
@@ -7,6 +8,7 @@ namespace RaidLoop.Client.Services;
 public sealed class StashStorage
 {
     private const string SaveKey = "raidloop.save.v3";
+    private static readonly JsonSerializerOptions WebJsonOptions = new(JsonSerializerDefaults.Web);
     private readonly IJSRuntime _js;
 
     public StashStorage(IJSRuntime js)
@@ -33,10 +35,17 @@ public sealed class StashStorage
 
         try
         {
-            var save = JsonSerializer.Deserialize<GameSave>(raw);
+            var normalizedRaw = NormalizeLegacyRandomCharacterStats(raw);
+            var save = JsonSerializer.Deserialize<GameSave>(normalizedRaw, WebJsonOptions);
             if (save is null)
             {
                 return CreateDefaultSave();
+            }
+
+            if ((save.RandomCharacter is null || string.IsNullOrWhiteSpace(save.RandomCharacter.Name))
+                && TryReadLegacyRandomCharacter(raw, out var legacyRandomCharacter))
+            {
+                save = save with { RandomCharacter = legacyRandomCharacter };
             }
 
             var onPerson = save.OnPersonItems ?? [];
@@ -78,6 +87,63 @@ public sealed class StashStorage
         }
     }
 
+    private static bool TryReadLegacyRandomCharacter(string raw, out RandomCharacterState randomCharacter)
+    {
+        randomCharacter = null!;
+        try
+        {
+            var root = JsonNode.Parse(raw) as JsonObject;
+            if (root is null)
+            {
+                return false;
+            }
+
+            if (!TryGetNodeProperty(root, "RandomCharacter", out var characterNode)
+                && !TryGetNodeProperty(root, "randomCharacter", out characterNode))
+            {
+                return false;
+            }
+
+            if (characterNode is not JsonObject characterObject)
+            {
+                return false;
+            }
+
+            var name = TryGetString(characterObject, "Name", out var canonicalName)
+                ? canonicalName
+                : TryGetString(characterObject, "name", out var legacyName)
+                    ? legacyName
+                    : string.Empty;
+
+            var inventory = TryGetNodeProperty(characterObject, "Inventory", out var canonicalInventory)
+                ? TryReadItemListFromNode(canonicalInventory, out var parsedCanonicalInventory)
+                    ? parsedCanonicalInventory
+                    : []
+                : TryGetNodeProperty(characterObject, "inventory", out var legacyInventory)
+                    ? TryReadItemListFromNode(legacyInventory, out var parsedLegacyInventory)
+                        ? parsedLegacyInventory
+                        : []
+                    : [];
+
+            var stats = TryGetNodeProperty(characterObject, "Stats", out var canonicalStats)
+                ? TryReadPlayerStatsFromNode(canonicalStats, out var parsedCanonicalStats)
+                    ? parsedCanonicalStats
+                    : PlayerStats.Default
+                : TryGetNodeProperty(characterObject, "stats", out var legacyStats)
+                    ? TryReadPlayerStatsFromNode(legacyStats, out var parsedLegacyStats)
+                        ? parsedLegacyStats
+                        : PlayerStats.Default
+                    : PlayerStats.Default;
+
+            randomCharacter = new RandomCharacterState(name, inventory, stats);
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
     public async Task SaveAsync(GameSave save)
     {
         var payload = JsonSerializer.Serialize(save);
@@ -113,6 +179,174 @@ public sealed class StashStorage
         var inventory = NormalizeOnPersonItems(save.OnPersonItems ?? []);
         EnsureKnifeFallback(stash, inventory);
         return save with { Money = money, MainStash = stash, OnPersonItems = inventory };
+    }
+
+    private static string NormalizeLegacyRandomCharacterStats(string raw)
+    {
+        try
+        {
+            var root = JsonNode.Parse(raw) as JsonObject;
+            if (root is null)
+            {
+                return raw;
+            }
+
+            if (TryGetNodeProperty(root, "randomCharacter", out var camelRandomCharacter) && camelRandomCharacter is not null)
+            {
+                if (!root.ContainsKey("RandomCharacter"))
+                {
+                    root["RandomCharacter"] = camelRandomCharacter.DeepClone();
+                    root.Remove("randomCharacter");
+                }
+            }
+
+            if (TryGetNodeProperty(root, "RandomCharacter", out var randomCharacterNode) && randomCharacterNode is JsonObject randomCharacter)
+            {
+                MoveProperty(randomCharacter, "name", "Name");
+                MoveProperty(randomCharacter, "inventory", "Inventory");
+                MoveProperty(randomCharacter, "stats", "Stats");
+
+                if (TryGetNodeProperty(randomCharacter, "stats", out var camelStats) && camelStats is not null && !HasProperty(randomCharacter, "Stats"))
+                {
+                    randomCharacter["Stats"] = camelStats.DeepClone();
+                    randomCharacter.Remove("stats");
+                }
+
+                if (!HasProperty(randomCharacter, "Stats"))
+                {
+                    randomCharacter["Stats"] = JsonSerializer.SerializeToNode(PlayerStats.Default);
+                }
+            }
+
+            return root.ToJsonString();
+        }
+        catch
+        {
+            return raw;
+        }
+    }
+
+    private static void MoveProperty(JsonObject node, string sourceName, string targetName)
+    {
+        if (string.Equals(sourceName, targetName, StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        if (HasProperty(node, targetName))
+        {
+            return;
+        }
+
+        foreach (var entry in node)
+        {
+            if (!string.Equals(entry.Key, sourceName, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            if (entry.Value is null)
+            {
+                return;
+            }
+
+            node[targetName] = entry.Value.DeepClone();
+            node.Remove(entry.Key);
+            return;
+        }
+    }
+
+    private static bool TryGetNodeProperty(JsonObject root, string propertyName, out JsonNode? value)
+    {
+        foreach (var entry in root)
+        {
+            if (!string.Equals(entry.Key, propertyName, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            value = entry.Value;
+            return value is not null;
+        }
+
+        value = null;
+        return false;
+    }
+
+    private static bool TryGetString(JsonObject root, string propertyName, out string value)
+    {
+        foreach (var entry in root)
+        {
+            if (!string.Equals(entry.Key, propertyName, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            if (entry.Value is JsonValue jsonValue && jsonValue.TryGetValue<string>(out value))
+            {
+                return true;
+            }
+
+            break;
+        }
+
+        value = string.Empty;
+        return false;
+    }
+
+    private static bool TryReadItemListFromNode(JsonNode items, out List<Item> parsedItems)
+    {
+        try
+        {
+            if (items is not JsonArray)
+            {
+                parsedItems = [];
+                return false;
+            }
+
+            var legacy = JsonSerializer.Deserialize<List<Item>>(items.ToJsonString(), WebJsonOptions);
+            parsedItems = legacy ?? [];
+            return true;
+        }
+        catch
+        {
+            parsedItems = [];
+            return false;
+        }
+    }
+
+    private static bool TryReadPlayerStatsFromNode(JsonNode stats, out PlayerStats parsedStats)
+    {
+        try
+        {
+            if (stats is not JsonObject)
+            {
+                parsedStats = PlayerStats.Default;
+                return false;
+            }
+
+            var legacy = JsonSerializer.Deserialize<PlayerStats>(stats.ToJsonString(), WebJsonOptions);
+            parsedStats = legacy ?? PlayerStats.Default;
+            return true;
+        }
+        catch
+        {
+            parsedStats = PlayerStats.Default;
+            return false;
+        }
+    }
+
+    private static bool HasProperty(JsonObject node, string propertyName)
+    {
+        foreach (var entry in node)
+        {
+            if (string.Equals(entry.Key, propertyName, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static List<Item> ExtractLegacyCharacterInventory(string raw)
@@ -178,7 +412,20 @@ public sealed class StashStorage
     }
 }
 
-public sealed record RandomCharacterState(string Name, List<Item> Inventory);
+public sealed record RandomCharacterState
+{
+    public RandomCharacterState(string Name, List<Item> Inventory, PlayerStats Stats)
+    {
+        ArgumentNullException.ThrowIfNull(Stats);
+        this.Name = Name;
+        this.Inventory = Inventory;
+        this.Stats = Stats;
+    }
+
+    public string Name { get; init; }
+    public List<Item> Inventory { get; init; }
+    public PlayerStats Stats { get; init; }
+}
 
 public sealed record GameSave(
     List<Item> MainStash,

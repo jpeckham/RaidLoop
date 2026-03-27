@@ -1,3 +1,4 @@
+using System.Reflection;
 using System.Text.Json;
 using RaidLoop.Core.Contracts;
 
@@ -23,7 +24,7 @@ public sealed class ContractsTests
                 PlayerConstitution: 10,
                 PlayerMaxHealth: 30,
                 RandomCharacterAvailableAt: DateTimeOffset.Parse("2026-03-18T00:00:00Z"),
-                RandomCharacter: new RandomCharacterSnapshot("Ghost-101", [ItemCatalog.Create("Bandage")]),
+                RandomCharacter: new RandomCharacterSnapshot("Ghost-101", [ItemCatalog.Create("Bandage")], PlayerStats.Default),
                 ActiveRaid: new RaidSnapshot(
                     Health: 30,
                     BackpackCapacity: 3,
@@ -56,7 +57,7 @@ public sealed class ContractsTests
                     LogEntries: ["Raid started."])));
 
         var json = JsonSerializer.Serialize(response);
-        var roundTrip = JsonSerializer.Deserialize<AuthBootstrapResponse>(json);
+        var roundTrip = JsonSerializer.Deserialize<AuthBootstrapResponse>(json, new JsonSerializerOptions(JsonSerializerDefaults.Web));
 
         Assert.NotNull(roundTrip);
         Assert.True(roundTrip!.IsAuthenticated);
@@ -78,6 +79,51 @@ public sealed class ContractsTests
         Assert.Equal("None", roundTrip.Snapshot.ActiveRaid.InitiativeWinner);
         Assert.Equal(1, roundTrip.Snapshot.ActiveRaid.OpeningActionsRemaining);
         Assert.False(roundTrip.Snapshot.ActiveRaid.SurprisePersistenceEligible);
+    }
+
+    [Fact]
+    public void RandomCharacterSnapshot_RoundTripsStatsThroughJson()
+    {
+        const string json = """
+            {
+              "IsAuthenticated": true,
+              "UserEmail": "player@example.com",
+              "Snapshot": {
+                "Money": 500,
+                "MainStash": [],
+                "OnPersonItems": [],
+                "ShopStock": [],
+                "PlayerConstitution": 10,
+                "PlayerMaxHealth": 30,
+                "RandomCharacterAvailableAt": "2026-03-18T00:00:00Z",
+                "RandomCharacter": {
+                  "Name": "Ghost-101",
+                  "Inventory": [
+                    { "Name": "Bandage", "Type": 4, "Value": 15, "Slots": 1, "Rarity": 0, "DisplayRarity": 0, "Weight": 1 }
+                  ],
+                  "Stats": {
+                    "Strength": 12,
+                    "Dexterity": 11,
+                    "Constitution": 10,
+                    "Intelligence": 9,
+                    "Wisdom": 8,
+                    "Charisma": 13
+                  }
+                },
+                "ActiveRaid": null
+              }
+            }
+            """;
+
+        var roundTrip = JsonSerializer.Deserialize<AuthBootstrapResponse>(json);
+
+        Assert.NotNull(roundTrip);
+        var randomCharacter = roundTrip!.Snapshot.RandomCharacter;
+        Assert.NotNull(randomCharacter);
+        var statsProperty = randomCharacter.GetType().GetProperty("Stats", BindingFlags.Instance | BindingFlags.Public);
+
+        Assert.NotNull(statsProperty);
+        Assert.Equal(new PlayerStats(12, 11, 10, 9, 8, 13), Assert.IsType<PlayerStats>(statsProperty!.GetValue(randomCharacter)));
     }
 
     [Fact]

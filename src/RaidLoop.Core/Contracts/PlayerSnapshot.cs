@@ -4,7 +4,20 @@ namespace RaidLoop.Core.Contracts;
 
 public sealed record OnPersonSnapshot(Item Item, bool IsEquipped);
 
-public sealed record RandomCharacterSnapshot(string Name, IReadOnlyList<Item> Inventory);
+public sealed record RandomCharacterSnapshot
+{
+    public RandomCharacterSnapshot(string Name, IReadOnlyList<Item> Inventory, PlayerStats Stats)
+    {
+        ArgumentNullException.ThrowIfNull(Stats);
+        this.Name = Name;
+        this.Inventory = Inventory;
+        this.Stats = Stats;
+    }
+
+    public string Name { get; init; }
+    public IReadOnlyList<Item> Inventory { get; init; }
+    public PlayerStats Stats { get; init; }
+}
 
 public sealed record PlayerSnapshot
 {

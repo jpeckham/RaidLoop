@@ -500,7 +500,7 @@ public sealed class ProfileMutationFlowTests
         var home = CreateHome(actionClient);
 
         SetField(home, "_money", 500);
-        SetField(home, "_randomCharacter", new RandomCharacterState("Ghost-101", [ItemCatalog.Create("Bandage")]));
+        SetField(home, "_randomCharacter", new RandomCharacterState("Ghost-101", [ItemCatalog.Create("Bandage")], PlayerStats.Default));
 
         await InvokePrivateAsync(home, "SellLuckRunItemAsync", 0);
 
@@ -615,7 +615,15 @@ public sealed class ProfileMutationFlowTests
                   "Name": "Ghost-101",
                   "Inventory": [
                     { "Name": "Bandage", "Type": 4, "Value": 15, "Slots": 1, "Rarity": 0, "DisplayRarity": 0 }
-                  ]
+                  ],
+                  "Stats": {
+                    "Strength": 12,
+                    "Dexterity": 11,
+                    "Constitution": 10,
+                    "Intelligence": 9,
+                    "Wisdom": 8,
+                    "Charisma": 13
+                  }
                 }
               },
                 "raid": {
@@ -666,6 +674,7 @@ public sealed class ProfileMutationFlowTests
         var randomCharacter = Assert.IsType<RandomCharacterState>(GetField(home, "_randomCharacter"));
         Assert.Equal("Ghost-101", randomCharacter.Name);
         Assert.Equal("Bandage", Assert.Single(randomCharacter.Inventory).Name);
+        Assert.Equal(new PlayerStats(12, 11, 10, 9, 8, 13), randomCharacter.Stats);
         var raid = Assert.IsType<RaidState>(GetField(home, "_raid"));
         Assert.Equal(21, raid.Health);
         Assert.Equal(6, raid.BackpackCapacity);
@@ -676,6 +685,39 @@ public sealed class ProfileMutationFlowTests
         Assert.Equal(6, Assert.IsType<int>(GetField(home, "_enemyHealth")));
         Assert.Equal("Combat", Assert.IsType<EncounterType>(GetField(home, "_encounterType")).ToString());
         Assert.Equal("Action resolved.", Assert.IsType<string>(GetField(home, "_resultMessage")));
+    }
+
+    [Fact]
+    public void ReadRandomCharacter_HydratesStatsFromProjection()
+    {
+        using var document = JsonDocument.Parse("""
+        {
+          "name": "Ghost-101",
+          "inventory": [
+            { "name": "Bandage", "type": 4, "value": 15, "slots": 1, "rarity": 0, "displayRarity": 0, "weight": 1 }
+          ],
+          "stats": {
+            "strength": 12,
+            "dexterity": 11,
+            "constitution": 10,
+            "intelligence": 9,
+            "wisdom": 8,
+            "charisma": 13
+          }
+        }
+        """);
+
+        var method = typeof(Home).GetMethod("TryReadRandomCharacter", BindingFlags.Static | BindingFlags.NonPublic);
+        Assert.NotNull(method);
+
+        var args = new object?[] { document.RootElement, null };
+        var result = Assert.IsType<bool>(method!.Invoke(null, args));
+        Assert.True(result);
+
+        var parsedRandomCharacter = Assert.IsType<RandomCharacterState>(args[1]);
+        var statsProperty = parsedRandomCharacter.GetType().GetProperty("Stats", BindingFlags.Instance | BindingFlags.Public);
+        Assert.NotNull(statsProperty);
+        Assert.Equal(new PlayerStats(12, 11, 10, 9, 8, 13), Assert.IsType<PlayerStats>(statsProperty!.GetValue(parsedRandomCharacter)));
     }
 
     [Fact]
@@ -713,7 +755,15 @@ public sealed class ProfileMutationFlowTests
                           "Name": "Ghost-303",
                           "Inventory": [
                             { "Name": "Bandage", "Type": 4, "Value": 15, "Slots": 1, "Rarity": 0, "DisplayRarity": 0 }
-                          ]
+                          ],
+                          "Stats": {
+                            "Strength": 12,
+                            "Dexterity": 11,
+                            "Constitution": 10,
+                            "Intelligence": 9,
+                            "Wisdom": 8,
+                            "Charisma": 13
+                          }
                         }
                       }
                     }
@@ -727,7 +777,9 @@ public sealed class ProfileMutationFlowTests
         Assert.Single(onPersonItems);
         Assert.Equal("Medkit", onPersonItems[0].Item.Name);
         Assert.Equal(DateTimeOffset.Parse("2026-03-20T08:00:00Z"), Assert.IsType<DateTimeOffset>(GetField(home, "_randomCharacterAvailableAt")));
-        Assert.Equal("Ghost-303", Assert.IsType<RandomCharacterState>(GetField(home, "_randomCharacter")).Name);
+        var randomCharacter = Assert.IsType<RandomCharacterState>(GetField(home, "_randomCharacter"));
+        Assert.Equal("Ghost-303", randomCharacter.Name);
+        Assert.Equal(new PlayerStats(12, 11, 10, 9, 8, 13), randomCharacter.Stats);
     }
 
     [Fact]
@@ -1072,6 +1124,40 @@ public sealed class ProfileMutationFlowTests
     }
 
     [Fact]
+    public void ApplyActionResult_SkipsRandomCharacterProjection_WhenStatsAreMissing()
+    {
+        var home = CreateHome(new FakeGameActionApiClient());
+        var expectedRandomCharacter = new RandomCharacterState(
+            "Ghost-101",
+            [ItemCatalog.Create("Bandage")],
+            new PlayerStats(12, 11, 10, 9, 8, 13));
+
+        SetField(home, "_randomCharacter", expectedRandomCharacter);
+
+        InvokePrivateVoid(
+            home,
+            "ApplyActionResult",
+            new GameActionResult(
+                "ProfileMutated",
+                null,
+                System.Text.Json.JsonDocument.Parse("""
+                    {
+                      "luckRun": {
+                        "randomCharacter": {
+                          "name": "Ghost-101",
+                          "inventory": [
+                            { "name": "Bandage", "type": 4, "value": 15, "slots": 1, "rarity": 0, "displayRarity": 0 }
+                          ]
+                        }
+                      }
+                    }
+                    """).RootElement.Clone(),
+                null));
+
+        Assert.Same(expectedRandomCharacter, GetField(home, "_randomCharacter"));
+    }
+
+    [Fact]
     public void ApplySnapshot_ClearsEmptyRandomCharacter_And_LeavesReadyStateWhenCooldownMissing()
     {
         var home = CreateHome(new FakeGameActionApiClient());
@@ -1091,7 +1177,7 @@ public sealed class ProfileMutationFlowTests
                 PlayerConstitution: 10,
                 PlayerMaxHealth: 30,
                 RandomCharacterAvailableAt: DateTimeOffset.MinValue,
-                RandomCharacter: new RandomCharacterSnapshot("Ghost-101", []),
+                RandomCharacter: new RandomCharacterSnapshot("Ghost-101", [], PlayerStats.Default),
                 ActiveRaid: null));
 
         Assert.Null(GetField(home, "_randomCharacter"));
@@ -1119,7 +1205,7 @@ public sealed class ProfileMutationFlowTests
                 PlayerConstitution: 10,
                 PlayerMaxHealth: 30,
                 RandomCharacterAvailableAt: expectedCooldown,
-                RandomCharacter: new RandomCharacterSnapshot("Ghost-101", []),
+                RandomCharacter: new RandomCharacterSnapshot("Ghost-101", [], PlayerStats.Default),
                 ActiveRaid: null));
 
         Assert.Null(GetField(home, "_randomCharacter"));

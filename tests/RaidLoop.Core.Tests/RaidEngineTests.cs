@@ -463,6 +463,26 @@ public class RaidEngineTests
     }
 
     [Fact]
+    public void TryLootFromDiscovered_RejectsWhenWeightWouldExceedEncumbrance()
+    {
+        var state = new RaidState(
+            health: 30,
+            backpackCapacity: 2,
+            broughtItems: [ItemCatalog.Get("Makarov")],
+            raidLoot: []);
+        state.Inventory.MaxEncumbrance = 6;
+
+        RaidEngine.StartDiscoveredLootEncounter(state, [ItemCatalog.Get("Medkit")]);
+
+        var looted = RaidEngine.TryLootFromDiscovered(state, state.Inventory.DiscoveredLoot[0]);
+
+        Assert.False(looted);
+        Assert.Single(state.Inventory.DiscoveredLoot);
+        Assert.Empty(state.Inventory.CarriedItems);
+        Assert.Equal(0, state.Inventory.MedkitCount);
+    }
+
+    [Fact]
     public void Sellable_Items_AreRegularLootForCapacityChecks()
     {
         var state = new RaidState(
@@ -475,6 +495,88 @@ public class RaidEngineTests
 
         Assert.True(added);
         Assert.Single(state.RaidLoot);
+    }
+
+    [Fact]
+    public void TryEquipFromDiscovered_RejectsWhenWeightWouldExceedEncumbranceWithOpenSlot()
+    {
+        var state = new RaidState(
+            health: 30,
+            backpackCapacity: 2,
+            broughtItems:
+            [
+                ItemCatalog.Get("Makarov"),
+                ItemCatalog.Get("Small Backpack")
+            ],
+            raidLoot: []);
+        state.Inventory.MaxEncumbrance = 20;
+
+        RaidEngine.StartDiscoveredLootEncounter(state, [ItemCatalog.Get("6B13 assault armor")]);
+
+        var equipped = RaidEngine.TryEquipFromDiscovered(state, state.Inventory.DiscoveredLoot[0]);
+
+        Assert.False(equipped);
+        Assert.Equal("Makarov", state.Inventory.EquippedWeapon?.Name);
+        Assert.Equal("Small Backpack", state.Inventory.EquippedBackpack?.Name);
+        Assert.Single(state.Inventory.DiscoveredLoot);
+        Assert.Equal("6B13 assault armor", state.Inventory.DiscoveredLoot[0].Name);
+    }
+
+    [Fact]
+    public void TryEquipFromCarried_RejectsWhenWeightWouldExceedEncumbranceWithOpenSlot()
+    {
+        var state = new RaidState(
+            health: 30,
+            backpackCapacity: 2,
+            broughtItems:
+            [
+                ItemCatalog.Get("Makarov"),
+                ItemCatalog.Get("Small Backpack")
+            ],
+            raidLoot:
+            [
+                ItemCatalog.Get("6B13 assault armor")
+            ]);
+        state.Inventory.MaxEncumbrance = 20;
+
+        var equipped = RaidEngine.TryEquipFromCarried(state, state.Inventory.CarriedItems[0]);
+
+        Assert.False(equipped);
+        Assert.Equal("Makarov", state.Inventory.EquippedWeapon?.Name);
+        Assert.Equal("Small Backpack", state.Inventory.EquippedBackpack?.Name);
+        Assert.Single(state.Inventory.CarriedItems);
+        Assert.Equal("6B13 assault armor", state.Inventory.CarriedItems[0].Name);
+    }
+
+    [Fact]
+    public void TryEquipFromCarried_SmallerBackpackSpillsOverflowBeforeWeightCheck()
+    {
+        var state = new RaidState(
+            health: 30,
+            backpackCapacity: 4,
+            broughtItems:
+            [
+                ItemCatalog.Get("Makarov"),
+                ItemCatalog.Get("Large Backpack")
+            ],
+            raidLoot:
+            [
+                ItemCatalog.Get("Bandage"),
+                ItemCatalog.Get("Ammo Box"),
+                ItemCatalog.Get("Tactical Backpack"),
+                ItemCatalog.Get("Small Backpack")
+            ]);
+        state.Inventory.MaxEncumbrance = 13;
+
+        var equipped = RaidEngine.TryEquipFromCarried(state, state.Inventory.CarriedItems[3]);
+
+        Assert.True(equipped);
+        Assert.Equal("Small Backpack", state.Inventory.EquippedBackpack?.Name);
+        Assert.Contains(state.Inventory.DiscoveredLoot, x => x.Name == "Large Backpack");
+        Assert.Contains(state.Inventory.DiscoveredLoot, x => x.Name == "Tactical Backpack");
+        Assert.Equal(2, state.Inventory.CarriedItems.Count);
+        Assert.Contains(state.Inventory.CarriedItems, x => x.Name == "Bandage");
+        Assert.Contains(state.Inventory.CarriedItems, x => x.Name == "Ammo Box");
     }
 
     [Fact]

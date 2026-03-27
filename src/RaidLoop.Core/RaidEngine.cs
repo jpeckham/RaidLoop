@@ -86,12 +86,6 @@ public static class RaidEngine
             return false;
         }
 
-        if (string.Equals(item.Name, "Medkit", StringComparison.OrdinalIgnoreCase))
-        {
-            state.Inventory.MedkitCount++;
-            return true;
-        }
-
         if (!TryAddCarriedItem(state, item))
         {
             state.Inventory.DiscoveredLoot.Add(item);
@@ -190,6 +184,11 @@ public static class RaidEngine
             return false;
         }
 
+        if (!CanEquipItemByWeight(state, item))
+        {
+            return false;
+        }
+
         Item? previous = item.Type switch
         {
             ItemType.Weapon => state.Inventory.EquippedWeapon,
@@ -226,12 +225,22 @@ public static class RaidEngine
     {
         if (string.Equals(item.Name, "Medkit", StringComparison.OrdinalIgnoreCase))
         {
+            if (!CanFitMedkitByWeight(state))
+            {
+                return false;
+            }
+
             state.Inventory.MedkitCount++;
             return true;
         }
 
         var currentSlots = state.Inventory.CarriedItems.Sum(x => x.Slots);
         if (currentSlots + item.Slots > state.Inventory.BackpackCapacity)
+        {
+            return false;
+        }
+
+        if (!CanFitCarriedItemByWeight(state, item))
         {
             return false;
         }
@@ -249,6 +258,76 @@ public static class RaidEngine
             state.Inventory.CarriedItems.RemoveAt(state.Inventory.CarriedItems.Count - 1);
             state.Inventory.DiscoveredLoot.Add(spill);
             currentSlots -= spill.Slots;
+        }
+    }
+
+    private static bool CanFitMedkitByWeight(RaidState state)
+    {
+        return GetEncumbranceWithAdditionalItems(state, [ItemCatalog.Create("Medkit")]) <= state.Inventory.MaxEncumbrance;
+    }
+
+    private static bool CanFitCarriedItemByWeight(RaidState state, Item item)
+    {
+        return GetEncumbranceWithAdditionalItems(state, [item]) <= state.Inventory.MaxEncumbrance;
+    }
+
+    private static bool CanEquipItemByWeight(RaidState state, Item item)
+    {
+        var equippedItems = GetEquippedItems(state)
+            .Where(existing => existing.Type != item.Type)
+            .ToList();
+        equippedItems.Add(item);
+
+        var carriedItems = state.Inventory.CarriedItems.ToList();
+        if (item.Type == ItemType.Backpack)
+        {
+            var backpackCapacity = CombatBalance.GetBackpackCapacity(item.Name);
+            var currentSlots = carriedItems.Sum(x => x.Slots);
+            while (currentSlots > backpackCapacity && carriedItems.Count > 0)
+            {
+                var spill = carriedItems[^1];
+                carriedItems.RemoveAt(carriedItems.Count - 1);
+                currentSlots -= spill.Slots;
+            }
+        }
+
+        var prospectiveItems = equippedItems.Concat(carriedItems).ToList();
+        for (var i = 0; i < state.Inventory.MedkitCount; i++)
+        {
+            prospectiveItems.Add(ItemCatalog.Create("Medkit"));
+        }
+
+        return CombatBalance.GetTotalEncumbrance(prospectiveItems) <= state.Inventory.MaxEncumbrance;
+    }
+
+    private static int GetEncumbranceWithAdditionalItems(RaidState state, IEnumerable<Item> additionalItems)
+    {
+        var prospectiveItems = GetEquippedItems(state).ToList();
+        prospectiveItems.AddRange(state.Inventory.CarriedItems);
+        for (var i = 0; i < state.Inventory.MedkitCount; i++)
+        {
+            prospectiveItems.Add(ItemCatalog.Create("Medkit"));
+        }
+
+        prospectiveItems.AddRange(additionalItems);
+        return CombatBalance.GetTotalEncumbrance(prospectiveItems);
+    }
+
+    private static IEnumerable<Item> GetEquippedItems(RaidState state)
+    {
+        if (state.Inventory.EquippedWeapon is not null)
+        {
+            yield return state.Inventory.EquippedWeapon;
+        }
+
+        if (state.Inventory.EquippedArmor is not null)
+        {
+            yield return state.Inventory.EquippedArmor;
+        }
+
+        if (state.Inventory.EquippedBackpack is not null)
+        {
+            yield return state.Inventory.EquippedBackpack;
         }
     }
 }

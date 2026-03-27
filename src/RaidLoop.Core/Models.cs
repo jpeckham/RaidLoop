@@ -56,6 +56,11 @@ public sealed class RaidState
 {
     public int Health { get; set; }
     public int BackpackCapacity { get; set; }
+    public int MaxEncumbrance
+    {
+        get => Inventory.MaxEncumbrance;
+        set => Inventory.MaxEncumbrance = value;
+    }
     public List<Item> BroughtItems { get; } = [];
     public RaidInventory Inventory { get; }
     public List<Item> RaidLoot => Inventory.CarriedItems;
@@ -87,6 +92,7 @@ public sealed class RaidInventory
     public List<Item> DiscoveredLoot { get; } = [];
     public int MedkitCount { get; set; }
     public int BackpackCapacity { get; set; }
+    public int MaxEncumbrance { get; set; } = CombatBalance.GetMaxEncumbranceFromStrength(PlayerStatRules.MinimumScore);
 
     public IEnumerable<Item> GetExtractableItems()
     {

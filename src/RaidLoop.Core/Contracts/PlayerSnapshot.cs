@@ -20,11 +20,13 @@ public sealed record PlayerSnapshot
         PlayerStats? AcceptedStats = null,
         PlayerStats? DraftStats = null,
         int AvailableStatPoints = PlayerStatRules.StartingPool,
-        bool StatsAccepted = false)
+        bool StatsAccepted = false,
+        IReadOnlyList<Item>? ShopStock = null)
     {
         this.Money = Money;
         this.MainStash = MainStash;
         this.OnPersonItems = OnPersonItems;
+        this.ShopStock = ShopStock ?? [];
         this.PlayerConstitution = PlayerConstitution;
         this.PlayerMaxHealth = PlayerMaxHealth;
         this.RandomCharacterAvailableAt = RandomCharacterAvailableAt;
@@ -39,6 +41,7 @@ public sealed record PlayerSnapshot
     public int Money { get; init; }
     public IReadOnlyList<Item> MainStash { get; init; }
     public IReadOnlyList<OnPersonSnapshot> OnPersonItems { get; init; }
+    public IReadOnlyList<Item> ShopStock { get; init; }
     public int PlayerConstitution { get; init; }
     public int PlayerMaxHealth { get; init; }
 

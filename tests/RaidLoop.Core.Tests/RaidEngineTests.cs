@@ -69,6 +69,7 @@ public class RaidEngineTests
 
     [Theory]
     [InlineData("6B2 body armor", 1)]
+    [InlineData("BNTI Kirasa-N", 2)]
     [InlineData("6B13 assault armor", 3)]
     [InlineData("FORT Defender-2", 4)]
     [InlineData("6B43 Zabralo-Sh body armor", 5)]
@@ -233,10 +234,13 @@ public class RaidEngineTests
     [InlineData("AK47", 1500)]
     [InlineData("PKP", 3200)]
     [InlineData("6B2 body armor", 380)]
+    [InlineData("BNTI Kirasa-N", 640)]
     [InlineData("6B13 assault armor", 900)]
     [InlineData("FORT Defender-2", 1500)]
     [InlineData("6B43 Zabralo-Sh body armor", 1800)]
     [InlineData("NFM THOR", 2600)]
+    [InlineData("Small Backpack", 100)]
+    [InlineData("Large Backpack", 200)]
     [InlineData("Tasmanian Tiger Trooper 35", 1600)]
     [InlineData("6Sh118", 2400)]
     public void CombatBalance_Prices_AreConfigured(string itemName, int buyPrice)
@@ -273,6 +277,7 @@ public class RaidEngineTests
 
     [Theory]
     [InlineData("Small Backpack", 3)]
+    [InlineData("Large Backpack", 4)]
     [InlineData("Tactical Backpack", 6)]
     [InlineData("Tasmanian Tiger Trooper 35", 8)]
     [InlineData("6Sh118", 10)]

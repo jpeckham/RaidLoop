@@ -130,7 +130,7 @@ function buildActionResponse(action, payload, snapshot) {
           action,
         },
         projections: buildRaidFinishedProjections(snapshot),
-        message: null,
+        message: buildRaidFinishedMessage(action),
       };
     }
 
@@ -301,6 +301,12 @@ function buildRaidFinishedProjections(snapshot) {
     luckRun: buildLuckRunProjection(snapshot),
     raid: null,
   };
+}
+
+function buildRaidFinishedMessage(action) {
+  return action === "attempt-extract"
+    ? "Extracted successfully."
+    : "Killed in raid.";
 }
 
 function resolveRaidEventType(action) {

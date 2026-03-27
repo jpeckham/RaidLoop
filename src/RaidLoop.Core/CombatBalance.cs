@@ -184,6 +184,7 @@ public static class CombatBalance
             "6B43 Zabralo-Sh body armor" => 5,
             "FORT Defender-2" => 4,
             "6B13 assault armor" => 3,
+            "BNTI Kirasa-N" => 2,
             "6B2 body armor" => 1,
             _ => 0
         };
@@ -210,10 +211,14 @@ public static class CombatBalance
             "AK47" => 1500,
             "PKP" => 3200,
             "6B2 body armor" => 380,
+            "BNTI Kirasa-N" => 640,
             "6B13 assault armor" => 900,
             "FORT Defender-2" => 1500,
             "6B43 Zabralo-Sh body armor" => 1800,
             "NFM THOR" => 2600,
+            "Small Backpack" => 100,
+            "Large Backpack" => 200,
+            "Tactical Backpack" => 300,
             "Tasmanian Tiger Trooper 35" => 1600,
             "6Sh118" => 2400,
             _ => 100
@@ -246,6 +251,7 @@ public static class CombatBalance
             "6Sh118" => 10,
             "Tasmanian Tiger Trooper 35" => 8,
             "Tactical Backpack" => 6,
+            "Large Backpack" => 4,
             "Small Backpack" => 3,
             _ => 2
         };

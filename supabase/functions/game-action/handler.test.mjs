@@ -998,5 +998,41 @@ test("game-action returns raid-finished projections for attempt-extract", async 
   assert.equal(body.projections.raid, null);
   assert.equal(body.projections.loadout.onPersonItems[0].item.name, "AK74");
   assert.equal(body.projections.loadout.onPersonItems[1].item.name, "Bandage");
+  assert.equal(body.message, "Extracted successfully.");
   assert.equal(body.snapshot, undefined);
+});
+
+test("game-action returns concise death message when combat ends the raid", async () => {
+  const handler = createGameActionHandler({
+    dispatchAction: async (accessToken, action, payload) => {
+      assert.equal(accessToken, "token-123");
+      assert.equal(action, "attack");
+      assert.equal(payload.knownLogCount, 4);
+      return {
+        money: 120,
+        mainStash: [],
+        onPersonItems: [],
+        randomCharacterAvailableAt: "0001-01-01T00:00:00+00:00",
+        randomCharacter: null,
+        activeRaid: null,
+      };
+    },
+  });
+
+  const response = await handler(new Request("https://example.test/game-action", {
+    method: "POST",
+    headers: {
+      Authorization: "Bearer token-123",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      action: "attack",
+      payload: { knownLogCount: 4 },
+    }),
+  }));
+
+  const body = await response.json();
+  assert.equal(body.eventType, "RaidFinished");
+  assert.equal(body.message, "Killed in raid.");
+  assert.equal(body.projections.raid, null);
 });

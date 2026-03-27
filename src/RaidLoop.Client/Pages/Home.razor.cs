@@ -10,6 +10,7 @@ public partial class Home : IDisposable
 {
     private const string FallbackKnifeName = "Rusty Knife";
     private const int MainStashCap = 30;
+    private static readonly string[] StatOrder = ["STR", "DEX", "CON", "INT", "WIS", "CHA"];
     private int _playerConstitution = 10;
     private int _maxHealth = 30;
 #if DEBUG
@@ -18,14 +19,8 @@ public partial class Home : IDisposable
     private static readonly TimeSpan LuckRunCooldown = TimeSpan.FromMinutes(5);
 #endif
 
-    private readonly List<ShopStock> _shopStock =
-    [
-        new(ItemCatalog.Create("Medkit")),
-        new(ItemCatalog.Create("Makarov")),
-        new(ItemCatalog.Create("Small Backpack"))
-    ];
-
     private GameState _mainGame = new([]);
+    private List<ShopStock> _shopStock = [];
     private List<OnPersonEntry> _onPersonItems = [];
     private int _money;
     private PlayerStats _acceptedStats = PlayerStats.Default;
@@ -131,6 +126,7 @@ public partial class Home : IDisposable
     private int CurrentMedkits => _raid?.Inventory.MedkitCount ?? 0;
     private List<Item> CurrentDiscoveredLoot => _raid?.Inventory.DiscoveredLoot ?? EmptyItems;
     private List<Item> CurrentCarriedLoot => _raid?.Inventory.CarriedItems ?? EmptyItems;
+    private IReadOnlyList<ShopStock> VisibleShopStock => _shopStock.Where(stock => CanBuyItem(stock.Item)).ToList();
     private bool CanReallocateStats => _raid is null && _statsAccepted && _money >= 5000;
 
     private static bool IsSlotType(ItemType type)
@@ -271,7 +267,7 @@ public partial class Home : IDisposable
 
     private void IncrementDraftStat(string statKey)
     {
-        if (_raid is not null)
+        if (_raid is not null || _statsAccepted)
         {
             return;
         }
@@ -289,7 +285,7 @@ public partial class Home : IDisposable
 
     private void DecrementDraftStat(string statKey)
     {
-        if (_raid is not null)
+        if (_raid is not null || _statsAccepted)
         {
             return;
         }
@@ -329,6 +325,7 @@ public partial class Home : IDisposable
         var current = GetDraftStatValue(statKey);
         var cost = PlayerStatRules.GetRaiseCost(current);
         return _raid is null
+            && !_statsAccepted
             && current < PlayerStatRules.MaximumScore
             && cost > 0
             && _availableStatPoints >= cost;
@@ -336,7 +333,9 @@ public partial class Home : IDisposable
 
     private bool CanDecreaseDraftStat(string statKey)
     {
-        return _raid is null && GetDraftStatValue(statKey) > PlayerStatRules.MinimumScore;
+        return _raid is null
+            && !_statsAccepted
+            && GetDraftStatValue(statKey) > PlayerStatRules.MinimumScore;
     }
 
     private void SetDraftStatValue(string statKey, int value)
@@ -418,6 +417,11 @@ public partial class Home : IDisposable
         }
 
         await ExecuteProfileActionAsync("sell-luck-run-item", new { luckIndex });
+    }
+
+    private async Task SignOutAsync()
+    {
+        await AuthService.SignOutAsync();
     }
 
     private async Task ExecuteProfileActionAsync(string action, object payload)
@@ -1409,6 +1413,7 @@ public partial class Home : IDisposable
         }
 
         _money = snapshot.Money;
+        _shopStock = snapshot.ShopStock.Select(item => new ShopStock(item)).ToList();
         _acceptedStats = snapshot.AcceptedStats;
         _draftStats = snapshot.DraftStats;
         _availableStatPoints = snapshot.AvailableStatPoints;

@@ -23,10 +23,13 @@ public sealed class ItemCatalogTests
     public void LargerBackpacks_CostMoreThanSmallerBackpacks()
     {
         var smallBackpack = ItemCatalog.Get("Small Backpack");
+        var largeBackpack = ItemCatalog.Get("Large Backpack");
         var tacticalBackpack = ItemCatalog.Get("Tactical Backpack");
 
-        Assert.True(tacticalBackpack.Slots > smallBackpack.Slots);
-        Assert.True(tacticalBackpack.Value > smallBackpack.Value);
+        Assert.True(CombatBalance.GetBackpackCapacity(largeBackpack.Name) > CombatBalance.GetBackpackCapacity(smallBackpack.Name));
+        Assert.True(CombatBalance.GetBackpackCapacity(tacticalBackpack.Name) > CombatBalance.GetBackpackCapacity(largeBackpack.Name));
+        Assert.True(largeBackpack.Value > smallBackpack.Value);
+        Assert.True(tacticalBackpack.Value > largeBackpack.Value);
     }
 
     [Fact]
@@ -51,13 +54,15 @@ public sealed class ItemCatalogTests
     public void StrongerArmor_CostsMoreThanWeakerArmor()
     {
         var starterArmor = ItemCatalog.Get("6B2 body armor");
+        var uncommonArmor = ItemCatalog.Get("BNTI Kirasa-N");
         var assaultArmor = ItemCatalog.Get("6B13 assault armor");
         var epicArmor = ItemCatalog.Get("FORT Defender-2");
         var heavyArmor = ItemCatalog.Get("6B43 Zabralo-Sh body armor");
         var thorArmor = ItemCatalog.Get("NFM THOR");
 
         Assert.Equal(ItemType.Armor, starterArmor.Type);
-        Assert.True(assaultArmor.Value > starterArmor.Value);
+        Assert.True(uncommonArmor.Value > starterArmor.Value);
+        Assert.True(assaultArmor.Value > uncommonArmor.Value);
         Assert.True(epicArmor.Value > assaultArmor.Value);
         Assert.True(heavyArmor.Value > epicArmor.Value);
         Assert.True(thorArmor.Value > heavyArmor.Value);
@@ -67,11 +72,13 @@ public sealed class ItemCatalogTests
     public void HigherTierBackpacks_CostMoreThanLowerTierBackpacks()
     {
         var smallBackpack = ItemCatalog.Get("Small Backpack");
+        var largeBackpack = ItemCatalog.Get("Large Backpack");
         var tacticalBackpack = ItemCatalog.Get("Tactical Backpack");
         var trooperBackpack = ItemCatalog.Get("Tasmanian Tiger Trooper 35");
         var raidBackpack = ItemCatalog.Get("6Sh118");
 
-        Assert.True(tacticalBackpack.Value > smallBackpack.Value);
+        Assert.True(largeBackpack.Value > smallBackpack.Value);
+        Assert.True(tacticalBackpack.Value > largeBackpack.Value);
         Assert.True(trooperBackpack.Value > tacticalBackpack.Value);
         Assert.True(raidBackpack.Value > trooperBackpack.Value);
     }
@@ -128,6 +135,30 @@ public sealed class ItemCatalogTests
 
         Assert.Equal(Rarity.Rare, ak47.Rarity);
         Assert.Equal(DisplayRarity.Rare, ak47.DisplayRarity);
+    }
+
+    [Fact]
+    public void Kirasa_UsesUncommonDisplayAndLootTier()
+    {
+        var kirasa = ItemCatalog.Get("BNTI Kirasa-N");
+
+        Assert.Equal(Rarity.Uncommon, kirasa.Rarity);
+        Assert.Equal(DisplayRarity.Uncommon, kirasa.DisplayRarity);
+        Assert.Equal(ItemType.Armor, kirasa.Type);
+    }
+
+    [Fact]
+    public void BackpackTierProgression_UsesCommonThenUncommonThenRare()
+    {
+        var smallBackpack = ItemCatalog.Get("Small Backpack");
+        var largeBackpack = ItemCatalog.Get("Large Backpack");
+        var tacticalBackpack = ItemCatalog.Get("Tactical Backpack");
+
+        Assert.Equal(Rarity.Common, smallBackpack.Rarity);
+        Assert.Equal(DisplayRarity.Common, smallBackpack.DisplayRarity);
+        Assert.Equal(Rarity.Uncommon, largeBackpack.Rarity);
+        Assert.Equal(DisplayRarity.Uncommon, largeBackpack.DisplayRarity);
+        Assert.Equal(Rarity.Rare, tacticalBackpack.Rarity);
     }
 
     [Fact]

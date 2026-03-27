@@ -1,25 +1,4 @@
 <section class="panel top-gap">
-    <h2>Stats</h2>
-    <p>Remaining Points: @AvailableStatPoints</p>
-    <div class="stat-grid">
-        @foreach (var statKey in StatOrder)
-        {
-            <div class="row-item">
-                <span>@statKey @GetStatValue(statKey) (@FormatModifier(GetDraftModifier(statKey)))</span>
-                <div class="row-actions">
-                    <button class="action" disabled="@(!CanDecreaseDraftStat(statKey))" @onclick="() => OnDecrementStat.InvokeAsync(statKey)">▼</button>
-                    <button class="action" disabled="@(!CanIncreaseDraftStat(statKey))" @onclick="() => OnIncrementStat.InvokeAsync(statKey)">▲</button>
-                </div>
-            </div>
-        }
-    </div>
-    <div class="actions top-gap">
-        <button class="action" disabled="@StatsAccepted" @onclick="() => OnAcceptStats.InvokeAsync()">Accept Stats</button>
-        <button class="action" disabled="@(!CanReallocateStats)" @onclick="() => OnReallocateStats.InvokeAsync()">Re-Allocate Stats ($5000)</button>
-    </div>
-</section>
-
-<section class="panel top-gap">
     <h2>Luck Run</h2>
     <p>Available once every 5 minutes. Generates a random kit to raid with. Keep what you extract.</p>
 
@@ -92,25 +71,4 @@
     [Parameter, EditorRequired] public EventCallback<int> OnStoreLuckRunItem { get; set; }
     [Parameter, EditorRequired] public EventCallback<int> OnMoveToForRaid { get; set; }
     [Parameter, EditorRequired] public EventCallback<int> OnSellLuckRunItem { get; set; }
-
-    private static readonly string[] StatOrder = ["STR", "DEX", "CON", "INT", "WIS", "CHA"];
-
-    private int GetStatValue(string statKey)
-    {
-        return statKey switch
-        {
-            "STR" => DraftStats.Strength,
-            "DEX" => DraftStats.Dexterity,
-            "CON" => DraftStats.Constitution,
-            "INT" => DraftStats.Intelligence,
-            "WIS" => DraftStats.Wisdom,
-            "CHA" => DraftStats.Charisma,
-            _ => 0
-        };
-    }
-
-    private static string FormatModifier(int modifier)
-    {
-        return modifier >= 0 ? $"+{modifier}" : modifier.ToString();
-    }
 }

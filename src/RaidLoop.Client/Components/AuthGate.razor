@@ -33,14 +33,6 @@ else if (!AuthService.IsAuthenticated)
 }
 else
 {
-    @if (!string.IsNullOrWhiteSpace(AuthService.UserEmail))
-    {
-        <div class="panel top-gap">
-            <p><strong>Signed in:</strong> @AuthService.UserEmail</p>
-            <button class="action" @onclick="SignOutAsync">Sign out</button>
-        </div>
-    }
-
     @ChildContent
 }
 
@@ -87,11 +79,6 @@ else
         {
             _authErrorMessage = ex.Message;
         }
-    }
-
-    private async Task SignOutAsync()
-    {
-        await AuthService.SignOutAsync();
     }
 
     private void HandleAuthStateChanged()

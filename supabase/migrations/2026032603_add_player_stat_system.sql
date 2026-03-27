@@ -7,36 +7,38 @@ declare
     settled_random_state jsonb := game.settle_random_character(
         coalesce(payload->'randomCharacter', payload->'RandomCharacter'),
         coalesce(payload->'randomCharacterAvailableAt', payload->'RandomCharacterAvailableAt', to_jsonb('0001-01-01T00:00:00+00:00'::text)));
+    accepted_stats_source jsonb := coalesce(payload->'acceptedStats', payload->'AcceptedStats', '{}'::jsonb);
+    draft_stats_source jsonb := coalesce(payload->'draftStats', payload->'DraftStats', '{}'::jsonb);
 begin
     return jsonb_build_object(
         'money', greatest(coalesce((payload->>'money')::int, (payload->>'Money')::int, 0), 0),
-        'acceptedStats', coalesce(payload->'acceptedStats', payload->'AcceptedStats', jsonb_build_object(
-            'strength', 8,
-            'dexterity', 8,
-            'constitution', 8,
-            'intelligence', 8,
-            'wisdom', 8,
-            'charisma', 8
-        )),
-        'draftStats', coalesce(payload->'draftStats', payload->'DraftStats', jsonb_build_object(
-            'strength', 8,
-            'dexterity', 8,
-            'constitution', 8,
-            'intelligence', 8,
-            'wisdom', 8,
-            'charisma', 8
-        )),
+        'acceptedStats', jsonb_build_object(
+            'strength', coalesce((accepted_stats_source->>'strength')::int, (accepted_stats_source->>'Strength')::int, 8),
+            'dexterity', coalesce((accepted_stats_source->>'dexterity')::int, (accepted_stats_source->>'Dexterity')::int, 8),
+            'constitution', coalesce((accepted_stats_source->>'constitution')::int, (accepted_stats_source->>'Constitution')::int, 8),
+            'intelligence', coalesce((accepted_stats_source->>'intelligence')::int, (accepted_stats_source->>'Intelligence')::int, 8),
+            'wisdom', coalesce((accepted_stats_source->>'wisdom')::int, (accepted_stats_source->>'Wisdom')::int, 8),
+            'charisma', coalesce((accepted_stats_source->>'charisma')::int, (accepted_stats_source->>'Charisma')::int, 8)
+        ),
+        'draftStats', jsonb_build_object(
+            'strength', coalesce((draft_stats_source->>'strength')::int, (draft_stats_source->>'Strength')::int, 8),
+            'dexterity', coalesce((draft_stats_source->>'dexterity')::int, (draft_stats_source->>'Dexterity')::int, 8),
+            'constitution', coalesce((draft_stats_source->>'constitution')::int, (draft_stats_source->>'Constitution')::int, 8),
+            'intelligence', coalesce((draft_stats_source->>'intelligence')::int, (draft_stats_source->>'Intelligence')::int, 8),
+            'wisdom', coalesce((draft_stats_source->>'wisdom')::int, (draft_stats_source->>'Wisdom')::int, 8),
+            'charisma', coalesce((draft_stats_source->>'charisma')::int, (draft_stats_source->>'Charisma')::int, 8)
+        ),
         'availableStatPoints', coalesce((payload->>'availableStatPoints')::int, (payload->>'AvailableStatPoints')::int, 27),
         'statsAccepted', coalesce((payload->>'statsAccepted')::boolean, (payload->>'StatsAccepted')::boolean, false),
         'playerDexterity', coalesce(
-            ((coalesce(payload->'acceptedStats', payload->'AcceptedStats')->>'dexterity'))::int,
-            ((coalesce(payload->'acceptedStats', payload->'AcceptedStats')->>'Dexterity'))::int,
+            (accepted_stats_source->>'dexterity')::int,
+            (accepted_stats_source->>'Dexterity')::int,
             (payload->>'playerDexterity')::int,
             (payload->>'PlayerDexterity')::int,
             8),
         'playerConstitution', coalesce(
-            ((coalesce(payload->'acceptedStats', payload->'AcceptedStats')->>'constitution'))::int,
-            ((coalesce(payload->'acceptedStats', payload->'AcceptedStats')->>'Constitution'))::int,
+            (accepted_stats_source->>'constitution')::int,
+            (accepted_stats_source->>'Constitution')::int,
             (payload->>'playerConstitution')::int,
             (payload->>'PlayerConstitution')::int,
             8),
@@ -44,8 +46,8 @@ begin
             (payload->>'playerMaxHealth')::int,
             (payload->>'PlayerMaxHealth')::int,
             10 + (2 * coalesce(
-                ((coalesce(payload->'acceptedStats', payload->'AcceptedStats')->>'constitution'))::int,
-                ((coalesce(payload->'acceptedStats', payload->'AcceptedStats')->>'Constitution'))::int,
+                (accepted_stats_source->>'constitution')::int,
+                (accepted_stats_source->>'Constitution')::int,
                 (payload->>'playerConstitution')::int,
                 (payload->>'PlayerConstitution')::int,
                 8))),

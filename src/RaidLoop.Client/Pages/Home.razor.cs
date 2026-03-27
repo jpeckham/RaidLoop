@@ -47,6 +47,9 @@ public partial class Home : IDisposable
 
     private string _enemyName = string.Empty;
     private int _enemyHealth;
+    private int _enemyDexterity;
+    private int _enemyConstitution;
+    private int _enemyStrength;
 
     private string _lootContainer = string.Empty;
     private static readonly List<Item> EmptyItems = [];
@@ -443,6 +446,9 @@ public partial class Home : IDisposable
             _surprisePersistenceEligible = false;
             _enemyName = string.Empty;
             _enemyHealth = 0;
+            _enemyDexterity = 0;
+            _enemyConstitution = 0;
+            _enemyStrength = 0;
             _lootContainer = string.Empty;
             _log.Clear();
             _encounterType = EncounterType.Neutral;
@@ -575,6 +581,24 @@ public partial class Home : IDisposable
             hasRaidPatch = true;
         }
 
+        if (TryGetInt32(raid, "enemyDexterity", out var enemyDexterity))
+        {
+            _enemyDexterity = enemyDexterity;
+            hasRaidPatch = true;
+        }
+
+        if (TryGetInt32(raid, "enemyConstitution", out var enemyConstitution))
+        {
+            _enemyConstitution = enemyConstitution;
+            hasRaidPatch = true;
+        }
+
+        if (TryGetInt32(raid, "enemyStrength", out var enemyStrength))
+        {
+            _enemyStrength = enemyStrength;
+            hasRaidPatch = true;
+        }
+
         if (TryGetString(raid, "lootContainer", out var lootContainer))
         {
             _lootContainer = lootContainer;
@@ -656,6 +680,9 @@ public partial class Home : IDisposable
         _surprisePersistenceEligible = false;
         _enemyName = string.Empty;
         _enemyHealth = 0;
+        _enemyDexterity = 0;
+        _enemyConstitution = 0;
+        _enemyStrength = 0;
         _lootContainer = string.Empty;
         _log.Clear();
     }
@@ -1237,6 +1264,9 @@ public partial class Home : IDisposable
         _surprisePersistenceEligible = snapshot.SurprisePersistenceEligible;
         _enemyName = snapshot.EnemyName;
         _enemyHealth = snapshot.EnemyHealth;
+        _enemyDexterity = snapshot.EnemyDexterity;
+        _enemyConstitution = snapshot.EnemyConstitution;
+        _enemyStrength = snapshot.EnemyStrength;
         _lootContainer = snapshot.LootContainer;
         _log.Clear();
         _log.AddRange(snapshot.LogEntries);

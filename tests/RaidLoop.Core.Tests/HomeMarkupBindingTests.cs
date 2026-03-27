@@ -1,6 +1,5 @@
 using System.IO;
 using System.Linq;
-
 namespace RaidLoop.Core.Tests;
 
 public sealed class HomeMarkupBindingTests
@@ -848,6 +847,21 @@ public sealed class HomeMarkupBindingTests
         Assert.Contains("distance_from_extract = 0", migration);
         Assert.Contains("create or replace function public.game_action", migration);
         Assert.Contains("'stay-at-extract'", migration);
+        var encounterSelectionBlock = ExtractSection(
+            migration,
+            "if selected_entry.encounter_type = 'Combat' then",
+            "if selected_entry.encounter_type = 'Loot' then");
+        Assert.Contains("challenge", encounterSelectionBlock);
+        Assert.Contains("selected_combat_table_key", encounterSelectionBlock);
+        Assert.Contains("updated_payload := jsonb_set(updated_payload, '{enemyConstitution}'", migration);
+        Assert.Contains("updated_payload := jsonb_set(updated_payload, '{enemyStrength}'", migration);
+        var deathDropBlock = ExtractSection(
+            migration,
+            "if enemy_health <= 0 then",
+            "attack_roll := floor(random() * 20)::int + 1;");
+        Assert.Contains("enemy_dropped_items", deathDropBlock);
+        Assert.Contains("enemy_loadout", deathDropBlock);
+        Assert.DoesNotContain("game.random_enemy_loadout()", deathDropBlock);
     }
 
     [Fact]
@@ -1056,5 +1070,17 @@ public sealed class HomeMarkupBindingTests
         Assert.DoesNotContain("@equipped.Type", markup);
         Assert.DoesNotContain("@carried.Type", markup);
         Assert.DoesNotContain("@lootItem.Type", markup);
+    }
+
+    private static string ExtractSection(string text, string startMarker, string endMarker)
+    {
+        var startIndex = text.IndexOf(startMarker, StringComparison.OrdinalIgnoreCase);
+        Assert.True(startIndex >= 0, $"Could not find start marker: {startMarker}");
+        startIndex += startMarker.Length;
+
+        var endIndex = text.IndexOf(endMarker, startIndex, StringComparison.OrdinalIgnoreCase);
+        Assert.True(endIndex > startIndex, $"Could not find end marker: {endMarker}");
+
+        return text[startIndex..endIndex];
     }
 }

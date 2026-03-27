@@ -287,6 +287,64 @@ test("game-action returns raid-started projections for start-main-raid", async (
   assert.equal(body.snapshot, undefined);
 });
 
+test("game-action round-trips enemy constitution and strength in raid projections", async () => {
+  const handler = createGameActionHandler({
+    dispatchAction: async (accessToken, action, payload) => {
+      assert.equal(accessToken, "token-123");
+      assert.equal(action, "start-main-raid");
+      assert.deepEqual(payload, {});
+      return {
+        money: 500,
+        mainStash: [],
+        onPersonItems: [],
+        randomCharacterAvailableAt: "0001-01-01T00:00:00+00:00",
+        randomCharacter: null,
+        activeRaid: {
+          health: 27,
+          backpackCapacity: 3,
+          ammo: 9,
+          weaponMalfunction: false,
+          medkits: 1,
+          lootSlots: 0,
+          challenge: 0,
+          distanceFromExtract: 3,
+          encounterType: "Combat",
+          encounterTitle: "Combat Encounter",
+          encounterDescription: "Enemy contact on your position.",
+          enemyName: "Scav",
+          enemyHealth: 17,
+          enemyConstitution: 12,
+          enemyStrength: 7,
+          lootContainer: "",
+          awaitingDecision: false,
+          discoveredLoot: [],
+          carriedLoot: [],
+          equippedItems: [
+            { name: "AK74", type: 0, value: 320, slots: 1, rarity: 2, displayRarity: 3 },
+          ],
+          logEntries: ["Raid started as Main Character."],
+        },
+      };
+    },
+  });
+
+  const response = await handler(new Request("https://example.test/game-action", {
+    method: "POST",
+    headers: {
+      Authorization: "Bearer token-123",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      action: "start-main-raid",
+      payload: {},
+    }),
+  }));
+
+  const body = await response.json();
+  assert.equal(body.projections.raid.enemyConstitution, 12);
+  assert.equal(body.projections.raid.enemyStrength, 7);
+});
+
 test("game-action returns raid-started projections for start-random-raid", async () => {
   const handler = createGameActionHandler({
     dispatchAction: async (accessToken, action, payload) => {

@@ -450,6 +450,8 @@ public sealed class ProfileMutationFlowTests
                       "raid": {
                         "health": 18,
                         "enemyHealth": 4,
+                        "enemyConstitution": 12,
+                        "enemyStrength": 7,
                         "ammo": 3,
                         "weaponMalfunction": true,
                         "logEntries": [
@@ -479,6 +481,8 @@ public sealed class ProfileMutationFlowTests
         Assert.Equal("Weapons Crate", Assert.IsType<string>(GetField(home, "_lootContainer")));
         Assert.Equal("Patrol Guard", Assert.IsType<string>(GetField(home, "_enemyName")));
         Assert.Equal(4, Assert.IsType<int>(GetField(home, "_enemyHealth")));
+        Assert.Equal(12, Assert.IsType<int>(GetField(home, "_enemyConstitution")));
+        Assert.Equal(7, Assert.IsType<int>(GetField(home, "_enemyStrength")));
         Assert.Equal("A searchable container appears.", Assert.IsType<string>(GetField(home, "_encounterDescription")));
         Assert.Equal(["You hit Patrol Guard for 2.", "Patrol Guard hits you for 3."], Assert.IsType<List<string>>(GetField(home, "_log")));
     }
@@ -808,6 +812,9 @@ public sealed class ProfileMutationFlowTests
                     EncounterDescription: "They spotted you first.",
                     EnemyName: "Scav",
                     EnemyHealth: 12,
+                    EnemyDexterity: 9,
+                    EnemyConstitution: 11,
+                    EnemyStrength: 8,
                     LootContainer: string.Empty,
                     AwaitingDecision: false,
                     ContactState: "PlayerAmbush",
@@ -857,6 +864,9 @@ public sealed class ProfileMutationFlowTests
                     EncounterDescription: "They spotted you first.",
                     EnemyName: "Scav",
                     EnemyHealth: 12,
+                    EnemyDexterity: 9,
+                    EnemyConstitution: 11,
+                    EnemyStrength: 8,
                     LootContainer: string.Empty,
                     AwaitingDecision: false,
                     ContactState: null!,

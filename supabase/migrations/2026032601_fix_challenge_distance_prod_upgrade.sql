@@ -1,3 +1,159 @@
+alter table game.encounter_table_entries
+    add column if not exists challenge_min int not null default 0,
+    add column if not exists challenge_max_exclusive int not null default 2147483647,
+    add column if not exists enemy_dexterity int not null default 10,
+    add column if not exists enemy_constitution int not null default 10,
+    add column if not exists enemy_strength int not null default 10;
+
+insert into game.enemy_loadout_tables (table_key, name, enabled)
+values
+    ('challenge_0_enemy_loadout', 'Challenge 0 Enemy Loadouts', true)
+on conflict (table_key) do update
+set name = excluded.name,
+    enabled = excluded.enabled;
+
+delete from game.enemy_loadout_variants
+where variant_key in (
+    'challenge0_makarov',
+    'challenge0_makarov_6b2',
+    'challenge0_6b2_medkit',
+    'challenge0_makarov_6b2_medkit'
+);
+
+insert into game.enemy_loadout_variants (variant_key, table_key, weight, sort_order, enabled)
+values
+    ('challenge0_makarov', 'challenge_0_enemy_loadout', 120, 10, true),
+    ('challenge0_makarov_6b2', 'challenge_0_enemy_loadout', 90, 20, true),
+    ('challenge0_6b2_medkit', 'challenge_0_enemy_loadout', 60, 30, true),
+    ('challenge0_makarov_6b2_medkit', 'challenge_0_enemy_loadout', 30, 40, true)
+on conflict (variant_key) do update
+set table_key = excluded.table_key,
+    weight = excluded.weight,
+    sort_order = excluded.sort_order,
+    enabled = excluded.enabled;
+
+delete from game.enemy_loadout_variant_items
+where variant_key in (
+    'challenge0_makarov',
+    'challenge0_makarov_6b2',
+    'challenge0_6b2_medkit',
+    'challenge0_makarov_6b2_medkit'
+);
+
+insert into game.enemy_loadout_variant_items (variant_key, item_key, item_order)
+values
+    ('challenge0_makarov', 'makarov', 10),
+    ('challenge0_makarov_6b2', 'makarov', 10),
+    ('challenge0_makarov_6b2', '6b2_body_armor', 20),
+    ('challenge0_6b2_medkit', '6b2_body_armor', 10),
+    ('challenge0_6b2_medkit', 'medkit', 20),
+    ('challenge0_makarov_6b2_medkit', 'makarov', 10),
+    ('challenge0_makarov_6b2_medkit', '6b2_body_armor', 20),
+    ('challenge0_makarov_6b2_medkit', 'medkit', 30);
+
+update game.encounter_table_entries
+set challenge_min = case entry_key
+        when 'raid_combat_travel_player_spots_camp' then 0
+        when 'raid_combat_travel_enemy_ambush' then 3
+        when 'raid_combat_travel_mutual_contact' then 6
+        when 'raid_combat_loot_player_hears_movement' then 0
+        when 'raid_combat_loot_enemy_pushes_camp' then 3
+        when 'raid_combat_loot_mutual_contact' then 6
+        when 'raid_combat_extract_player_spots_guard' then 0
+        when 'raid_combat_extract_enemy_ambush' then 3
+        when 'raid_combat_extract_mutual_contact' then 6
+        else challenge_min
+    end,
+    challenge_max_exclusive = case entry_key
+        when 'raid_combat_travel_player_spots_camp' then 3
+        when 'raid_combat_travel_enemy_ambush' then 6
+        when 'raid_combat_travel_mutual_contact' then 2147483647
+        when 'raid_combat_loot_player_hears_movement' then 3
+        when 'raid_combat_loot_enemy_pushes_camp' then 6
+        when 'raid_combat_loot_mutual_contact' then 2147483647
+        when 'raid_combat_extract_player_spots_guard' then 3
+        when 'raid_combat_extract_enemy_ambush' then 6
+        when 'raid_combat_extract_mutual_contact' then 2147483647
+        else challenge_max_exclusive
+    end,
+    enemy_loadout_table_key = case entry_key
+        when 'raid_combat_travel_player_spots_camp' then 'challenge_0_enemy_loadout'
+        when 'raid_combat_loot_player_hears_movement' then 'challenge_0_enemy_loadout'
+        when 'raid_combat_extract_player_spots_guard' then 'challenge_0_enemy_loadout'
+        else 'default_enemy_loadout'
+    end,
+    enemy_health_min = case entry_key
+        when 'raid_combat_travel_player_spots_camp' then 8
+        when 'raid_combat_travel_enemy_ambush' then 12
+        when 'raid_combat_travel_mutual_contact' then 16
+        when 'raid_combat_loot_player_hears_movement' then 8
+        when 'raid_combat_loot_enemy_pushes_camp' then 12
+        when 'raid_combat_loot_mutual_contact' then 16
+        when 'raid_combat_extract_player_spots_guard' then 8
+        when 'raid_combat_extract_enemy_ambush' then 12
+        when 'raid_combat_extract_mutual_contact' then 16
+        else enemy_health_min
+    end,
+    enemy_health_max_exclusive = case entry_key
+        when 'raid_combat_travel_player_spots_camp' then 14
+        when 'raid_combat_travel_enemy_ambush' then 18
+        when 'raid_combat_travel_mutual_contact' then 24
+        when 'raid_combat_loot_player_hears_movement' then 14
+        when 'raid_combat_loot_enemy_pushes_camp' then 18
+        when 'raid_combat_loot_mutual_contact' then 24
+        when 'raid_combat_extract_player_spots_guard' then 14
+        when 'raid_combat_extract_enemy_ambush' then 18
+        when 'raid_combat_extract_mutual_contact' then 24
+        else enemy_health_max_exclusive
+    end,
+    enemy_dexterity = case entry_key
+        when 'raid_combat_travel_player_spots_camp' then 9
+        when 'raid_combat_travel_enemy_ambush' then 10
+        when 'raid_combat_travel_mutual_contact' then 11
+        when 'raid_combat_loot_player_hears_movement' then 9
+        when 'raid_combat_loot_enemy_pushes_camp' then 10
+        when 'raid_combat_loot_mutual_contact' then 11
+        when 'raid_combat_extract_player_spots_guard' then 9
+        when 'raid_combat_extract_enemy_ambush' then 10
+        when 'raid_combat_extract_mutual_contact' then 11
+        else enemy_dexterity
+    end,
+    enemy_constitution = case entry_key
+        when 'raid_combat_travel_player_spots_camp' then 9
+        when 'raid_combat_travel_enemy_ambush' then 10
+        when 'raid_combat_travel_mutual_contact' then 11
+        when 'raid_combat_loot_player_hears_movement' then 9
+        when 'raid_combat_loot_enemy_pushes_camp' then 10
+        when 'raid_combat_loot_mutual_contact' then 11
+        when 'raid_combat_extract_player_spots_guard' then 9
+        when 'raid_combat_extract_enemy_ambush' then 10
+        when 'raid_combat_extract_mutual_contact' then 11
+        else enemy_constitution
+    end,
+    enemy_strength = case entry_key
+        when 'raid_combat_travel_player_spots_camp' then 9
+        when 'raid_combat_travel_enemy_ambush' then 10
+        when 'raid_combat_travel_mutual_contact' then 11
+        when 'raid_combat_loot_player_hears_movement' then 9
+        when 'raid_combat_loot_enemy_pushes_camp' then 10
+        when 'raid_combat_loot_mutual_contact' then 11
+        when 'raid_combat_extract_player_spots_guard' then 9
+        when 'raid_combat_extract_enemy_ambush' then 10
+        when 'raid_combat_extract_mutual_contact' then 11
+        else enemy_strength
+    end
+where entry_key in (
+    'raid_combat_travel_player_spots_camp',
+    'raid_combat_travel_enemy_ambush',
+    'raid_combat_travel_mutual_contact',
+    'raid_combat_loot_player_hears_movement',
+    'raid_combat_loot_enemy_pushes_camp',
+    'raid_combat_loot_mutual_contact',
+    'raid_combat_extract_player_spots_guard',
+    'raid_combat_extract_enemy_ambush',
+    'raid_combat_extract_mutual_contact'
+);
+
 create or replace function game.build_raid_snapshot(loadout jsonb, raider_name text, player_max_health int)
 returns jsonb
 language plpgsql
@@ -10,13 +166,7 @@ declare
     medkits int := 0;
     equipped_weapon_name text := 'Rusty Knife';
     equipped_backpack_name text := '';
-    encounter_roll float8 := random();
-    encounter_type text := 'Neutral';
-    encounter_title text := 'Area Clear';
-    encounter_description text := 'Area looks quiet. Nothing useful here.';
-    enemy_name text := '';
-    enemy_health int := 0;
-    loot_container text := '';
+    raid_payload jsonb;
     entry jsonb;
 begin
     for entry in
@@ -37,21 +187,7 @@ begin
         end if;
     end loop;
 
-    if encounter_roll < 0.5 then
-        encounter_type := 'Combat';
-        encounter_title := 'Combat Encounter';
-        encounter_description := 'Enemy contact on your position.';
-        enemy_name := case when random() < 0.65 then 'Scav' else 'Patrol Guard' end;
-        enemy_health := 12 + floor(random() * 9)::int;
-    elsif encounter_roll < 0.8 then
-        encounter_type := 'Loot';
-        encounter_title := 'Loot Encounter';
-        encounter_description := 'A searchable container appears.';
-        loot_container := game.random_container_name();
-        discovered_loot := game.random_loot_items();
-    end if;
-
-    return jsonb_build_object(
+    raid_payload := jsonb_build_object(
         'health', greatest(coalesce(player_max_health, 30), 1),
         'backpackCapacity', game.backpack_capacity(equipped_backpack_name),
         'ammo', game.weapon_magazine_capacity(equipped_weapon_name),
@@ -60,18 +196,24 @@ begin
         'lootSlots', 0,
         'challenge', 0,
         'distanceFromExtract', 3,
-        'encounterType', encounter_type,
-        'encounterTitle', encounter_title,
-        'encounterDescription', encounter_description,
-        'enemyName', enemy_name,
-        'enemyHealth', enemy_health,
-        'lootContainer', loot_container,
+        'encounterType', 'Neutral',
+        'encounterTitle', 'Area Clear',
+        'encounterDescription', 'Area looks quiet. Nothing useful here.',
+        'enemyName', '',
+        'enemyHealth', 0,
+        'enemyDexterity', 0,
+        'enemyConstitution', 0,
+        'enemyStrength', 0,
+        'lootContainer', '',
+        'enemyLoadout', '[]'::jsonb,
         'awaitingDecision', false,
         'discoveredLoot', discovered_loot,
         'carriedLoot', carried_loot,
         'equippedItems', equipped_items,
         'logEntries', jsonb_build_array(format('Raid started as %s.', raider_name))
     );
+
+    return game.generate_raid_encounter(raid_payload, false);
 end;
 $$;
 
@@ -94,6 +236,8 @@ declare
     enemy_name text;
     enemy_health int;
     enemy_dexterity int;
+    enemy_constitution int;
+    enemy_strength int;
     player_dexterity int;
     ammo int;
     medkits int;
@@ -156,6 +300,8 @@ begin
     enemy_name := coalesce(raid_payload->>'enemyName', '');
     enemy_health := greatest(coalesce((raid_payload->>'enemyHealth')::int, 0), 0);
     enemy_dexterity := greatest(coalesce((raid_payload->>'enemyDexterity')::int, 10), 0);
+    enemy_constitution := greatest(coalesce((raid_payload->>'enemyConstitution')::int, 10), 0);
+    enemy_strength := greatest(coalesce((raid_payload->>'enemyStrength')::int, 10), 0);
     ammo := greatest(coalesce((raid_payload->>'ammo')::int, 0), 0);
     medkits := greatest(coalesce((raid_payload->>'medkits')::int, 0), 0);
     health := greatest(coalesce((raid_payload->>'health')::int, player_max_health), 0);
@@ -270,10 +416,7 @@ begin
                 return game.finish_raid_session(save_payload, raid_payload, raid_profile, true, target_user_id);
             end if;
 
-            enemy_dropped_items := case
-                when jsonb_array_length(enemy_loadout) > 0 then enemy_loadout
-                else game.random_enemy_loadout()
-            end;
+            enemy_dropped_items := enemy_loadout;
 
             log_entries := game.raid_append_log(log_entries, format('Found Dead Body with %s lootable items.', jsonb_array_length(enemy_dropped_items)));
             raid_payload := jsonb_set(raid_payload, '{encounterType}', to_jsonb('Loot'::text), true);
@@ -811,6 +954,9 @@ declare
     discovered_loot jsonb;
     enemy_loadout jsonb;
     enemy_health int;
+    enemy_dexterity int;
+    enemy_constitution int;
+    enemy_strength int;
 begin
     updated_payload := jsonb_set(updated_payload, '{discoveredLoot}', '[]'::jsonb, true);
     updated_payload := jsonb_set(updated_payload, '{awaitingDecision}', 'false'::jsonb, true);
@@ -835,6 +981,9 @@ begin
             updated_payload := jsonb_set(updated_payload, '{encounterDescription}', to_jsonb('You are near the extraction route.'::text), true);
             updated_payload := jsonb_set(updated_payload, '{enemyName}', to_jsonb(''::text), true);
             updated_payload := jsonb_set(updated_payload, '{enemyHealth}', to_jsonb(0), true);
+            updated_payload := jsonb_set(updated_payload, '{enemyDexterity}', to_jsonb(0), true);
+            updated_payload := jsonb_set(updated_payload, '{enemyConstitution}', to_jsonb(0), true);
+            updated_payload := jsonb_set(updated_payload, '{enemyStrength}', to_jsonb(0), true);
             updated_payload := jsonb_set(updated_payload, '{lootContainer}', to_jsonb(''::text), true);
             updated_payload := jsonb_set(updated_payload, '{enemyLoadout}', '[]'::jsonb, true);
             updated_payload := jsonb_set(updated_payload, '{logEntries}', log_entries, true);
@@ -847,6 +996,9 @@ begin
         updated_payload := jsonb_set(updated_payload, '{encounterDescription}', to_jsonb('You are near the extraction route.'::text), true);
         updated_payload := jsonb_set(updated_payload, '{enemyName}', to_jsonb(''::text), true);
         updated_payload := jsonb_set(updated_payload, '{enemyHealth}', to_jsonb(0), true);
+        updated_payload := jsonb_set(updated_payload, '{enemyDexterity}', to_jsonb(0), true);
+        updated_payload := jsonb_set(updated_payload, '{enemyConstitution}', to_jsonb(0), true);
+        updated_payload := jsonb_set(updated_payload, '{enemyStrength}', to_jsonb(0), true);
         updated_payload := jsonb_set(updated_payload, '{lootContainer}', to_jsonb(''::text), true);
         updated_payload := jsonb_set(updated_payload, '{enemyLoadout}', '[]'::jsonb, true);
         updated_payload := jsonb_set(updated_payload, '{logEntries}', log_entries, true);
@@ -894,13 +1046,15 @@ begin
             from game.encounter_table_entries entries
             join game.encounter_tables tables
                 on tables.table_key = entries.table_key
-            where entries.table_key = selected_combat_table_key
-              and entries.enabled
-              and tables.enabled
-        ),
-        target_roll as (
-            select floor(random() * max(weighted_entries.total_weight))::int + 1 as target
-            from weighted_entries
+        where entries.table_key = selected_combat_table_key
+          and entries.enabled
+          and tables.enabled
+          and challenge >= coalesce(entries.challenge_min, 0)
+          and challenge < coalesce(entries.challenge_max_exclusive, 2147483647)
+    ),
+    target_roll as (
+        select floor(random() * max(weighted_entries.total_weight))::int + 1 as target
+        from weighted_entries
         )
         select weighted_entries.*
         into selected_entry
@@ -915,6 +1069,9 @@ begin
         enemy_health := selected_entry.enemy_health_min
             + floor(random() * (selected_entry.enemy_health_max_exclusive - selected_entry.enemy_health_min))::int;
         enemy_loadout := game.random_enemy_loadout_from_table(coalesce(selected_entry.enemy_loadout_table_key, 'default_enemy_loadout'));
+        enemy_dexterity := coalesce(selected_entry.enemy_dexterity, 10);
+        enemy_constitution := coalesce(selected_entry.enemy_constitution, 10);
+        enemy_strength := coalesce(selected_entry.enemy_strength, 10);
         log_entries := game.raid_append_log(log_entries, format('Combat started vs %s.', selected_entry.enemy_name));
 
         updated_payload := jsonb_set(updated_payload, '{encounterType}', to_jsonb('Combat'::text), true);
@@ -923,6 +1080,9 @@ begin
         updated_payload := jsonb_set(updated_payload, '{contactState}', to_jsonb(coalesce(selected_entry.contact_state, 'MutualContact'::text)), true);
         updated_payload := jsonb_set(updated_payload, '{enemyName}', to_jsonb(coalesce(selected_entry.enemy_name, ''::text)), true);
         updated_payload := jsonb_set(updated_payload, '{enemyHealth}', to_jsonb(enemy_health), true);
+        updated_payload := jsonb_set(updated_payload, '{enemyDexterity}', to_jsonb(enemy_dexterity), true);
+        updated_payload := jsonb_set(updated_payload, '{enemyConstitution}', to_jsonb(enemy_constitution), true);
+        updated_payload := jsonb_set(updated_payload, '{enemyStrength}', to_jsonb(enemy_strength), true);
         updated_payload := jsonb_set(updated_payload, '{lootContainer}', to_jsonb(''::text), true);
         updated_payload := jsonb_set(updated_payload, '{enemyLoadout}', enemy_loadout, true);
         if selected_entry.contact_state = 'PlayerAmbush' then
@@ -960,6 +1120,9 @@ begin
         updated_payload := jsonb_set(updated_payload, '{encounterDescription}', to_jsonb(coalesce(selected_entry.description, 'A searchable container appears.'::text)), true);
         updated_payload := jsonb_set(updated_payload, '{enemyName}', to_jsonb(''::text), true);
         updated_payload := jsonb_set(updated_payload, '{enemyHealth}', to_jsonb(0), true);
+        updated_payload := jsonb_set(updated_payload, '{enemyDexterity}', to_jsonb(0), true);
+        updated_payload := jsonb_set(updated_payload, '{enemyConstitution}', to_jsonb(0), true);
+        updated_payload := jsonb_set(updated_payload, '{enemyStrength}', to_jsonb(0), true);
         updated_payload := jsonb_set(updated_payload, '{lootContainer}', to_jsonb(coalesce(container_name, 'Filing Cabinet'::text)), true);
         updated_payload := jsonb_set(updated_payload, '{discoveredLoot}', discovered_loot, true);
         updated_payload := jsonb_set(updated_payload, '{enemyLoadout}', '[]'::jsonb, true);
@@ -973,6 +1136,9 @@ begin
     updated_payload := jsonb_set(updated_payload, '{encounterDescription}', to_jsonb(coalesce(selected_entry.description, 'Area looks quiet. Nothing useful here.'::text)), true);
     updated_payload := jsonb_set(updated_payload, '{enemyName}', to_jsonb(''::text), true);
     updated_payload := jsonb_set(updated_payload, '{enemyHealth}', to_jsonb(0), true);
+    updated_payload := jsonb_set(updated_payload, '{enemyDexterity}', to_jsonb(0), true);
+    updated_payload := jsonb_set(updated_payload, '{enemyConstitution}', to_jsonb(0), true);
+    updated_payload := jsonb_set(updated_payload, '{enemyStrength}', to_jsonb(0), true);
     updated_payload := jsonb_set(updated_payload, '{lootContainer}', to_jsonb(''::text), true);
     updated_payload := jsonb_set(updated_payload, '{enemyLoadout}', '[]'::jsonb, true);
     updated_payload := jsonb_set(updated_payload, '{logEntries}', log_entries, true);

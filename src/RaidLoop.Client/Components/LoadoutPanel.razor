@@ -1,6 +1,7 @@
 <div>
     <h3>For Raid</h3>
     <p>You are taking these into raid with you and they will be lost if you die.</p>
+    <p>@EncumbranceText</p>
     @if (OnPersonItems.Count == 0)
     {
         <p>Nothing selected.</p>
@@ -42,6 +43,7 @@
     [Parameter, EditorRequired] public bool CanStashItem { get; set; }
     [Parameter, EditorRequired] public bool CanStartRaid { get; set; }
     [Parameter] public string? RaidBlockReason { get; set; }
+    [Parameter, EditorRequired] public string EncumbranceText { get; set; } = string.Empty;
     [Parameter, EditorRequired] public Func<Item, bool> CanSellItem { get; set; } = _ => false;
     [Parameter, EditorRequired] public Func<Item, int> GetSellPrice { get; set; } = _ => 0;
     [Parameter, EditorRequired] public Func<ItemType, bool> IsSlotType { get; set; } = _ => false;

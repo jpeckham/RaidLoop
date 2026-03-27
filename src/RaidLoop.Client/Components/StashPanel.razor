@@ -3,22 +3,23 @@
     <p>Your secured items. They cannot be lost when you raid.</p>
     @for (var i = 0; i < Items.Count; i++)
     {
-        var stashIndex = i;
-        var item = Items[stashIndex];
-        <div class="row-item">
-            <ItemTypeIcon Type="item.Type" />
-            <span class="item-name rarity-@item.DisplayRarity.ToString().ToLower()">@item.Name</span>
-            <div class="row-actions">
-                <button class="action" @onclick="() => OnMoveToLoadout.InvokeAsync(stashIndex)">@GetPrimaryActionLabel(item)</button>
-                <button class="action" disabled="@(!CanSellItem(item))" @onclick="() => OnSell.InvokeAsync(stashIndex)">Sell ($@GetSellPrice(item))</button>
+            var stashIndex = i;
+            var item = Items[stashIndex];
+            <div class="row-item">
+                <ItemTypeIcon Type="item.Type" />
+                <span class="item-name rarity-@item.DisplayRarity.ToString().ToLower()">@item.Name</span>
+                <div class="row-actions">
+                    <button class="action" disabled="@(!CanMoveToLoadoutItem(item))" @onclick="() => OnMoveToLoadout.InvokeAsync(stashIndex)">@GetPrimaryActionLabel(item)</button>
+                    <button class="action" disabled="@(!CanSellItem(item))" @onclick="() => OnSell.InvokeAsync(stashIndex)">Sell ($@GetSellPrice(item))</button>
+                </div>
             </div>
-        </div>
-    }
+        }
 </div>
 
 @code {
     [Parameter, EditorRequired] public IReadOnlyList<Item> Items { get; set; } = [];
     [Parameter, EditorRequired] public Func<Item, string> GetPrimaryActionLabel { get; set; } = _ => string.Empty;
+    [Parameter, EditorRequired] public Func<Item, bool> CanMoveToLoadoutItem { get; set; } = _ => false;
     [Parameter, EditorRequired] public Func<Item, bool> CanSellItem { get; set; } = _ => false;
     [Parameter, EditorRequired] public Func<Item, int> GetSellPrice { get; set; } = _ => 0;
     [Parameter, EditorRequired] public EventCallback<int> OnMoveToLoadout { get; set; }

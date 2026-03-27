@@ -95,21 +95,68 @@ public partial class Home : IDisposable
 
     private bool HasUnequippedOnPersonItems => _onPersonItems.Any(x => IsSlotType(x.Item.Type) && !x.IsEquipped);
     private bool HasEquippedWeapon => _onPersonItems.Any(x => x.IsEquipped && x.Item.Type == ItemType.Weapon);
-    private bool CanStartMainRaid => _statsAccepted && !HasUnprocessedLuckRunLoot && !HasUnequippedOnPersonItems && HasEquippedWeapon;
+    private bool HasOverweightOnPersonItems => GetOnPersonEncumbrance() > GetMainCharacterMaxEncumbrance();
+    private bool CanStartMainRaid => _statsAccepted && !HasUnprocessedLuckRunLoot && !HasUnequippedOnPersonItems && !HasOverweightOnPersonItems && HasEquippedWeapon;
     private bool CanStartLuckRunRaid => _statsAccepted && !HasUnprocessedLuckRunLoot && IsRandomCharacterReady;
-    private string? RaidBlockReason => HasUnprocessedLuckRunLoot
-        ? "Luck Run loot must be sold, stored, or moved to For Raid before entering a raid."
-        : !_statsAccepted
-            ? "Accept Stats before entering a raid."
-        : HasUnequippedOnPersonItems
-            ? "You need to move your unequipped items to stash or sell them."
-            : !HasEquippedWeapon ? "You don't have a weapon equipped." : null;
+    private string? RaidBlockReason => GetRaidBlockReason();
     private string? LuckRunBlockReason => HasUnprocessedLuckRunLoot
         ? "Luck Run loot must be sold, stored, or moved to For Raid before entering a raid."
         : !_statsAccepted
             ? "Accept Stats before entering a raid."
         : null;
     private bool CanStashOnPersonItem => _mainGame.Stash.Count < MainStashCap;
+    private int GetOnPersonEncumbrance()
+    {
+        return CombatBalance.GetTotalEncumbrance(_onPersonItems.Select(entry => entry.Item));
+    }
+
+    private int GetMainCharacterMaxEncumbrance()
+    {
+        return CombatBalance.GetMaxEncumbranceFromStrength(_acceptedStats.Strength);
+    }
+
+    private bool CanAddOnPersonItem(Item item)
+    {
+        return GetOnPersonEncumbrance() + Math.Max(0, item.Weight) <= GetMainCharacterMaxEncumbrance();
+    }
+
+    private string GetPreRaidEncumbranceText()
+    {
+        return $"{GetOnPersonEncumbrance()}/{GetMainCharacterMaxEncumbrance()} lbs";
+    }
+
+    private string? GetRaidBlockReason()
+    {
+        var reasons = new List<string>();
+
+        if (HasUnprocessedLuckRunLoot)
+        {
+            reasons.Add("Luck Run loot must be sold, stored, or moved to For Raid before entering a raid.");
+        }
+
+        if (!_statsAccepted)
+        {
+            reasons.Add("Accept Stats before entering a raid.");
+        }
+
+        if (HasUnequippedOnPersonItems)
+        {
+            reasons.Add("You need to move your unequipped items to stash or sell them.");
+        }
+
+        if (HasOverweightOnPersonItems)
+        {
+            reasons.Add($"Your loadout weight is too high. {GetPreRaidEncumbranceText()}");
+        }
+
+        if (!HasEquippedWeapon)
+        {
+            reasons.Add("You don't have a weapon equipped.");
+        }
+
+        return reasons.Count == 0 ? null : string.Join(" ", reasons);
+    }
+
     private bool EquippedWeaponUsesAmmo => CombatBalance.WeaponUsesAmmo(GetEquippedWeaponName());
     private int CurrentMagazineCapacity => CombatBalance.GetMagazineCapacity(GetEquippedWeaponName());
     private bool EquippedWeaponSupportsSingleShot => CombatBalance.SupportsSingleShot(GetEquippedWeaponName());
@@ -169,6 +216,12 @@ public partial class Home : IDisposable
     private async Task MoveStashToOnPersonAsync(int stashIndex)
     {
         if (stashIndex < 0 || stashIndex >= _mainGame.Stash.Count)
+        {
+            return;
+        }
+
+        var item = _mainGame.Stash[stashIndex];
+        if (!CanAddOnPersonItem(item))
         {
             return;
         }
@@ -237,7 +290,7 @@ public partial class Home : IDisposable
     private async Task BuyFromShopAsync(ShopStock stock)
     {
         var price = GetBuyPrice(stock.Item.Name);
-        if (_money < price)
+        if (_money < price || !CanAddOnPersonItem(stock.Item))
         {
             return;
         }

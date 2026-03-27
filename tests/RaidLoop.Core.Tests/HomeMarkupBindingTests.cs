@@ -112,6 +112,7 @@ public sealed class HomeMarkupBindingTests
 
         Assert.Contains("RaidBlockReason=\"@RaidBlockReason\"", markup);
         Assert.Contains("LuckRunBlockReason=\"@LuckRunBlockReason\"", markup);
+        Assert.Contains("EncumbranceText=\"@GetPreRaidEncumbranceText()\"", markup);
         Assert.Contains("AmmoHudText=\"@GetAmmoHudText()\"", markup);
         Assert.Contains("EncounterTitle=\"@GetEncounterTitle()\"", markup);
         Assert.Contains("EncounterDescription=\"@_encounterDescription\"", markup);
@@ -189,6 +190,22 @@ public sealed class HomeMarkupBindingTests
 
         Assert.Contains("Buy ($@GetBuyPrice(stock.Item.Name))", markup);
         Assert.DoesNotContain("<small>$@GetBuyPrice(stock.Item.Name)</small>", markup);
+    }
+
+    [Fact]
+    public void HomeWiresPreRaidEncumbranceIntoLoadoutAndInventoryPanels()
+    {
+        var markup = File.ReadAllText(HomeMarkupPath);
+        var loadoutMarkup = File.ReadAllText(LoadoutPanelPath);
+        var stashMarkup = File.ReadAllText(StashPanelPath);
+        var shopMarkup = File.ReadAllText(ShopPanelPath);
+
+        Assert.Contains("EncumbranceText=\"@GetPreRaidEncumbranceText()\"", markup);
+        Assert.Contains("CanMoveToLoadoutItem=\"CanAddOnPersonItem\"", markup);
+        Assert.Contains("CanPurchaseItem=\"CanAddOnPersonItem\"", markup);
+        Assert.Contains("@EncumbranceText", loadoutMarkup);
+        Assert.Contains("disabled=\"@(!CanMoveToLoadoutItem(item))\"", stashMarkup);
+        Assert.Contains("disabled=\"@(!CanBuyItem(stock.Item) || !CanPurchaseItem(stock.Item) || Money < GetBuyPrice(stock.Item.Name))\"", shopMarkup);
     }
 
     [Fact]
@@ -275,7 +292,7 @@ public sealed class HomeMarkupBindingTests
 
         Assert.Contains("Stock=\"VisibleShopStock\"", homeMarkup);
         Assert.Contains("CanBuyItem=\"CanBuyItem\"", homeMarkup);
-        Assert.Contains("disabled=\"@(!CanBuyItem(stock.Item) || Money < GetBuyPrice(stock.Item.Name))\"", shopMarkup);
+        Assert.Contains("disabled=\"@(!CanBuyItem(stock.Item) || !CanPurchaseItem(stock.Item) || Money < GetBuyPrice(stock.Item.Name))\"", shopMarkup);
     }
 
     [Fact]

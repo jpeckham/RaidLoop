@@ -6,7 +6,7 @@
         <div class="row-item">
             <span class="item-name rarity-@stock.Item.DisplayRarity.ToString().ToLower()">@stock.Item.Name</span>
             <div class="row-actions">
-                <button class="action" disabled="@(!CanBuyItem(stock.Item) || Money < GetBuyPrice(stock.Item.Name))" @onclick="() => OnBuy.InvokeAsync(stock)">Buy ($@GetBuyPrice(stock.Item.Name))</button>
+                <button class="action" disabled="@(!CanBuyItem(stock.Item) || !CanPurchaseItem(stock.Item) || Money < GetBuyPrice(stock.Item.Name))" @onclick="() => OnBuy.InvokeAsync(stock)">Buy ($@GetBuyPrice(stock.Item.Name))</button>
             </div>
         </div>
     }
@@ -17,5 +17,6 @@
     [Parameter, EditorRequired] public int Money { get; set; }
     [Parameter, EditorRequired] public Func<string, int> GetBuyPrice { get; set; } = _ => 0;
     [Parameter, EditorRequired] public Func<Item, bool> CanBuyItem { get; set; } = _ => false;
+    [Parameter, EditorRequired] public Func<Item, bool> CanPurchaseItem { get; set; } = _ => false;
     [Parameter, EditorRequired] public EventCallback<ShopStock> OnBuy { get; set; }
 }

@@ -138,6 +138,64 @@ public sealed class ProfileMutationFlowTests
     }
 
     [Fact]
+    public async Task MoveStashToOnPersonAsync_RejectsWhenLoadoutWouldExceedStrengthBudget()
+    {
+        var actionClient = new FakeGameActionApiClient
+        {
+            ResponseFactory = _ => Response(
+                money: 500,
+                mainStash: [ItemCatalog.Create("AK74")],
+                onPersonItems: [new OnPersonSnapshot(ItemCatalog.Create("AK74"), true)])
+        };
+        var home = CreateHome(actionClient);
+
+        SetField(home, "_statsAccepted", true);
+        SetField(home, "_acceptedStats", new PlayerStats(8, 8, 8, 8, 8, 8));
+        SetField(home, "_mainGame", new GameState([ItemCatalog.Create("AK74")]));
+        SetField(home, "_onPersonItems", new List<OnPersonEntry>
+        {
+            new(ItemCatalog.Create("6B43 Zabralo-Sh body armor"), true),
+            new(ItemCatalog.Create("6B13 assault armor"), true),
+            new(ItemCatalog.Create("Small Backpack"), true)
+        });
+
+        await InvokePrivateAsync(home, "MoveStashToOnPersonAsync", 0);
+
+        Assert.Empty(actionClient.Requests);
+        var mainGame = Assert.IsType<GameState>(GetField(home, "_mainGame"));
+        Assert.Single(mainGame.Stash);
+        Assert.Equal("AK74", mainGame.Stash[0].Name);
+    }
+
+    [Fact]
+    public async Task BuyFromShopAsync_RejectsWhenLoadoutWouldExceedStrengthBudget()
+    {
+        var actionClient = new FakeGameActionApiClient
+        {
+            ResponseFactory = _ => Response(
+                money: 500,
+                mainStash: [],
+                onPersonItems: [new OnPersonSnapshot(ItemCatalog.Create("AK74"), true)])
+        };
+        var home = CreateHome(actionClient);
+
+        SetField(home, "_money", 500);
+        SetField(home, "_statsAccepted", true);
+        SetField(home, "_acceptedStats", new PlayerStats(8, 8, 8, 8, 8, 8));
+        SetField(home, "_onPersonItems", new List<OnPersonEntry>
+        {
+            new(ItemCatalog.Create("6B43 Zabralo-Sh body armor"), true),
+            new(ItemCatalog.Create("6B13 assault armor"), true),
+            new(ItemCatalog.Create("Small Backpack"), true)
+        });
+
+        await InvokePrivateAsync(home, "BuyFromShopAsync", new ShopStock(ItemCatalog.Create("AK74")));
+
+        Assert.Empty(actionClient.Requests);
+        Assert.Equal(500, Assert.IsType<int>(GetField(home, "_money")));
+    }
+
+    [Fact]
     public void ShopStock_ContainsTieredWeaponAndArmorChoicesForCharismaUnlocks()
     {
         var home = CreateHome(new FakeGameActionApiClient());
@@ -302,6 +360,27 @@ public sealed class ProfileMutationFlowTests
         SetField(home, "_statsAccepted", true);
 
         Assert.True(GetPrivateProperty<bool>(home, "CanStartMainRaid"));
+    }
+
+    [Fact]
+    public void RaidBlockReason_CombinesExistingReasonsWithLoadoutWeightWarning()
+    {
+        var home = CreateHome(new FakeGameActionApiClient());
+
+        SetField(home, "_statsAccepted", true);
+        SetField(home, "_acceptedStats", new PlayerStats(8, 8, 8, 8, 8, 8));
+        SetField(home, "_onPersonItems", new List<OnPersonEntry>
+        {
+            new(ItemCatalog.Create("6B43 Zabralo-Sh body armor"), true),
+            new(ItemCatalog.Create("6B13 assault armor"), true),
+            new(ItemCatalog.Create("Small Backpack"), true)
+        });
+
+        var reason = GetPrivateProperty<string?>(home, "RaidBlockReason");
+
+        Assert.NotNull(reason);
+        Assert.Contains("weapon", reason, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("weight", reason, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]

@@ -61,7 +61,7 @@ public sealed class RaidStartApiTests
         InvokePrivateVoid(
             home,
             "ApplySnapshot",
-            new PlayerSnapshot(500, [], [], 12, 34, DateTimeOffset.MinValue, null, null));
+            new PlayerSnapshot(500, [], [], 12, 34, DateTimeOffset.MinValue, null, null, StatsAccepted: true));
 
         SetField(home, "_onPersonItems", new List<OnPersonEntry>
         {
@@ -149,7 +149,7 @@ public sealed class RaidStartApiTests
         InvokePrivateVoid(
             home,
             "ApplySnapshot",
-            new PlayerSnapshot(500, [], [], 12, 34, DateTimeOffset.MinValue, null, null));
+            new PlayerSnapshot(500, [], [], 12, 34, DateTimeOffset.MinValue, null, null, StatsAccepted: true));
 
         SetField(home, "_randomCharacterAvailableAt", DateTimeOffset.MinValue);
         SetField(home, "_randomCharacter", null);
@@ -229,7 +229,7 @@ public sealed class RaidStartApiTests
         InvokePrivateVoid(
             home,
             "ApplySnapshot",
-            new PlayerSnapshot(500, [], [], 12, 34, DateTimeOffset.MinValue, null, null));
+            new PlayerSnapshot(500, [], [], 12, 34, DateTimeOffset.MinValue, null, null, StatsAccepted: true));
 
         SetField(home, "_randomCharacterAvailableAt", DateTimeOffset.MinValue);
         SetField(home, "_randomCharacter", null);
@@ -305,7 +305,7 @@ public sealed class RaidStartApiTests
             return Task.FromResult(new AuthBootstrapResponse(
                 true,
                 "player@example.com",
-                new PlayerSnapshot(500, [], [], 12, 34, DateTimeOffset.MinValue, null, null)));
+                new PlayerSnapshot(500, [], [], 12, 34, DateTimeOffset.MinValue, null, null, StatsAccepted: true)));
         }
     }
 

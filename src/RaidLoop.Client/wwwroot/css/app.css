@@ -152,6 +152,38 @@ h2, h3 {
     color: #cbd5e1;
 }
 
+.encumbrance-readout {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.35rem;
+}
+
+.encumbrance-label {
+    color: #cbd5e1;
+}
+
+.encumbrance-value,
+.encumbrance-tier {
+    font-weight: 600;
+}
+
+.encumbrance-tier {
+    font-size: 0.8rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.encumbrance-value.encumbrance-medium,
+.encumbrance-tier.encumbrance-medium {
+    color: #fbbf24;
+}
+
+.encumbrance-value.encumbrance-heavy,
+.encumbrance-tier.encumbrance-heavy {
+    color: #f87171;
+}
+
 .stat-strip-inline {
     display: flex;
     flex-wrap: wrap;

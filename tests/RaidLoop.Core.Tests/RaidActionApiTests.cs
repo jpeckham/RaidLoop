@@ -309,7 +309,7 @@ public sealed class RaidActionApiTests
         var raid = new RaidState(
             30,
             RaidInventory.FromItems([ItemCatalog.Create("Makarov"), ItemCatalog.Create("Small Backpack")], [], 3));
-        raid.MaxEncumbrance = 10;
+        raid.MaxEncumbrance = 9;
 
         SetField(home, "_raid", raid);
 
@@ -390,7 +390,7 @@ public sealed class RaidActionApiTests
                     """).RootElement.Clone(),
                 null));
 
-        Assert.Equal("14/100 lbs", InvokePrivate<string>(home, "GetRaidEncumbranceText"));
+        Assert.Equal("9/100 lbs", InvokePrivate<string>(home, "GetRaidEncumbranceText"));
     }
 
     [Fact]
@@ -402,7 +402,7 @@ public sealed class RaidActionApiTests
         var raid = new RaidState(
             30,
             RaidInventory.FromItems([ItemCatalog.Create("Makarov"), ItemCatalog.Create("Small Backpack")], [carriedArmor], 3));
-        raid.MaxEncumbrance = 30;
+        raid.MaxEncumbrance = 16;
 
         SetField(home, "_raid", raid);
 

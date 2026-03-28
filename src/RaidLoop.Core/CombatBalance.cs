@@ -29,8 +29,22 @@ public sealed class RandomRng : IRng
 
 public readonly record struct DamageRange(int Min, int Max);
 
+public enum EncumbranceTier
+{
+    Light,
+    Medium,
+    Heavy
+}
+
 public static class CombatBalance
 {
+    private static readonly int[] HeavyLoadByStrength =
+    [
+        10, 20, 30, 40, 50, 60, 70, 80, 90, 100,
+        115, 130, 150, 175, 200, 230, 260, 300, 350, 400,
+        460, 520, 600, 700, 800, 920, 1040, 1200, 1400
+    ];
+
     public static int GetAbilityModifier(int score)
     {
         return PlayerStatRules.GetAbilityModifier(score);
@@ -64,7 +78,48 @@ public static class CombatBalance
 
     public static int GetMaxEncumbranceFromStrength(int strength)
     {
-        return 40 + (5 * Math.Max(0, strength - PlayerStatRules.MinimumScore));
+        return GetHeavyLoadLimit(strength);
+    }
+
+    public static EncumbranceTier GetEncumbranceTier(int strength, int carriedWeight)
+    {
+        var lightLimit = GetLightLoadLimit(strength);
+        var mediumLimit = GetMediumLoadLimit(strength);
+
+        if (carriedWeight <= lightLimit)
+        {
+            return EncumbranceTier.Light;
+        }
+
+        if (carriedWeight <= mediumLimit)
+        {
+            return EncumbranceTier.Medium;
+        }
+
+        return EncumbranceTier.Heavy;
+    }
+
+    public static int GetEffectiveDexterityModifier(int dexterity, EncumbranceTier encumbranceTier)
+    {
+        var dexterityModifier = GetAbilityModifier(dexterity);
+        var maxDexterityModifier = encumbranceTier switch
+        {
+            EncumbranceTier.Medium => 3,
+            EncumbranceTier.Heavy => 1,
+            _ => int.MaxValue
+        };
+
+        return Math.Min(dexterityModifier, maxDexterityModifier);
+    }
+
+    public static int GetEncumbranceAttackPenalty(EncumbranceTier encumbranceTier)
+    {
+        return encumbranceTier switch
+        {
+            EncumbranceTier.Medium => 3,
+            EncumbranceTier.Heavy => 6,
+            _ => 0
+        };
     }
 
     public static int GetCharismaModifier(int charisma)
@@ -296,6 +351,27 @@ public static class CombatBalance
             "Plate Carrier" => "6B13 assault armor",
             _ => armorName
         };
+    }
+
+    private static int GetLightLoadLimit(int strength)
+    {
+        return GetHeavyLoadLimit(strength) / 3;
+    }
+
+    private static int GetMediumLoadLimit(int strength)
+    {
+        return (GetHeavyLoadLimit(strength) * 2) / 3;
+    }
+
+    private static int GetHeavyLoadLimit(int strength)
+    {
+        var normalizedStrength = Math.Max(1, strength);
+        if (normalizedStrength <= HeavyLoadByStrength.Length)
+        {
+            return HeavyLoadByStrength[normalizedStrength - 1];
+        }
+
+        return GetHeavyLoadLimit(normalizedStrength - 10) * 4;
     }
 
     private static int GetDamageDieCount(AttackMode mode)

@@ -12,6 +12,8 @@ public sealed class ItemCatalogTests
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026031807_game_raid_start_functions.sql"));
     private static readonly string StrengthEncumbranceMigrationPath = Path.GetFullPath(
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026032701_add_strength_encumbrance.sql"));
+    private static readonly string ItemWeightRebalanceMigrationPath = Path.GetFullPath(
+        Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026032708_rebalance_item_weights.sql"));
 
     [Fact]
     public void KeyItems_HaveAuthoredValuesGreaterThanOne()
@@ -24,12 +26,30 @@ public sealed class ItemCatalogTests
     [Fact]
     public void AuthoredItems_HaveRequestedWeights()
     {
-        Assert.Equal(2, ItemCatalog.Get("Rusty Knife").Weight);
-        Assert.Equal(4, ItemCatalog.Get("Makarov").Weight);
-        Assert.Equal(8, ItemCatalog.Get("PPSH").Weight);
-        Assert.Equal(9, ItemCatalog.Get("AK74").Weight);
-        Assert.Equal(18, ItemCatalog.Get("6B13 assault armor").Weight);
-        Assert.Equal(3, ItemCatalog.Get("Medkit").Weight);
+        Assert.Equal(1, ItemCatalog.Get("Rusty Knife").Weight);
+        Assert.Equal(2, ItemCatalog.Get("Makarov").Weight);
+        Assert.Equal(12, ItemCatalog.Get("PPSH").Weight);
+        Assert.Equal(7, ItemCatalog.Get("AK74").Weight);
+        Assert.Equal(10, ItemCatalog.Get("SVDS").Weight);
+        Assert.Equal(10, ItemCatalog.Get("AK47").Weight);
+        Assert.Equal(18, ItemCatalog.Get("PKP").Weight);
+        Assert.Equal(9, ItemCatalog.Get("6B2 body armor").Weight);
+        Assert.Equal(7, ItemCatalog.Get("BNTI Kirasa-N").Weight);
+        Assert.Equal(1, ItemCatalog.Get("Small Backpack").Weight);
+        Assert.Equal(1, ItemCatalog.Get("Large Backpack").Weight);
+        Assert.Equal(2, ItemCatalog.Get("Tactical Backpack").Weight);
+        Assert.Equal(2, ItemCatalog.Get("Tasmanian Tiger Trooper 35").Weight);
+        Assert.Equal(8, ItemCatalog.Get("6Sh118").Weight);
+        Assert.Equal(7, ItemCatalog.Get("6B13 assault armor").Weight);
+        Assert.Equal(22, ItemCatalog.Get("FORT Defender-2").Weight);
+        Assert.Equal(28, ItemCatalog.Get("6B43 Zabralo-Sh body armor").Weight);
+        Assert.Equal(19, ItemCatalog.Get("NFM THOR").Weight);
+        Assert.Equal(1, ItemCatalog.Get("Medkit").Weight);
+        Assert.Equal(1, ItemCatalog.Get("Bandage").Weight);
+        Assert.Equal(4, ItemCatalog.Get("Ammo Box").Weight);
+        Assert.Equal(10, ItemCatalog.Get("Scrap Metal").Weight);
+        Assert.Equal(1, ItemCatalog.Get("Rare Scope").Weight);
+        Assert.Equal(1, ItemCatalog.Get("Legendary Trigger Group").Weight);
     }
 
     [Fact]
@@ -254,7 +274,28 @@ public sealed class ItemCatalogTests
 
         var totalEncumbrance = CombatBalance.GetTotalEncumbrance(items);
 
-        Assert.Equal(5, totalEncumbrance);
+        Assert.Equal(2, totalEncumbrance);
+    }
+
+    [Fact]
+    public void ItemWeightRebalanceMigration_UpdatesCurrentAuthoritativeWeights()
+    {
+        var migration = File.ReadAllText(ItemWeightRebalanceMigrationPath);
+
+        Assert.Contains("update game.item_defs", migration);
+        Assert.Contains("when 'Rusty Knife' then 1", migration);
+        Assert.Contains("when 'Makarov' then 2", migration);
+        Assert.Contains("when 'PPSH' then 12", migration);
+        Assert.Contains("when 'AK74' then 7", migration);
+        Assert.Contains("when '6B2 body armor' then 9", migration);
+        Assert.Contains("when '6B13 assault armor' then 7", migration);
+        Assert.Contains("when 'Tactical Backpack' then 2", migration);
+        Assert.Contains("when '6Sh118' then 8", migration);
+        Assert.Contains("when 'Small Backpack' then 1", migration);
+        Assert.Contains("when 'Medkit' then 1", migration);
+        Assert.Contains("when 'Ammo Box' then 4", migration);
+        Assert.Contains("when 'Scrap Metal' then 10", migration);
+        Assert.Contains("when 'Legendary Trigger Group' then 1", migration);
     }
 
     [Fact]

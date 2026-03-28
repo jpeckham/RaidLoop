@@ -6,7 +6,14 @@
         <span>@AmmoHudText</span>
         <span>Medkits: @Medkits</span>
         <span>Loot Slots: @LootSlots / @Raid.BackpackCapacity</span>
-        <span>@RaidEncumbranceText</span>
+        <span class="encumbrance-readout">
+            <span class="encumbrance-label">Encumbrance:</span>
+            <span class="encumbrance-value @GetEncumbranceSeverityCssClass()">@RaidEncumbranceText</span>
+            @if (ShouldShowEncumbranceTier())
+            {
+                <span class="encumbrance-tier @GetEncumbranceSeverityCssClass()">@GetEncumbranceTierLabel()</span>
+            }
+        </span>
         <span>Challenge: @Challenge</span>
         <span>Distance from Extract: @DistanceFromExtract</span>
     </div>
@@ -278,5 +285,49 @@
     private int RaidEncumbrance()
     {
         return CombatBalance.GetTotalEncumbrance(Raid.Inventory.GetExtractableItems());
+    }
+
+    private EncumbranceTier GetDisplayedEncumbranceTier()
+    {
+        if (Raid.MaxEncumbrance <= 0)
+        {
+            return EncumbranceTier.Light;
+        }
+
+        var carriedWeight = RaidEncumbrance();
+        var lightThreshold = Raid.MaxEncumbrance / 3;
+        var mediumThreshold = (Raid.MaxEncumbrance * 2) / 3;
+
+        if (carriedWeight <= lightThreshold)
+        {
+            return EncumbranceTier.Light;
+        }
+
+        if (carriedWeight <= mediumThreshold)
+        {
+            return EncumbranceTier.Medium;
+        }
+
+        return EncumbranceTier.Heavy;
+    }
+
+    private bool ShouldShowEncumbranceTier()
+    {
+        return GetDisplayedEncumbranceTier() is not EncumbranceTier.Light;
+    }
+
+    private string GetEncumbranceTierLabel()
+    {
+        return GetDisplayedEncumbranceTier().ToString();
+    }
+
+    private string GetEncumbranceSeverityCssClass()
+    {
+        return GetDisplayedEncumbranceTier() switch
+        {
+            EncumbranceTier.Medium => "encumbrance-medium",
+            EncumbranceTier.Heavy => "encumbrance-heavy",
+            _ => string.Empty
+        };
     }
 }

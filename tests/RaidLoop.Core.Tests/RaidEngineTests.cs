@@ -184,6 +184,25 @@ public class RaidEngineTests
         Assert.Equal(12, capped);
     }
 
+    [Theory]
+    [InlineData(18, EncumbranceTier.Light, 4)]
+    [InlineData(18, EncumbranceTier.Medium, 3)]
+    [InlineData(18, EncumbranceTier.Heavy, 1)]
+    [InlineData(12, EncumbranceTier.Heavy, 1)]
+    public void CombatBalance_EncumbranceTier_CapsEffectiveDexterityModifier(int dexterity, EncumbranceTier tier, int expectedModifier)
+    {
+        Assert.Equal(expectedModifier, CombatBalance.GetEffectiveDexterityModifier(dexterity, tier));
+    }
+
+    [Theory]
+    [InlineData(EncumbranceTier.Light, 0)]
+    [InlineData(EncumbranceTier.Medium, 3)]
+    [InlineData(EncumbranceTier.Heavy, 6)]
+    public void CombatBalance_EncumbranceTier_DefinesAttackPenalty(EncumbranceTier tier, int expectedPenalty)
+    {
+        Assert.Equal(expectedPenalty, CombatBalance.GetEncumbranceAttackPenalty(tier));
+    }
+
     [Fact]
     public void CombatBalance_SameAttackRoll_CanMissLowDex_AndHitHighDex()
     {
@@ -296,15 +315,33 @@ public class RaidEngineTests
         Assert.True(highStrengthCapacity > lowStrengthCapacity);
     }
 
-    [Fact]
-    public void CombatBalance_StrengthMaxEncumbrance_GrowsWithStrength()
+    [Theory]
+    [InlineData(8, 80)]
+    [InlineData(10, 100)]
+    [InlineData(14, 175)]
+    [InlineData(18, 300)]
+    [InlineData(30, 1600)]
+    [InlineData(31, 1840)]
+    [InlineData(40, 6400)]
+    public void CombatBalance_StrengthMaxEncumbrance_FollowsD20HeavyLoadTable(int strength, int expectedHeavyLoad)
     {
-        var lowStrengthLimit = CombatBalance.GetMaxEncumbranceFromStrength(8);
-        var highStrengthLimit = CombatBalance.GetMaxEncumbranceFromStrength(18);
+        Assert.Equal(expectedHeavyLoad, CombatBalance.GetMaxEncumbranceFromStrength(strength));
+    }
 
-        Assert.Equal(40, lowStrengthLimit);
-        Assert.Equal(90, highStrengthLimit);
-        Assert.True(highStrengthLimit > lowStrengthLimit);
+    [Theory]
+    [InlineData(8, 53, EncumbranceTier.Medium)]
+    [InlineData(8, 54, EncumbranceTier.Heavy)]
+    [InlineData(10, 33, EncumbranceTier.Light)]
+    [InlineData(10, 34, EncumbranceTier.Medium)]
+    [InlineData(10, 66, EncumbranceTier.Medium)]
+    [InlineData(10, 67, EncumbranceTier.Heavy)]
+    [InlineData(14, 116, EncumbranceTier.Medium)]
+    [InlineData(14, 117, EncumbranceTier.Heavy)]
+    [InlineData(18, 200, EncumbranceTier.Medium)]
+    [InlineData(18, 201, EncumbranceTier.Heavy)]
+    public void CombatBalance_EncumbranceTier_FollowsD20LoadBoundaries(int strength, int carriedWeight, EncumbranceTier expectedTier)
+    {
+        Assert.Equal(expectedTier, CombatBalance.GetEncumbranceTier(strength, carriedWeight));
     }
 
     [Fact]
@@ -321,7 +358,7 @@ public class RaidEngineTests
 
         var totalEncumbrance = CombatBalance.GetTotalEncumbrance(items);
 
-        Assert.Equal(20, totalEncumbrance);
+        Assert.Equal(14, totalEncumbrance);
     }
 
     [Theory]
@@ -470,7 +507,7 @@ public class RaidEngineTests
             backpackCapacity: 2,
             broughtItems: [ItemCatalog.Get("Makarov")],
             raidLoot: []);
-        state.Inventory.MaxEncumbrance = 6;
+        state.Inventory.MaxEncumbrance = 2;
 
         RaidEngine.StartDiscoveredLootEncounter(state, [ItemCatalog.Get("Medkit")]);
 
@@ -509,7 +546,7 @@ public class RaidEngineTests
                 ItemCatalog.Get("Small Backpack")
             ],
             raidLoot: []);
-        state.Inventory.MaxEncumbrance = 20;
+        state.Inventory.MaxEncumbrance = 9;
 
         RaidEngine.StartDiscoveredLootEncounter(state, [ItemCatalog.Get("6B13 assault armor")]);
 
@@ -537,7 +574,7 @@ public class RaidEngineTests
             [
                 ItemCatalog.Get("6B13 assault armor")
             ]);
-        state.Inventory.MaxEncumbrance = 20;
+        state.Inventory.MaxEncumbrance = 9;
 
         var equipped = RaidEngine.TryEquipFromCarried(state, state.Inventory.CarriedItems[0]);
 

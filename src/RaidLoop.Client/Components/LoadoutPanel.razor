@@ -1,7 +1,14 @@
 <div>
     <h3>For Raid</h3>
     <p>You are taking these into raid with you and they will be lost if you die.</p>
-    <p>@EncumbranceText</p>
+    <p class="encumbrance-readout">
+        <span class="encumbrance-label">Encumbrance:</span>
+        <span class="encumbrance-value @GetEncumbranceSeverityCssClass()">@EncumbranceText</span>
+        @if (ShouldShowEncumbranceTier())
+        {
+            <span class="encumbrance-tier @GetEncumbranceSeverityCssClass()">@GetEncumbranceTierLabel()</span>
+        }
+    </p>
     @if (OnPersonItems.Count == 0)
     {
         <p>Nothing selected.</p>
@@ -44,6 +51,7 @@
     [Parameter, EditorRequired] public bool CanStartRaid { get; set; }
     [Parameter] public string? RaidBlockReason { get; set; }
     [Parameter, EditorRequired] public string EncumbranceText { get; set; } = string.Empty;
+    [Parameter, EditorRequired] public int MaxEncumbrance { get; set; }
     [Parameter, EditorRequired] public Func<Item, bool> CanSellItem { get; set; } = _ => false;
     [Parameter, EditorRequired] public Func<Item, int> GetSellPrice { get; set; } = _ => 0;
     [Parameter, EditorRequired] public Func<ItemType, bool> IsSlotType { get; set; } = _ => false;
@@ -56,5 +64,54 @@
     private Task ToggleEquipAsync(int index, bool isEquipped)
     {
         return isEquipped ? OnUnequip.InvokeAsync(index) : OnEquip.InvokeAsync(index);
+    }
+
+    private int GetCurrentEncumbrance()
+    {
+        return OnPersonItems.Sum(entry => Math.Max(0, entry.Item.Weight));
+    }
+
+    private EncumbranceTier GetDisplayedEncumbranceTier()
+    {
+        if (MaxEncumbrance <= 0)
+        {
+            return EncumbranceTier.Light;
+        }
+
+        var carriedWeight = GetCurrentEncumbrance();
+        var lightThreshold = MaxEncumbrance / 3;
+        var mediumThreshold = (MaxEncumbrance * 2) / 3;
+
+        if (carriedWeight <= lightThreshold)
+        {
+            return EncumbranceTier.Light;
+        }
+
+        if (carriedWeight <= mediumThreshold)
+        {
+            return EncumbranceTier.Medium;
+        }
+
+        return EncumbranceTier.Heavy;
+    }
+
+    private bool ShouldShowEncumbranceTier()
+    {
+        return GetDisplayedEncumbranceTier() is not EncumbranceTier.Light;
+    }
+
+    private string GetEncumbranceTierLabel()
+    {
+        return GetDisplayedEncumbranceTier().ToString();
+    }
+
+    private string GetEncumbranceSeverityCssClass()
+    {
+        return GetDisplayedEncumbranceTier() switch
+        {
+            EncumbranceTier.Medium => "encumbrance-medium",
+            EncumbranceTier.Heavy => "encumbrance-heavy",
+            _ => string.Empty
+        };
     }
 }

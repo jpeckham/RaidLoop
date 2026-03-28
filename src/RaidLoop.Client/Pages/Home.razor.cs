@@ -176,7 +176,7 @@ public partial class Home : IDisposable
     private List<Item> CurrentDiscoveredLoot => _raid?.Inventory.DiscoveredLoot ?? EmptyItems;
     private List<Item> CurrentCarriedLoot => _raid?.Inventory.CarriedItems ?? EmptyItems;
     private IReadOnlyList<ShopStock> VisibleShopStock => _shopStock.Where(stock => CanBuyItem(stock.Item)).ToList();
-    private bool CanReallocateStats => _raid is null && _statsAccepted && _money >= 5000;
+    private bool CanReallocateStats => _raid is null && _statsAccepted && _money >= GetReallocateStatCost();
 
     private static bool IsSlotType(ItemType type)
     {
@@ -312,7 +312,7 @@ public partial class Home : IDisposable
 
     private async Task ReallocateStatsAsync()
     {
-        if (_raid is not null || !_statsAccepted || _money < 5000)
+        if (_raid is not null || !_statsAccepted || _money < GetReallocateStatCost())
         {
             return;
         }
@@ -1495,6 +1495,16 @@ public partial class Home : IDisposable
     private int GetLootSlotCount()
     {
         return _raid?.Inventory.CarriedItems.Sum(x => x.Slots) ?? 0;
+    }
+
+    private int GetReallocateStatCost()
+    {
+        return (int)Math.Round(_money / 2m, MidpointRounding.AwayFromZero);
+    }
+
+    private string GetReallocateStatCostLabel()
+    {
+        return $"${GetReallocateStatCost()}";
     }
 
     private int GetBuyPrice(string itemName)

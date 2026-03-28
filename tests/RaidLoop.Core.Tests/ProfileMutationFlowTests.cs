@@ -144,19 +144,31 @@ public sealed class ProfileMutationFlowTests
         {
             ResponseFactory = _ => Response(
                 money: 500,
-                mainStash: [ItemCatalog.Create("AK74")],
+                mainStash: [ItemCatalog.Create("6B43 Zabralo-Sh body armor")],
                 onPersonItems: [new OnPersonSnapshot(ItemCatalog.Create("AK74"), true)])
         };
         var home = CreateHome(actionClient);
 
         SetField(home, "_statsAccepted", true);
         SetField(home, "_acceptedStats", new PlayerStats(8, 8, 8, 8, 8, 8));
-        SetField(home, "_mainGame", new GameState([ItemCatalog.Create("AK74")]));
+        SetField(home, "_mainGame", new GameState([ItemCatalog.Create("6B43 Zabralo-Sh body armor")]));
         SetField(home, "_onPersonItems", new List<OnPersonEntry>
         {
             new(ItemCatalog.Create("6B43 Zabralo-Sh body armor"), true),
             new(ItemCatalog.Create("6B13 assault armor"), true),
-            new(ItemCatalog.Create("Small Backpack"), true)
+            new(ItemCatalog.Create("FORT Defender-2"), true),
+            new(ItemCatalog.Create("NFM THOR"), true),
+            new(ItemCatalog.Create("Small Backpack"), true),
+            new(ItemCatalog.Create("Medkit"), false),
+            new(ItemCatalog.Create("Medkit"), false),
+            new(ItemCatalog.Create("Medkit"), false),
+            new(ItemCatalog.Create("Medkit"), false),
+            new(ItemCatalog.Create("Medkit"), false),
+            new(ItemCatalog.Create("Medkit"), false),
+            new(ItemCatalog.Create("Medkit"), false),
+            new(ItemCatalog.Create("Medkit"), false),
+            new(ItemCatalog.Create("Medkit"), false),
+            new(ItemCatalog.Create("Medkit"), false)
         });
 
         await InvokePrivateAsync(home, "MoveStashToOnPersonAsync", 0);
@@ -164,7 +176,7 @@ public sealed class ProfileMutationFlowTests
         Assert.Empty(actionClient.Requests);
         var mainGame = Assert.IsType<GameState>(GetField(home, "_mainGame"));
         Assert.Single(mainGame.Stash);
-        Assert.Equal("AK74", mainGame.Stash[0].Name);
+        Assert.Equal("6B43 Zabralo-Sh body armor", mainGame.Stash[0].Name);
     }
 
     [Fact]
@@ -186,10 +198,22 @@ public sealed class ProfileMutationFlowTests
         {
             new(ItemCatalog.Create("6B43 Zabralo-Sh body armor"), true),
             new(ItemCatalog.Create("6B13 assault armor"), true),
-            new(ItemCatalog.Create("Small Backpack"), true)
+            new(ItemCatalog.Create("FORT Defender-2"), true),
+            new(ItemCatalog.Create("NFM THOR"), true),
+            new(ItemCatalog.Create("Small Backpack"), true),
+            new(ItemCatalog.Create("Medkit"), false),
+            new(ItemCatalog.Create("Medkit"), false),
+            new(ItemCatalog.Create("Medkit"), false),
+            new(ItemCatalog.Create("Medkit"), false),
+            new(ItemCatalog.Create("Medkit"), false),
+            new(ItemCatalog.Create("Medkit"), false),
+            new(ItemCatalog.Create("Medkit"), false),
+            new(ItemCatalog.Create("Medkit"), false),
+            new(ItemCatalog.Create("Medkit"), false),
+            new(ItemCatalog.Create("Medkit"), false)
         });
 
-        await InvokePrivateAsync(home, "BuyFromShopAsync", new ShopStock(ItemCatalog.Create("AK74")));
+        await InvokePrivateAsync(home, "BuyFromShopAsync", new ShopStock(ItemCatalog.Create("6B2 body armor")));
 
         Assert.Empty(actionClient.Requests);
         Assert.Equal(500, Assert.IsType<int>(GetField(home, "_money")));
@@ -373,7 +397,19 @@ public sealed class ProfileMutationFlowTests
         {
             new(ItemCatalog.Create("6B43 Zabralo-Sh body armor"), true),
             new(ItemCatalog.Create("6B13 assault armor"), true),
-            new(ItemCatalog.Create("Small Backpack"), true)
+            new(ItemCatalog.Create("FORT Defender-2"), true),
+            new(ItemCatalog.Create("NFM THOR"), true),
+            new(ItemCatalog.Create("Small Backpack"), true),
+            new(ItemCatalog.Create("Medkit"), false),
+            new(ItemCatalog.Create("Medkit"), false),
+            new(ItemCatalog.Create("Medkit"), false),
+            new(ItemCatalog.Create("Medkit"), false),
+            new(ItemCatalog.Create("Medkit"), false),
+            new(ItemCatalog.Create("Medkit"), false),
+            new(ItemCatalog.Create("Medkit"), false),
+            new(ItemCatalog.Create("Medkit"), false),
+            new(ItemCatalog.Create("Medkit"), false),
+            new(ItemCatalog.Create("Medkit"), false)
         });
 
         var reason = GetPrivateProperty<string?>(home, "RaidBlockReason");
@@ -435,7 +471,7 @@ public sealed class ProfileMutationFlowTests
 
         SetField(home, "_raid", null);
         SetField(home, "_statsAccepted", true);
-        SetField(home, "_money", 5000);
+        SetField(home, "_money", 1);
 
         Assert.True(GetPrivateProperty<bool>(home, "CanReallocateStats"));
     }
@@ -460,7 +496,7 @@ public sealed class ProfileMutationFlowTests
         };
         var home = CreateHome(actionClient);
 
-        SetField(home, "_money", 10000);
+        SetField(home, "_money", 10001);
         SetField(home, "_statsAccepted", true);
         SetField(home, "_acceptedStats", new PlayerStats(8, 14, 12, 10, 9, 16));
         SetField(home, "_draftStats", new PlayerStats(8, 14, 12, 10, 9, 16));

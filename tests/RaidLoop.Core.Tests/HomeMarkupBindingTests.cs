@@ -54,6 +54,18 @@ public sealed class HomeMarkupBindingTests
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026032606_restore_raid_session_persistence_for_stat_aware_raid_start.sql"));
     private static readonly string StrengthEncumbranceMigrationPath = Path.GetFullPath(
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026032701_add_strength_encumbrance.sql"));
+    private static readonly string D20EncumbranceMigrationPath = Path.GetFullPath(
+        Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026032703_apply_d20_encumbrance_thresholds.sql"));
+    private static readonly string D20EncumbranceCombatMigrationPath = Path.GetFullPath(
+        Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026032704_apply_d20_encumbrance_penalties_to_raid_combat.sql"));
+    private static readonly string AuthoritativeShopPurchaseMigrationPath = Path.GetFullPath(
+        Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026032705_fix_authoritative_shop_purchases.sql"));
+    private static readonly string HalfCashRespecMigrationPath = Path.GetFullPath(
+        Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026032706_half_cash_respec_cost.sql"));
+    private static readonly string ChallengeZeroTravelRebalanceMigrationPath = Path.GetFullPath(
+        Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026032801_rebalance_challenge_zero_travel_and_enemy_progression.sql"));
+    private static readonly string ItemWeightRebalanceMigrationPath = Path.GetFullPath(
+        Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026032708_rebalance_item_weights.sql"));
     private static readonly string ReallocateStatsJsonNullGuardMigrationPath = Path.GetFullPath(
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026032702_fix_reallocate_stats_json_null_guard.sql"));
     private static readonly string SupabaseAuthServicePath = Path.GetFullPath(
@@ -74,6 +86,8 @@ public sealed class HomeMarkupBindingTests
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "RaidLoop.Client", "wwwroot", "index.html"));
     private static readonly string HomeCodeBehindPath = Path.GetFullPath(
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "RaidLoop.Client", "Pages", "Home.razor.cs"));
+    private static readonly string ClientCssPath = Path.GetFullPath(
+        Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "RaidLoop.Client", "wwwroot", "css", "app.css"));
     private static readonly string StorageScriptPath = Path.GetFullPath(
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "RaidLoop.Client", "wwwroot", "js", "storage.js"));
     private static readonly string TelemetryScriptPath = Path.GetFullPath(
@@ -205,9 +219,12 @@ public sealed class HomeMarkupBindingTests
         var shopMarkup = File.ReadAllText(ShopPanelPath);
 
         Assert.Contains("EncumbranceText=\"@GetPreRaidEncumbranceText()\"", markup);
+        Assert.Contains("MaxEncumbrance=\"GetMainCharacterMaxEncumbrance()\"", markup);
         Assert.Contains("CanMoveToLoadoutItem=\"CanAddOnPersonItem\"", markup);
         Assert.Contains("CanPurchaseItem=\"CanAddOnPersonItem\"", markup);
-        Assert.Contains("@EncumbranceText", loadoutMarkup);
+        Assert.Contains("<span class=\"encumbrance-label\">Encumbrance:</span>", loadoutMarkup);
+        Assert.Contains("<span class=\"encumbrance-value @GetEncumbranceSeverityCssClass()\">@EncumbranceText</span>", loadoutMarkup);
+        Assert.Contains("<span class=\"encumbrance-tier @GetEncumbranceSeverityCssClass()\">@GetEncumbranceTierLabel()</span>", loadoutMarkup);
         Assert.Contains("disabled=\"@(!CanMoveToLoadoutItem(item))\"", stashMarkup);
         Assert.Contains("disabled=\"@(!CanBuyItem(stock.Item) || !CanPurchaseItem(stock.Item) || Money < GetBuyPrice(stock.Item.Name))\"", shopMarkup);
     }
@@ -235,7 +252,7 @@ public sealed class HomeMarkupBindingTests
         Assert.Contains("stat-adjust stat-adjust-down", homeMarkup);
         Assert.Contains("Remaining: @_availableStatPoints", homeMarkup);
         Assert.Contains("Accept Stats", homeMarkup);
-        Assert.Contains("Re-Allocate ($5000)", homeMarkup);
+        Assert.Contains("Re-Allocate (@GetReallocateStatCostLabel())", homeMarkup);
         Assert.DoesNotContain("stat-strip", preRaidMarkup);
         Assert.DoesNotContain("Signed in:", authGateMarkup);
         var topBarSection = ExtractSection(homeMarkup, "<section class=\"panel top-status-bar\">", "</section>");
@@ -281,6 +298,83 @@ public sealed class HomeMarkupBindingTests
     }
 
     [Fact]
+    public void D20EncumbranceMigration_UsesReducedTableMathAndCombatPenalties()
+    {
+        Assert.True(File.Exists(D20EncumbranceMigrationPath));
+
+        var migration = File.ReadAllText(D20EncumbranceMigrationPath);
+
+        Assert.Contains("create or replace function game.max_encumbrance(strength int)", migration);
+        Assert.Contains("create or replace function game.encumbrance_tier(strength int, carried_weight int)", migration);
+        Assert.Contains("create or replace function game.encumbrance_attack_penalty(encumbrance text)", migration);
+        Assert.Contains("create or replace function game.encumbrance_max_dex_bonus(encumbrance text)", migration);
+        Assert.Contains("heavy_loads int[]", migration);
+        Assert.Contains("array[10, 20, 30, 40, 50, 60, 70, 80, 90, 100", migration);
+        Assert.Contains("return game.max_encumbrance(strength) / 3;", migration);
+        Assert.Contains("return (game.max_encumbrance(strength) * 2) / 3;", migration);
+        Assert.Contains("return game.max_encumbrance(strength - 10) * 4;", migration);
+        Assert.Contains("when encumbrance = 'Heavy' then 6", migration);
+        Assert.Contains("when encumbrance = 'Medium' then 3", migration);
+        Assert.Contains("when encumbrance = 'Heavy' then 1", migration);
+        Assert.Contains("when encumbrance = 'Medium' then 3", migration);
+        Assert.Contains("'encumbranceTier', game.encumbrance_tier(", migration);
+        Assert.Contains("player_encumbrance text", migration);
+        Assert.Contains("player_attack_penalty int", migration);
+        Assert.Contains("player_max_dex_bonus int", migration);
+        Assert.Contains("game.encumbrance_attack_penalty(player_encumbrance)", migration);
+        Assert.Contains("game.encumbrance_max_dex_bonus(player_encumbrance)", migration);
+        Assert.Contains("least(game.ability_modifier(player_dexterity), player_max_dex_bonus)", migration);
+    }
+
+    [Fact]
+    public void D20EncumbranceCombatMigration_AppliesRuntimeAttackAndDefensePenalties()
+    {
+        Assert.True(File.Exists(D20EncumbranceCombatMigrationPath));
+
+        var migration = File.ReadAllText(D20EncumbranceCombatMigrationPath);
+
+        Assert.Contains("create or replace function game.perform_raid_action(action text, payload jsonb, target_user_id uuid default auth.uid())", migration);
+        Assert.Contains("current_encumbrance int;", migration);
+        Assert.Contains("player_encumbrance text;", migration);
+        Assert.Contains("player_attack_penalty int;", migration);
+        Assert.Contains("player_max_dex_bonus int;", migration);
+        Assert.Contains("player_effective_dex_bonus int;", migration);
+        Assert.Contains("current_encumbrance := game.current_encumbrance(equipped_items || carried_loot, medkits);", migration);
+        Assert.Contains("player_encumbrance := game.encumbrance_tier(", migration);
+        Assert.Contains("player_attack_penalty := game.encumbrance_attack_penalty(player_encumbrance);", migration);
+        Assert.Contains("player_max_dex_bonus := game.encumbrance_max_dex_bonus(player_encumbrance);", migration);
+        Assert.Contains("player_effective_dex_bonus := least(game.ability_modifier(player_dexterity), player_max_dex_bonus);", migration);
+        Assert.Contains("attack_bonus := player_effective_dex_bonus - player_attack_penalty;", migration);
+        Assert.Contains("attack_bonus := player_effective_dex_bonus - game.weapon_burst_attack_penalty(equipped_weapon_name) - player_attack_penalty;", migration);
+        Assert.Contains("attack_bonus := player_effective_dex_bonus - 4 - player_attack_penalty;", migration);
+        Assert.Contains("enemy_attack_total,", migration);
+        Assert.Contains("player_effective_dex_bonus,", migration);
+        Assert.Contains("raid_payload := jsonb_set(raid_payload, '{encumbrance}', to_jsonb(current_encumbrance), true);", migration);
+        Assert.Contains("raid_payload := jsonb_set(raid_payload, '{maxEncumbrance}', to_jsonb(game.max_encumbrance(", migration);
+        Assert.Contains("raid_payload := jsonb_set(raid_payload, '{encumbranceTier}', to_jsonb(player_encumbrance), true);", migration);
+    }
+
+    [Fact]
+    public void AuthoritativeShopPurchaseMigration_AlignsBackendItemLookupPriceAndCharismaGating()
+    {
+        Assert.True(File.Exists(AuthoritativeShopPurchaseMigrationPath));
+
+        var migration = File.ReadAllText(AuthoritativeShopPurchaseMigrationPath);
+
+        Assert.Contains("alter table game.item_defs", migration);
+        Assert.Contains("add column if not exists shop_price int not null default 0", migration);
+        Assert.Contains("create or replace function game.shop_max_rarity(charisma int)", migration);
+        Assert.Contains("create or replace function game.current_shop_charisma(target_user_id uuid default auth.uid())", migration);
+        Assert.Contains("create or replace function game.shop_item(item_name text)", migration);
+        Assert.Contains("where item_defs.enabled", migration);
+        Assert.Contains("and item_defs.shop_enabled", migration);
+        Assert.Contains("item_defs.rarity <= game.shop_max_rarity(game.current_shop_charisma())", migration);
+        Assert.Contains("create or replace function game.shop_item_price(item_name text)", migration);
+        Assert.Contains("item_defs.shop_price", migration);
+        Assert.Contains("round((item_defs.shop_price * (1 - (0.05 * greatest(game.ability_modifier(game.current_shop_charisma()), 0))))::numeric)", migration);
+    }
+
+    [Fact]
     public void HomeTopBarOmitsStatHeadingAndModifierText()
     {
         var homeMarkup = File.ReadAllText(HomeMarkupPath);
@@ -319,12 +413,19 @@ public sealed class HomeMarkupBindingTests
     {
         var homeMarkup = File.ReadAllText(HomeMarkupPath);
         var raidHudMarkup = File.ReadAllText(RaidHudPath);
+        var clientCss = File.ReadAllText(ClientCssPath);
 
         Assert.Contains("RaidEncumbranceText=\"@GetRaidEncumbranceText()\"", homeMarkup);
         Assert.Contains("CanEquipItem=\"CanEquipRaidItem\"", homeMarkup);
-        Assert.Contains("@RaidEncumbranceText", raidHudMarkup);
+        Assert.Contains("<span class=\"encumbrance-label\">Encumbrance:</span>", raidHudMarkup);
+        Assert.Contains("<span class=\"encumbrance-value @GetEncumbranceSeverityCssClass()\">@RaidEncumbranceText</span>", raidHudMarkup);
+        Assert.Contains("<span class=\"encumbrance-tier @GetEncumbranceSeverityCssClass()\">@GetEncumbranceTierLabel()</span>", raidHudMarkup);
         Assert.Contains("Too heavy to carry", raidHudMarkup);
         Assert.Contains("Too heavy to equip", raidHudMarkup);
+        Assert.Contains(".encumbrance-value.encumbrance-medium", clientCss);
+        Assert.Contains(".encumbrance-tier.encumbrance-medium", clientCss);
+        Assert.Contains(".encumbrance-value.encumbrance-heavy", clientCss);
+        Assert.Contains(".encumbrance-tier.encumbrance-heavy", clientCss);
     }
 
     [Fact]
@@ -929,6 +1030,88 @@ public sealed class HomeMarkupBindingTests
     }
 
     [Fact]
+    public void HalfCashRespecMigration_ReplacesFixedRespecFeeWithRoundedHalfCash()
+    {
+        Assert.True(File.Exists(HalfCashRespecMigrationPath));
+
+        var migration = File.ReadAllText(HalfCashRespecMigrationPath);
+
+        Assert.Contains("create or replace function game.apply_profile_action(action text, payload jsonb, target_user_id uuid default auth.uid())", migration);
+        Assert.Contains("respec_cost int;", migration);
+        Assert.Contains("respec_cost := round((coalesce((save_payload->>'money')::int, 0) / 2.0)::numeric)::int;", migration);
+        Assert.Contains("if active_raid = 'null'::jsonb and coalesce((save_payload->>'money')::int, 0) >= respec_cost then", migration);
+        Assert.Contains("save_payload := jsonb_set(save_payload, '{money}', to_jsonb(coalesce((save_payload->>'money')::int, 0) - respec_cost), true);", migration);
+        Assert.DoesNotContain(">= 5000", migration);
+        Assert.DoesNotContain("- 5000", migration);
+    }
+
+    [Fact]
+    public void ItemWeightRebalanceMigration_UpdatesCurrentAuthoritativeWeights()
+    {
+        Assert.True(File.Exists(ItemWeightRebalanceMigrationPath));
+
+        var migration = File.ReadAllText(ItemWeightRebalanceMigrationPath);
+
+        Assert.Contains("update game.item_defs", migration);
+        Assert.Contains("when 'Rusty Knife' then 1", migration);
+        Assert.Contains("when 'Makarov' then 2", migration);
+        Assert.Contains("when 'PPSH' then 12", migration);
+        Assert.Contains("when 'AK74' then 7", migration);
+        Assert.Contains("when '6B2 body armor' then 9", migration);
+        Assert.Contains("when '6B13 assault armor' then 7", migration);
+        Assert.Contains("when 'Tactical Backpack' then 2", migration);
+        Assert.Contains("when '6Sh118' then 8", migration);
+        Assert.Contains("when 'Small Backpack' then 1", migration);
+        Assert.Contains("when 'Medkit' then 1", migration);
+        Assert.Contains("when 'Ammo Box' then 4", migration);
+        Assert.Contains("when 'Scrap Metal' then 10", migration);
+        Assert.Contains("when 'Legendary Trigger Group' then 1", migration);
+    }
+
+    [Fact]
+    public void ChallengeZeroTravelRebalanceMigration_AuthorsTieredEnemiesAndLowTierExtractLoot()
+    {
+        Assert.True(File.Exists(ChallengeZeroTravelRebalanceMigrationPath));
+
+        var migration = File.ReadAllText(ChallengeZeroTravelRebalanceMigrationPath);
+
+        Assert.Contains("challenge_0_enemy_loadout", migration);
+        Assert.Contains("challenge_1_enemy_loadout", migration);
+        Assert.Contains("challenge_2_enemy_loadout", migration);
+        Assert.Contains("challenge_3_enemy_loadout", migration);
+        Assert.Contains("challenge_4_enemy_loadout", migration);
+        Assert.Contains("challenge_5_enemy_loadout", migration);
+        Assert.Contains("challenge_0_travel_cache", migration);
+        Assert.Contains("challenge_0_extract_cache", migration);
+        Assert.Contains("create or replace function game.challenge_enemy_loadout_table(challenge int)", migration);
+        Assert.Contains("create or replace function game.challenge_enemy_stats(challenge int)", migration);
+        Assert.Contains("create or replace function game.challenge_encounter_loot_table(entry_key text, loot_table_key text, challenge int)", migration);
+        Assert.Contains("'makarov'", migration);
+        Assert.DoesNotContain("'ppsh', 10),\r\n    ('challenge0", migration);
+        Assert.Contains("'small_backpack'", migration);
+        Assert.Contains("'large_backpack'", migration);
+        Assert.DoesNotContain("'ppsh', 'challenge_0_enemy_loadout'", migration);
+        Assert.DoesNotContain("'6b2_body_armor', 'challenge_0_enemy_loadout'", migration);
+        Assert.Contains("'6b2_body_armor'", migration);
+        Assert.Contains("'bnti_kirasa_n'", migration);
+        Assert.Contains("'ak74'", migration);
+        Assert.Contains("'fort_defender_2'", migration);
+        Assert.Contains("'pkp'", migration);
+        Assert.Contains("weight = case entry_key", migration);
+        Assert.Contains("when 'raid_combat_travel_player_spots_camp' then 60", migration);
+        Assert.Contains("when 'raid_neutral_travel_area_clear' then 80", migration);
+        Assert.Contains("when 'raid_loot_travel_filing_cache' then 140", migration);
+        Assert.Contains("when 'raid_combat_extract_player_spots_guard' then 70", migration);
+        Assert.Contains("when 'raid_neutral_extract_route_clear' then 80", migration);
+        Assert.Contains("when 'raid_loot_extract_abandoned_cache' then 120", migration);
+        Assert.Contains("challenge_min = 0", migration);
+        Assert.Contains("challenge_max_exclusive = 2147483647", migration);
+        Assert.Contains("enemy_loadout := game.random_enemy_loadout_from_table(game.challenge_enemy_loadout_table(challenge));", migration);
+        Assert.Contains("enemy_stats := game.challenge_enemy_stats(challenge);", migration);
+        Assert.Contains("selected_loot_table_key := game.challenge_encounter_loot_table(", migration);
+    }
+
+    [Fact]
     public void SupabaseMigrationVersionsAreUnique()
     {
         var migrationDirectory = Path.GetFullPath(
@@ -1055,9 +1238,17 @@ public sealed class HomeMarkupBindingTests
         Assert.Contains("EnemyAmbush", migration);
         Assert.Contains("MutualContact", migration);
         Assert.Contains("raid_combat_travel_player_spots_camp", migration);
+        Assert.Contains("raid_neutral_travel_area_clear", migration);
+        Assert.Contains("raid_loot_travel_filing_cache", migration);
         Assert.Contains("raid_combat_loot_player_hears_movement", migration);
         Assert.Contains("raid_combat_extract_mutual_contact", migration);
+        Assert.Contains("raid_neutral_extract_route_clear", migration);
+        Assert.Contains("raid_loot_extract_abandoned_cache", migration);
         Assert.Contains("You spot an enemy camp before they see you.", migration);
+        Assert.Contains("The route is quiet for the moment.", migration);
+        Assert.Contains("You find a small cache while moving through the area.", migration);
+        Assert.Contains("The final stretch to extract is quiet.", migration);
+        Assert.Contains("You spot an abandoned cache near the extraction route.", migration);
         Assert.Contains("You hear movement while looting and catch them before they spot you.", migration);
         Assert.Contains("You and a guard on the extraction route notice each other at the same time.", migration);
         Assert.Contains("selected_combat_table_key text", migration);

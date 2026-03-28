@@ -57,12 +57,12 @@ else if (!_inRaid)
                         </div>
                     }
                     <button class="action" disabled="@_statsAccepted" @onclick="AcceptStatsAsync">Accept Stats</button>
-                    <button class="action" disabled="@(!CanReallocateStats)" @onclick="ReallocateStatsAsync">Re-Allocate ($5000)</button>
+                    <button class="action" disabled="@(!CanReallocateStats)" @onclick="ReallocateStatsAsync">Re-Allocate (@GetReallocateStatCostLabel())</button>
                 </div>
             </div>
         </div>
         <div class="grid-two">
-            <LoadoutPanel OnPersonItems="_onPersonItems" CanStashItem="CanStashOnPersonItem" CanStartRaid="CanStartMainRaid" RaidBlockReason="@RaidBlockReason" EncumbranceText="@GetPreRaidEncumbranceText()" CanSellItem="CanSellItem" GetSellPrice="GetSellPrice" IsSlotType="IsSlotType" OnEquip="EquipOnPersonItemAsync" OnUnequip="UnequipOnPersonItemAsync" OnStore="StashOnPersonItemAsync" OnSell="SellOnPersonItemAsync" OnStartRaid="StartMainRaidAsync" />
+            <LoadoutPanel OnPersonItems="_onPersonItems" CanStashItem="CanStashOnPersonItem" CanStartRaid="CanStartMainRaid" RaidBlockReason="@RaidBlockReason" EncumbranceText="@GetPreRaidEncumbranceText()" MaxEncumbrance="GetMainCharacterMaxEncumbrance()" CanSellItem="CanSellItem" GetSellPrice="GetSellPrice" IsSlotType="IsSlotType" OnEquip="EquipOnPersonItemAsync" OnUnequip="UnequipOnPersonItemAsync" OnStore="StashOnPersonItemAsync" OnSell="SellOnPersonItemAsync" OnStartRaid="StartMainRaidAsync" />
             <StashPanel Items="_mainGame.Stash" GetPrimaryActionLabel="GetStashPrimaryActionLabel" CanSellItem="CanSellItem" GetSellPrice="GetSellPrice" CanMoveToLoadoutItem="CanAddOnPersonItem" OnMoveToLoadout="MoveStashToOnPersonAsync" OnSell="SellStashItemAsync" />
         </div>
     </section>

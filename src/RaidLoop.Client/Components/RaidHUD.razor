@@ -21,6 +21,10 @@
     <div class="encounter">
         <h3>@EncounterTitle</h3>
         <p>@EncounterDescription</p>
+        @if (ExtractHoldActive)
+        {
+            <p class="extract-hold-status">Hold active for @GetExtractHoldCountdownText()</p>
+        }
 
         @if (EncounterType == EncounterType.Combat)
         {
@@ -138,23 +142,23 @@
         else if (EncounterType == EncounterType.Extraction)
         {
             <div class="actions">
-                <button class="action" @onclick="() => OnAttemptExtract.InvokeAsync()">Attempt Extraction</button>
-                <button class="action" @onclick="() => OnStayAtExtract.InvokeAsync()">Stay at Extract</button>
+                <button class="action" disabled="@ExtractHoldActive" @onclick="() => OnAttemptExtract.InvokeAsync()">Attempt Extraction</button>
+                <button class="action" @onclick="() => OnStartExtractHold.InvokeAsync()">Hold at Extract</button>
             </div>
         }
         else if (EncounterType == EncounterType.Neutral)
         {
             <div class="actions">
-                <button class="action" @onclick="() => OnGoDeeper.InvokeAsync()">Go Deeper</button>
-                <button class="action" @onclick="() => OnMoveTowardExtract.InvokeAsync()">Move Toward Extract</button>
+                <button class="action" disabled="@ExtractHoldActive" @onclick="() => OnGoDeeper.InvokeAsync()">Go Deeper</button>
+                <button class="action" disabled="@ExtractHoldActive" @onclick="() => OnMoveTowardExtract.InvokeAsync()">Move Toward Extract</button>
             </div>
         }
 
         @if (AwaitingDecision || EncounterType == EncounterType.Loot)
         {
             <div class="actions top-gap">
-                <button class="action" @onclick="() => OnGoDeeper.InvokeAsync()">Go Deeper</button>
-                <button class="action" @onclick="() => OnMoveTowardExtract.InvokeAsync()">Move Toward Extract</button>
+                <button class="action" disabled="@ExtractHoldActive" @onclick="() => OnGoDeeper.InvokeAsync()">Go Deeper</button>
+                <button class="action" disabled="@ExtractHoldActive" @onclick="() => OnMoveTowardExtract.InvokeAsync()">Move Toward Extract</button>
             </div>
         }
 
@@ -211,6 +215,8 @@
     [Parameter, EditorRequired] public bool CanUseMedkit { get; set; }
     [Parameter, EditorRequired] public Func<Item, bool> CanLootItem { get; set; } = _ => false;
     [Parameter, EditorRequired] public Func<Item, bool> CanEquipItem { get; set; } = _ => false;
+    [Parameter, EditorRequired] public bool ExtractHoldActive { get; set; }
+    [Parameter] public DateTimeOffset? HoldAtExtractUntil { get; set; }
     [Parameter, EditorRequired] public EventCallback OnAttack { get; set; }
     [Parameter, EditorRequired] public EventCallback OnBurstFire { get; set; }
     [Parameter, EditorRequired] public EventCallback OnFullAuto { get; set; }
@@ -224,7 +230,7 @@
     [Parameter, EditorRequired] public EventCallback<Item> OnEquipFromCarried { get; set; }
     [Parameter, EditorRequired] public EventCallback OnAttemptExtract { get; set; }
     [Parameter, EditorRequired] public EventCallback OnGoDeeper { get; set; }
-    [Parameter, EditorRequired] public EventCallback OnStayAtExtract { get; set; }
+    [Parameter, EditorRequired] public EventCallback OnStartExtractHold { get; set; }
     [Parameter, EditorRequired] public EventCallback OnMoveTowardExtract { get; set; }
 
     private string GetOpeningPhaseSummary()
@@ -270,6 +276,22 @@
     private static bool IsEquipable(Item item)
     {
         return item.Type is ItemType.Weapon or ItemType.Armor or ItemType.Backpack;
+    }
+
+    private string GetExtractHoldCountdownText()
+    {
+        if (HoldAtExtractUntil is null)
+        {
+            return string.Empty;
+        }
+
+        var left = HoldAtExtractUntil.Value - DateTimeOffset.UtcNow;
+        if (left < TimeSpan.Zero)
+        {
+            left = TimeSpan.Zero;
+        }
+
+        return $"{left.Minutes:D2}:{left.Seconds:D2}";
     }
 
     private bool IsTooHeavyToCarry(Item item)

@@ -199,9 +199,9 @@ public sealed class RaidActionApiTests
     }
 
     [Fact]
-    public async Task StayAtExtract_CallsBackend_And_AppliesReturnedRaidSnapshot()
+    public async Task StartExtractHoldAsync_CallsBackend_And_UpdatesExtractionState()
     {
-        var actionClient = CreateActionClient("stay-at-extract", _ =>
+        var actionClient = CreateActionClient("start-extract-hold", _ =>
             CreateRaidResult("""
                 {
                   "raid": {
@@ -234,7 +234,7 @@ public sealed class RaidActionApiTests
         var home = CreateHome(actionClient);
         SeedRaid(home);
 
-        await InvokePrivateAsync(home, "StayAtExtract");
+        await InvokePrivateAsync(home, "StartExtractHoldAsync");
 
         Assert.Single(actionClient.Requests);
         Assert.Equal(EncounterType.Extraction, Assert.IsType<EncounterType>(GetField(home, "_encounterType")));
@@ -425,7 +425,7 @@ public sealed class RaidActionApiTests
         var home = CreateHome(actionClient);
 
         await InvokePrivateAsync(home, "GoDeeper");
-        await InvokePrivateAsync(home, "StayAtExtract");
+        await InvokePrivateAsync(home, "StartExtractHoldAsync");
         await InvokePrivateAsync(home, "MoveTowardExtract");
         await InvokePrivateAsync(home, "AttemptExtractAsync");
 

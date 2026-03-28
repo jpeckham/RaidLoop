@@ -1513,16 +1513,6 @@ public partial class Home : IDisposable
         await ExecuteRaidActionAsync("go-deeper", new { });
     }
 
-    private async Task StayAtExtract()
-    {
-        if (_raid is null)
-        {
-            return;
-        }
-
-        await ExecuteRaidActionAsync("stay-at-extract", new { });
-    }
-
     private async Task MoveTowardExtract()
     {
         if (_raid is null)

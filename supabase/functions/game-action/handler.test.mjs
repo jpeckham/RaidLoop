@@ -960,6 +960,71 @@ test("game-action returns encounter-advanced projections for stay-at-extract", a
   assert.equal("extractRequired" in body.projections.raid, false);
 });
 
+test("game-action returns encounter-advanced projections for start-extract-hold", async () => {
+  const handler = createGameActionHandler({
+    dispatchAction: async (accessToken, action, payload) => {
+      assert.equal(accessToken, "token-123");
+      assert.equal(action, "start-extract-hold");
+      assert.equal(payload.knownLogCount, 0);
+      return {
+        money: 500,
+        mainStash: [],
+        onPersonItems: [],
+        randomCharacterAvailableAt: "0001-01-01T00:00:00+00:00",
+        randomCharacter: null,
+        activeRaid: {
+          health: 24,
+          backpackCapacity: 3,
+          ammo: 8,
+          medkits: 1,
+          lootSlots: 0,
+          challenge: 2,
+          distanceFromExtract: 0,
+          extractHoldActive: true,
+          holdAtExtractUntil: "2026-03-28T18:30:00Z",
+          encounterType: "Extraction",
+          encounterTitle: "Extraction Opportunity",
+          encounterDescription: "Holding at extract.",
+          enemyName: "",
+          enemyHealth: 0,
+          lootContainer: "",
+          awaitingDecision: false,
+          discoveredLoot: [],
+          carriedLoot: [],
+          equippedItems: [],
+          logEntries: [
+            "You begin holding at extract.",
+          ],
+        },
+      };
+    },
+  });
+
+  const response = await handler(new Request("https://example.test/game-action", {
+    method: "POST",
+    headers: {
+      Authorization: "Bearer token-123",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      action: "start-extract-hold",
+      payload: { knownLogCount: 0 },
+    }),
+  }));
+
+  const body = await response.json();
+  assert.equal(body.eventType, "EncounterAdvanced");
+  assert.deepEqual(body.event, { action: "start-extract-hold" });
+  assert.equal(body.projections.raid.extractHoldActive, true);
+  assert.equal(body.projections.raid.holdAtExtractUntil, "2026-03-28T18:30:00Z");
+  assert.equal(body.projections.raid.encounterType, "Extraction");
+  assert.equal(body.projections.raid.challenge, 2);
+  assert.equal(body.projections.raid.distanceFromExtract, 0);
+  assert.equal("extractProgress" in body.projections.raid, false);
+  assert.equal("extractRequired" in body.projections.raid, false);
+  assert.deepEqual(body.projections.raid.logEntriesAdded, ["You begin holding at extract."]);
+});
+
 test("game-action returns raid-finished projections for attempt-extract", async () => {
   const handler = createGameActionHandler({
     dispatchAction: async (accessToken, action, payload) => {

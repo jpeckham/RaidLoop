@@ -64,6 +64,8 @@ public sealed class HomeMarkupBindingTests
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026032706_half_cash_respec_cost.sql"));
     private static readonly string ChallengeZeroTravelRebalanceMigrationPath = Path.GetFullPath(
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026032801_rebalance_challenge_zero_travel_and_enemy_progression.sql"));
+    private static readonly string DerivedMaxHealthMigrationPath = Path.GetFullPath(
+        Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026032802_derive_player_max_health_from_constitution.sql"));
     private static readonly string ItemWeightRebalanceMigrationPath = Path.GetFullPath(
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026032708_rebalance_item_weights.sql"));
     private static readonly string ReallocateStatsJsonNullGuardMigrationPath = Path.GetFullPath(
@@ -1115,6 +1117,26 @@ public sealed class HomeMarkupBindingTests
         Assert.Contains("enemy_loadout := game.random_enemy_loadout_from_table(game.challenge_enemy_loadout_table(challenge));", migration);
         Assert.Contains("enemy_stats := game.challenge_enemy_stats(challenge);", migration);
         Assert.Contains("selected_loot_table_key := game.challenge_encounter_loot_table(", migration);
+    }
+
+    [Fact]
+    public void DerivedMaxHealthMigration_RecomputesMaxHealthFromAcceptedConstitution()
+    {
+        Assert.True(File.Exists(DerivedMaxHealthMigrationPath));
+
+        var migration = File.ReadAllText(DerivedMaxHealthMigrationPath);
+
+        Assert.Contains("create or replace function game.normalize_save_payload(payload jsonb)", migration);
+        Assert.Contains("accepted_stats_source jsonb := coalesce(payload->'acceptedStats', payload->'AcceptedStats', '{}'::jsonb);", migration);
+        Assert.Contains("normalized_player_constitution int := greatest(coalesce((accepted_stats_source->>'constitution')::int, (accepted_stats_source->>'Constitution')::int, 8), 0);", migration);
+        Assert.Contains("derived_player_max_health int := 10 + (2 * normalized_player_constitution);", migration);
+        Assert.Contains("'playerMaxHealth', derived_player_max_health", migration);
+        Assert.Contains("update public.game_saves", migration);
+        Assert.Contains("create or replace function game.apply_profile_action(action text, payload jsonb, target_user_id uuid default auth.uid())", migration);
+        Assert.Contains("'playerConstitution', coalesce((coalesce(save_payload->'acceptedStats', accepted_stats)->>'constitution')::int, 8)", migration);
+        Assert.Contains("'playerMaxHealth', 10 + (2 * coalesce((coalesce(save_payload->'acceptedStats', accepted_stats)->>'constitution')::int, 8))", migration);
+        Assert.DoesNotContain("coalesce(nullif(greatest(coalesce((payload->>'playerMaxHealth')::int, (payload->>'PlayerMaxHealth')::int, 0), 0), 0), derived_player_max_health)", migration);
+        Assert.DoesNotContain("'playerMaxHealth', coalesce((save_payload->>'playerMaxHealth')::int, 26)", migration);
     }
 
     [Fact]

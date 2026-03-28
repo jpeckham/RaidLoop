@@ -1,3 +1,10 @@
+alter table game.encounter_table_entries
+    add column if not exists challenge_min int not null default 0,
+    add column if not exists challenge_max_exclusive int not null default 2147483647,
+    add column if not exists enemy_dexterity int not null default 10,
+    add column if not exists enemy_constitution int not null default 10,
+    add column if not exists enemy_strength int not null default 10;
+
 insert into game.enemy_loadout_tables (table_key, name, enabled)
 values
     ('challenge_0_enemy_loadout', 'Challenge 0 Enemy Loadouts', true),

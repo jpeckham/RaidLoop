@@ -1083,6 +1083,12 @@ public sealed class HomeMarkupBindingTests
         Assert.Contains("challenge_5_enemy_loadout", migration);
         Assert.Contains("challenge_0_travel_cache", migration);
         Assert.Contains("challenge_0_extract_cache", migration);
+        Assert.Contains("alter table game.encounter_table_entries", migration);
+        Assert.Contains("add column if not exists challenge_min int not null default 0", migration);
+        Assert.Contains("add column if not exists challenge_max_exclusive int not null default 2147483647", migration);
+        Assert.Contains("add column if not exists enemy_dexterity int not null default 10", migration);
+        Assert.Contains("add column if not exists enemy_constitution int not null default 10", migration);
+        Assert.Contains("add column if not exists enemy_strength int not null default 10", migration);
         Assert.Contains("create or replace function game.challenge_enemy_loadout_table(challenge int)", migration);
         Assert.Contains("create or replace function game.challenge_enemy_stats(challenge int)", migration);
         Assert.Contains("create or replace function game.challenge_encounter_loot_table(entry_key text, loot_table_key text, challenge int)", migration);

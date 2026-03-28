@@ -66,6 +66,8 @@ public sealed class HomeMarkupBindingTests
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026032801_rebalance_challenge_zero_travel_and_enemy_progression.sql"));
     private static readonly string DerivedMaxHealthMigrationPath = Path.GetFullPath(
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026032802_derive_player_max_health_from_constitution.sql"));
+    private static readonly string ExtractHoldBalanceMigrationPath = Path.GetFullPath(
+        Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026032803_extract_hold_balance.sql"));
     private static readonly string ItemWeightRebalanceMigrationPath = Path.GetFullPath(
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026032708_rebalance_item_weights.sql"));
     private static readonly string ReallocateStatsJsonNullGuardMigrationPath = Path.GetFullPath(
@@ -1318,6 +1320,21 @@ public sealed class HomeMarkupBindingTests
         Assert.Contains("enemy_dropped_items", deathDropBlock);
         Assert.Contains("enemy_loadout", deathDropBlock);
         Assert.DoesNotContain("game.random_enemy_loadout()", deathDropBlock);
+    }
+
+    [Fact]
+    public void ExtractHoldBalanceMigrationDefinesExtractHoldActionsAndState()
+    {
+        Assert.True(File.Exists(ExtractHoldBalanceMigrationPath));
+
+        var migration = File.ReadAllText(ExtractHoldBalanceMigrationPath);
+
+        Assert.Contains("start-extract-hold", migration);
+        Assert.Contains("resolve-extract-hold", migration);
+        Assert.Contains("'{extractHoldActive}'", migration);
+        Assert.Contains("'{holdAtExtractUntil}'", migration);
+        Assert.Contains("Extract Hold Encounter Table", migration);
+        Assert.Contains("extract_hold", migration);
     }
 
     [Fact]

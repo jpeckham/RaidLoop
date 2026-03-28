@@ -676,6 +676,11 @@ public partial class Home : IDisposable
         var health = raidState.Health;
         var backpackCapacity = raidState.BackpackCapacity;
         var hasRaidPatch = freshRaid;
+        var holdProjectionSeen = false;
+        var parsedExtractHoldActive = false;
+        DateTimeOffset? parsedHoldAtExtractUntil = null;
+        var extractHoldActiveSeen = false;
+        var holdAtExtractUntilSeen = false;
 
         if (TryGetInt32(raid, "health", out var parsedHealth))
         {
@@ -706,14 +711,24 @@ public partial class Home : IDisposable
 
         if (TryGetBool(raid, "extractHoldActive", out var extractHoldActive))
         {
-            _extractHoldActive = extractHoldActive;
+            parsedExtractHoldActive = extractHoldActive;
+            extractHoldActiveSeen = true;
+            holdProjectionSeen = true;
             hasRaidPatch = true;
         }
 
         if (TryGetNullableDateTimeOffset(raid, "holdAtExtractUntil", out var holdAtExtractUntil))
         {
-            _holdAtExtractUntil = holdAtExtractUntil;
+            parsedHoldAtExtractUntil = holdAtExtractUntil;
+            holdAtExtractUntilSeen = true;
+            holdProjectionSeen = true;
             hasRaidPatch = true;
+        }
+
+        if (holdProjectionSeen)
+        {
+            _extractHoldActive = extractHoldActiveSeen ? parsedExtractHoldActive : false;
+            _holdAtExtractUntil = holdAtExtractUntilSeen ? parsedHoldAtExtractUntil : null;
         }
 
         if (TryGetProjection(raid, "equippedItems", out var equippedItems))

@@ -378,6 +378,47 @@ public sealed class RaidActionApiTests
     }
 
     [Fact]
+    public void RaidProjection_ClearsHoldTimestamp_WhenPartialUpdateDisablesExtractHold()
+    {
+        var home = CreateHome(new FakeGameActionApiClient());
+        SeedRaid(home);
+
+        InvokePrivate(
+            home,
+            "ApplyActionResult",
+            new GameActionResult(
+                "RaidUpdated",
+                null,
+                JsonDocument.Parse("""
+                    {
+                      "raid": {
+                        "extractHoldActive": true,
+                        "holdAtExtractUntil": "2026-03-28T12:34:56Z"
+                      }
+                    }
+                    """).RootElement.Clone(),
+                null));
+
+        InvokePrivate(
+            home,
+            "ApplyActionResult",
+            new GameActionResult(
+                "RaidUpdated",
+                null,
+                JsonDocument.Parse("""
+                    {
+                      "raid": {
+                        "extractHoldActive": false
+                      }
+                    }
+                    """).RootElement.Clone(),
+                null));
+
+        Assert.False(Assert.IsType<bool>(GetField(home, "_extractHoldActive")));
+        Assert.Null(GetField(home, "_holdAtExtractUntil"));
+    }
+
+    [Fact]
     public async Task RaidMovementActions_DoNotDispatch_WhenRaidIsMissing()
     {
         var actionClient = CreateActionClient("unused", _ => throw new InvalidOperationException("Should not dispatch."));

@@ -54,6 +54,8 @@ public sealed class HomeMarkupBindingTests
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026032606_restore_raid_session_persistence_for_stat_aware_raid_start.sql"));
     private static readonly string StrengthEncumbranceMigrationPath = Path.GetFullPath(
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026032701_add_strength_encumbrance.sql"));
+    private static readonly string ReallocateStatsJsonNullGuardMigrationPath = Path.GetFullPath(
+        Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026032702_fix_reallocate_stats_json_null_guard.sql"));
     private static readonly string SupabaseAuthServicePath = Path.GetFullPath(
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "RaidLoop.Client", "Services", "SupabaseAuthService.cs"));
     private static readonly string ClientTelemetryServicePath = Path.GetFullPath(
@@ -908,6 +910,22 @@ public sealed class HomeMarkupBindingTests
         Assert.Contains("values (target_user_id, 'random', raid_snapshot)", migration);
         Assert.Contains("save_payload := jsonb_set(save_payload, '{activeRaid}', raid_snapshot, true);", migration);
         Assert.Contains("update public.game_saves", migration);
+    }
+
+    [Fact]
+    public void ReallocateStatsHotfixTreatsJsonNullActiveRaidAsOutOfRaid()
+    {
+        Assert.True(File.Exists(ReallocateStatsJsonNullGuardMigrationPath));
+
+        var migration = File.ReadAllText(ReallocateStatsJsonNullGuardMigrationPath);
+
+        Assert.Contains("create or replace function game.apply_profile_action(action text, payload jsonb, target_user_id uuid default auth.uid())", migration);
+        Assert.Contains("active_raid := coalesce(save_payload->'activeRaid', 'null'::jsonb);", migration);
+        Assert.Contains("when 'reallocate-stats' then", migration);
+        Assert.Contains("if active_raid = 'null'::jsonb and coalesce((save_payload->>'money')::int, 0) >= 5000 then", migration);
+        Assert.Contains("save_payload := jsonb_set(save_payload, '{draftStats}', normalized_draft_stats, true);", migration);
+        Assert.Contains("save_payload := jsonb_set(save_payload, '{availableStatPoints}', to_jsonb(27), true);", migration);
+        Assert.Contains("save_payload := jsonb_set(save_payload, '{statsAccepted}', 'false'::jsonb, true);", migration);
     }
 
     [Fact]

@@ -507,7 +507,7 @@ public sealed class HomeMarkupBindingTests
         var neutralBlockEnd = markup.IndexOf("@if (AwaitingDecision || EncounterType == EncounterType.Loot)", neutralBlockStart, StringComparison.Ordinal);
         var neutralBlock = markup.Substring(neutralBlockStart, neutralBlockEnd - neutralBlockStart);
         var extractAttemptIndex = extractionBlock.IndexOf("Attempt Extraction", StringComparison.Ordinal);
-        var stayIndex = extractionBlock.IndexOf("Stay at Extract", StringComparison.Ordinal);
+        var holdIndex = extractionBlock.IndexOf("Hold at Extract", StringComparison.Ordinal);
         var goDeeperIndex = neutralBlock.IndexOf("Go Deeper", StringComparison.Ordinal);
         var moveTowardIndex = neutralBlock.IndexOf("Move Toward Extract", StringComparison.Ordinal);
 
@@ -515,15 +515,15 @@ public sealed class HomeMarkupBindingTests
         Assert.True(neutralBlockStart > extractionBlockStart);
         Assert.True(neutralBlockEnd > neutralBlockStart);
         Assert.Contains("Attempt Extraction", extractionBlock);
-        Assert.Contains("Stay at Extract", extractionBlock);
+        Assert.Contains("Hold at Extract", extractionBlock);
         Assert.DoesNotContain("Go Deeper", extractionBlock);
         Assert.DoesNotContain("Move Toward Extract", extractionBlock);
         Assert.True(extractAttemptIndex >= 0);
-        Assert.True(stayIndex > extractAttemptIndex);
+        Assert.True(holdIndex > extractAttemptIndex);
         Assert.Contains("Go Deeper", neutralBlock);
         Assert.Contains("Move Toward Extract", neutralBlock);
         Assert.DoesNotContain("Attempt Extraction", neutralBlock);
-        Assert.DoesNotContain("Stay at Extract", neutralBlock);
+        Assert.DoesNotContain("Hold at Extract", neutralBlock);
         Assert.True(goDeeperIndex >= 0);
         Assert.True(moveTowardIndex > goDeeperIndex);
         var continueSearching = string.Concat("Continue", " Searching");
@@ -1335,6 +1335,10 @@ public sealed class HomeMarkupBindingTests
         Assert.Contains("'{holdAtExtractUntil}'", migration);
         Assert.Contains("Extract Hold Encounter Table", migration);
         Assert.Contains("extract_hold", migration);
+        Assert.Contains("create or replace function game.perform_raid_action", migration);
+        Assert.DoesNotContain("perform_extract_hold_action", migration);
+        Assert.DoesNotContain("challenge_enemy_stats(challenge)", migration);
+        Assert.DoesNotContain("challenge_enemy_loadout_table(challenge)", migration);
     }
 
     [Fact]

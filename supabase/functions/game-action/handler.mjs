@@ -50,6 +50,8 @@ const ENCOUNTER_ACTIONS = new Set([
   "move-toward-extract",
   "stay-at-extract",
   "start-extract-hold",
+  "resolve-extract-hold",
+  "cancel-extract-hold",
   "attempt-extract",
 ]);
 

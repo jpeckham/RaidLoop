@@ -40,6 +40,7 @@ public partial class Home : IDisposable
     private int? _raidMaxEncumbrance;
     private bool _extractHoldActive;
     private DateTimeOffset? _holdAtExtractUntil;
+    private bool _extractHoldResolutionInFlight;
     private EncounterType _encounterType = EncounterType.Neutral;
     private string _encounterDescription = string.Empty;
     private string _contactState = string.Empty;
@@ -88,7 +89,11 @@ public partial class Home : IDisposable
 
         _clockTimer = new System.Threading.Timer(async _ =>
         {
-            await InvokeAsync(StateHasChanged);
+            await InvokeAsync(async () =>
+            {
+                await ResolveExpiredExtractHoldAsync();
+                StateHasChanged();
+            });
         }, null, TimeSpan.Zero, TimeSpan.FromSeconds(1));
 
         _isLoading = false;
@@ -649,6 +654,7 @@ public partial class Home : IDisposable
             _raidMaxEncumbrance = null;
             _extractHoldActive = false;
             _holdAtExtractUntil = null;
+            _extractHoldResolutionInFlight = false;
             _raid = new RaidState(_maxHealth, new RaidInventory());
             _inRaid = true;
             _awaitingDecision = false;
@@ -943,6 +949,7 @@ public partial class Home : IDisposable
         _raidMaxEncumbrance = null;
         _extractHoldActive = false;
         _holdAtExtractUntil = null;
+        _extractHoldResolutionInFlight = false;
         _inRaid = false;
         _awaitingDecision = false;
         _challenge = 0;
@@ -1525,12 +1532,43 @@ public partial class Home : IDisposable
 
     private async Task StartExtractHoldAsync()
     {
-        if (_raid is null || IsExtractHoldEffectivelyActive())
+        if (_raid is null || IsExtractHoldEffectivelyActive() || _extractHoldResolutionInFlight)
         {
             return;
         }
 
         await ExecuteRaidActionAsync("start-extract-hold", new { });
+    }
+
+    private async Task CancelExtractHoldAsync()
+    {
+        if (_raid is null || !_extractHoldActive || _extractHoldResolutionInFlight)
+        {
+            return;
+        }
+
+        await ExecuteRaidActionAsync("cancel-extract-hold", new { });
+    }
+
+    private async Task ResolveExpiredExtractHoldAsync()
+    {
+        if (_raid is null || !HasExpiredExtractHold() || _extractHoldResolutionInFlight)
+        {
+            return;
+        }
+
+        _extractHoldResolutionInFlight = true;
+        try
+        {
+            await ExecuteRaidActionAsync("resolve-extract-hold", new
+            {
+                holdAtExtractUntil = _holdAtExtractUntil?.ToString("O")
+            });
+        }
+        finally
+        {
+            _extractHoldResolutionInFlight = false;
+        }
     }
 
     private bool IsExtractHoldEffectivelyActive()
@@ -1541,6 +1579,13 @@ public partial class Home : IDisposable
         }
 
         return _holdAtExtractUntil is null || _holdAtExtractUntil > DateTimeOffset.UtcNow;
+    }
+
+    private bool HasExpiredExtractHold()
+    {
+        return _extractHoldActive
+            && _holdAtExtractUntil is not null
+            && _holdAtExtractUntil <= DateTimeOffset.UtcNow;
     }
 
     private ValueTask ReportHandledErrorAsync(string message, string source, Exception exception, object? context = null)
@@ -1694,6 +1739,7 @@ public partial class Home : IDisposable
             _inRaid = false;
             _extractHoldActive = false;
             _holdAtExtractUntil = null;
+            _extractHoldResolutionInFlight = false;
             _contactState = string.Empty;
             _surpriseSide = string.Empty;
             _initiativeWinner = string.Empty;

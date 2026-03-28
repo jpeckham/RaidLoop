@@ -144,6 +144,10 @@
             <div class="actions">
                 <button class="action" disabled="@IsExtractHoldEffectivelyActive()" @onclick="() => OnAttemptExtract.InvokeAsync()">Attempt Extraction</button>
                 <button class="action" disabled="@IsExtractHoldEffectivelyActive()" @onclick="() => OnStartExtractHold.InvokeAsync()">Hold at Extract</button>
+                @if (ExtractHoldActive)
+                {
+                    <button class="action" @onclick="() => OnCancelExtractHold.InvokeAsync()">Cancel Hold</button>
+                }
             </div>
         }
         else if (EncounterType == EncounterType.Neutral)
@@ -231,6 +235,7 @@
     [Parameter, EditorRequired] public EventCallback OnAttemptExtract { get; set; }
     [Parameter, EditorRequired] public EventCallback OnGoDeeper { get; set; }
     [Parameter, EditorRequired] public EventCallback OnStartExtractHold { get; set; }
+    [Parameter, EditorRequired] public EventCallback OnCancelExtractHold { get; set; }
     [Parameter, EditorRequired] public EventCallback OnMoveTowardExtract { get; set; }
 
     private bool IsExtractHoldEffectivelyActive()

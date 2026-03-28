@@ -1,3 +1,4 @@
+using System.IO;
 using System.Reflection;
 using System.Text.Json;
 using RaidLoop.Client;
@@ -199,9 +200,9 @@ public sealed class RaidActionApiTests
     }
 
     [Fact]
-    public async Task StayAtExtract_CallsBackend_And_AppliesReturnedRaidSnapshot()
+    public async Task StartExtractHoldAsync_CallsBackend_And_UpdatesExtractionState()
     {
-        var actionClient = CreateActionClient("stay-at-extract", _ =>
+        var actionClient = CreateActionClient("start-extract-hold", _ =>
             CreateRaidResult("""
                 {
                   "raid": {
@@ -234,12 +235,200 @@ public sealed class RaidActionApiTests
         var home = CreateHome(actionClient);
         SeedRaid(home);
 
-        await InvokePrivateAsync(home, "StayAtExtract");
+        await InvokePrivateAsync(home, "StartExtractHoldAsync");
 
         Assert.Single(actionClient.Requests);
         Assert.Equal(EncounterType.Extraction, Assert.IsType<EncounterType>(GetField(home, "_encounterType")));
         Assert.Equal(5, Assert.IsType<int>(GetField(home, "_challenge")));
         Assert.Equal(1, Assert.IsType<int>(GetField(home, "_distanceFromExtract")));
+    }
+
+    [Fact]
+    public async Task StartExtractHoldAsync_CallsBackend_And_AppliesReturnedRaidSnapshot()
+    {
+        var actionClient = CreateActionClient("start-extract-hold", _ =>
+            CreateRaidResult("""
+                {
+                  "raid": {
+                    "health": 28,
+                    "ammo": 8,
+                    "weaponMalfunction": false,
+                    "encounterType": "Extraction",
+                    "encounterDescription": "Server extraction hold",
+                    "contactState": "None",
+                    "surpriseSide": "None",
+                    "initiativeWinner": "None",
+                    "openingActionsRemaining": 0,
+                    "surprisePersistenceEligible": false,
+                    "enemyName": "",
+                    "enemyHealth": 0,
+                    "lootContainer": "",
+                    "awaitingDecision": false,
+                    "challenge": 5,
+                    "distanceFromExtract": 0,
+                    "extractHoldActive": true,
+                    "holdAtExtractUntil": "2026-03-28T12:34:56Z",
+                    "discoveredLoot": [],
+                    "carriedLoot": [],
+                    "equippedItems": [
+                      { "name": "AK74", "type": 0, "value": 320, "slots": 1, "rarity": 2, "displayRarity": 3 },
+                      { "name": "Small Backpack", "type": 2, "value": 75, "slots": 2, "rarity": 2, "displayRarity": 3 }
+                    ],
+                    "logEntries": ["Raid updated on server."]
+                  }
+                }
+                """));
+        var home = CreateHome(actionClient);
+        SeedRaid(home);
+
+        await InvokePrivateAsync(home, "StartExtractHoldAsync");
+
+        Assert.Single(actionClient.Requests);
+        Assert.Equal(EncounterType.Extraction, Assert.IsType<EncounterType>(GetField(home, "_encounterType")));
+        Assert.True(Assert.IsType<bool>(GetField(home, "_extractHoldActive")));
+        Assert.Equal(DateTimeOffset.Parse("2026-03-28T12:34:56Z"), (DateTimeOffset?)GetField(home, "_holdAtExtractUntil"));
+    }
+
+    [Fact]
+    public void ExpiredExtractHold_IsNotTreatedAsActive()
+    {
+        var home = CreateHome(new FakeGameActionApiClient());
+        SeedRaid(home);
+
+        SetField(home, "_extractHoldActive", true);
+        SetField(home, "_holdAtExtractUntil", DateTimeOffset.UtcNow.AddSeconds(-1));
+
+        Assert.False(InvokePrivateBool(home, "IsExtractHoldEffectivelyActive"));
+    }
+
+    [Fact]
+    public async Task StartExtractHoldAsync_DoesNotDispatch_WhenExtractHoldIsAlreadyActive()
+    {
+        var actionClient = CreateActionClient("unused", _ => throw new InvalidOperationException("Should not dispatch."));
+        var home = CreateHome(actionClient);
+        SeedRaid(home);
+
+        SetField(home, "_extractHoldActive", true);
+        SetField(home, "_holdAtExtractUntil", DateTimeOffset.UtcNow.AddMinutes(1));
+
+        await InvokePrivateAsync(home, "StartExtractHoldAsync");
+
+        Assert.Empty(actionClient.Requests);
+    }
+
+    [Fact]
+    public async Task ResolveExpiredExtractHoldAsync_DispatchesResolveAction()
+    {
+        var actionClient = CreateActionClient("resolve-extract-hold", payload =>
+        {
+            Assert.Equal("2026-03-28T12:34:56.0000000+00:00", payload.GetProperty("holdAtExtractUntil").GetString());
+            return CreateRaidResult("""
+                {
+                  "raid": {
+                    "health": 28,
+                    "ammo": 8,
+                    "weaponMalfunction": false,
+                    "encounterType": "Combat",
+                    "encounterDescription": "Hunter contact.",
+                    "contactState": "MutualContact",
+                    "surpriseSide": "None",
+                    "initiativeWinner": "Enemy",
+                    "openingActionsRemaining": 0,
+                    "surprisePersistenceEligible": false,
+                    "enemyName": "Extract Hunter",
+                    "enemyHealth": 14,
+                    "lootContainer": "",
+                    "awaitingDecision": false,
+                    "challenge": 6,
+                    "distanceFromExtract": 0,
+                    "extractHoldActive": false,
+                    "holdAtExtractUntil": null,
+                    "discoveredLoot": [],
+                    "carriedLoot": [],
+                    "equippedItems": [],
+                    "logEntries": ["You finish holding at extract."]
+                  }
+                }
+                """);
+        });
+        var home = CreateHome(actionClient);
+        SeedRaid(home);
+        SetField(home, "_extractHoldActive", true);
+        SetField(home, "_holdAtExtractUntil", DateTimeOffset.Parse("2026-03-28T12:34:56Z"));
+
+        await InvokePrivateAsync(home, "ResolveExpiredExtractHoldAsync");
+
+        Assert.Single(actionClient.Requests);
+        Assert.False(Assert.IsType<bool>(GetField(home, "_extractHoldActive")));
+        Assert.Equal(EncounterType.Combat, Assert.IsType<EncounterType>(GetField(home, "_encounterType")));
+    }
+
+    [Fact]
+    public async Task CancelExtractHoldAsync_CallsBackend_And_ClearsHoldState()
+    {
+        var actionClient = CreateActionClient("cancel-extract-hold", _ =>
+            CreateRaidResult("""
+                {
+                  "raid": {
+                    "health": 28,
+                    "ammo": 8,
+                    "weaponMalfunction": false,
+                    "encounterType": "Extraction",
+                    "encounterDescription": "You are near the extraction route.",
+                    "contactState": "None",
+                    "surpriseSide": "None",
+                    "initiativeWinner": "None",
+                    "openingActionsRemaining": 0,
+                    "surprisePersistenceEligible": false,
+                    "enemyName": "",
+                    "enemyHealth": 0,
+                    "lootContainer": "",
+                    "awaitingDecision": false,
+                    "challenge": 5,
+                    "distanceFromExtract": 0,
+                    "extractHoldActive": false,
+                    "holdAtExtractUntil": null,
+                    "discoveredLoot": [],
+                    "carriedLoot": [],
+                    "equippedItems": [],
+                    "logEntries": ["You stop holding at extract."]
+                  }
+                }
+                """));
+        var home = CreateHome(actionClient);
+        SeedRaid(home);
+        SetField(home, "_extractHoldActive", true);
+        SetField(home, "_holdAtExtractUntil", DateTimeOffset.UtcNow.AddSeconds(10));
+
+        await InvokePrivateAsync(home, "CancelExtractHoldAsync");
+
+        Assert.Single(actionClient.Requests);
+        Assert.False(Assert.IsType<bool>(GetField(home, "_extractHoldActive")));
+        Assert.Null(GetField(home, "_holdAtExtractUntil"));
+        Assert.Equal(EncounterType.Extraction, Assert.IsType<EncounterType>(GetField(home, "_encounterType")));
+    }
+
+    [Fact]
+    public void HomeAndRaidHudMarkup_BindTheExtractHoldContract()
+    {
+        var homeMarkup = File.ReadAllText(HomeMarkupPath);
+        var raidHudMarkup = File.ReadAllText(RaidHudPath);
+
+        Assert.Contains("OnStartExtractHold=\"StartExtractHoldAsync\"", homeMarkup);
+        Assert.Contains("OnCancelExtractHold=\"CancelExtractHoldAsync\"", homeMarkup);
+        Assert.Contains("ExtractHoldActive=\"_extractHoldActive\"", homeMarkup);
+        Assert.Contains("HoldAtExtractUntil=\"_holdAtExtractUntil\"", homeMarkup);
+        Assert.DoesNotContain("OnStayAtExtract", homeMarkup);
+        Assert.Contains("public bool ExtractHoldActive { get; set; }", raidHudMarkup);
+        Assert.Contains("public DateTimeOffset? HoldAtExtractUntil { get; set; }", raidHudMarkup);
+        Assert.Contains("public EventCallback OnCancelExtractHold { get; set; }", raidHudMarkup);
+        Assert.Contains("Hold active for @GetExtractHoldCountdownText()", raidHudMarkup);
+        Assert.Contains("disabled=\"@IsExtractHoldEffectivelyActive()\"", raidHudMarkup);
+        Assert.Contains("Cancel Hold", raidHudMarkup);
+        Assert.Contains("Hold at Extract", raidHudMarkup);
+        Assert.Contains("@GetExtractHoldCountdownText()", raidHudMarkup);
+        Assert.DoesNotContain("Stay at Extract", raidHudMarkup);
+        Assert.DoesNotContain("Contract proof: disabled=\"@ExtractHoldActive\"", raidHudMarkup);
     }
 
     [Fact]
@@ -289,13 +478,97 @@ public sealed class RaidActionApiTests
     }
 
     [Fact]
+    public void ApplyActiveRaidSnapshot_TransfersExtractHoldFieldsIntoClientState()
+    {
+        var home = CreateHome(new FakeGameActionApiClient());
+
+        InvokePrivate(
+            home,
+            "ApplyActiveRaidSnapshot",
+            new RaidSnapshot(
+                Health: 30,
+                BackpackCapacity: 3,
+                Ammo: 8,
+                WeaponMalfunction: false,
+                Medkits: 1,
+                LootSlots: 0,
+                Challenge: 0,
+                DistanceFromExtract: 0,
+                EncounterType: "Extraction",
+                EncounterTitle: "Extraction",
+                EncounterDescription: "Holding extract.",
+                EnemyName: string.Empty,
+                EnemyHealth: 0,
+                EnemyDexterity: 0,
+                EnemyConstitution: 0,
+                EnemyStrength: 0,
+                LootContainer: string.Empty,
+                AwaitingDecision: false,
+                ContactState: "None",
+                SurpriseSide: "None",
+                InitiativeWinner: "None",
+                OpeningActionsRemaining: 0,
+                SurprisePersistenceEligible: false,
+                DiscoveredLoot: [],
+                CarriedLoot: [],
+                EquippedItems: [],
+                LogEntries: [],
+                ExtractHoldActive: true,
+                HoldAtExtractUntil: DateTimeOffset.Parse("2026-03-28T12:34:56Z")));
+
+        Assert.True(Assert.IsType<bool>(GetField(home, "_extractHoldActive")));
+        Assert.Equal(DateTimeOffset.Parse("2026-03-28T12:34:56Z"), (DateTimeOffset?)GetField(home, "_holdAtExtractUntil"));
+    }
+
+    [Fact]
+    public void RaidProjection_ClearsHoldTimestamp_WhenPartialUpdateDisablesExtractHold()
+    {
+        var home = CreateHome(new FakeGameActionApiClient());
+        SeedRaid(home);
+
+        InvokePrivate(
+            home,
+            "ApplyActionResult",
+            new GameActionResult(
+                "RaidUpdated",
+                null,
+                JsonDocument.Parse("""
+                    {
+                      "raid": {
+                        "extractHoldActive": true,
+                        "holdAtExtractUntil": "2026-03-28T12:34:56Z"
+                      }
+                    }
+                    """).RootElement.Clone(),
+                null));
+
+        InvokePrivate(
+            home,
+            "ApplyActionResult",
+            new GameActionResult(
+                "RaidUpdated",
+                null,
+                JsonDocument.Parse("""
+                    {
+                      "raid": {
+                        "extractHoldActive": false
+                      }
+                    }
+                    """).RootElement.Clone(),
+                null));
+
+        Assert.False(Assert.IsType<bool>(GetField(home, "_extractHoldActive")));
+        Assert.Null(GetField(home, "_holdAtExtractUntil"));
+    }
+
+    [Fact]
     public async Task RaidMovementActions_DoNotDispatch_WhenRaidIsMissing()
     {
         var actionClient = CreateActionClient("unused", _ => throw new InvalidOperationException("Should not dispatch."));
         var home = CreateHome(actionClient);
 
         await InvokePrivateAsync(home, "GoDeeper");
-        await InvokePrivateAsync(home, "StayAtExtract");
+        await InvokePrivateAsync(home, "StartExtractHoldAsync");
         await InvokePrivateAsync(home, "MoveTowardExtract");
         await InvokePrivateAsync(home, "AttemptExtractAsync");
 
@@ -455,6 +728,11 @@ public sealed class RaidActionApiTests
             }
         };
     }
+
+    private static readonly string HomeMarkupPath = Path.GetFullPath(
+        Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "RaidLoop.Client", "Pages", "Home.razor"));
+    private static readonly string RaidHudPath = Path.GetFullPath(
+        Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "RaidLoop.Client", "Components", "RaidHUD.razor"));
 
     private static void SetProperty(object instance, string propertyName, object value)
     {

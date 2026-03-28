@@ -66,6 +66,8 @@ public sealed class HomeMarkupBindingTests
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026032801_rebalance_challenge_zero_travel_and_enemy_progression.sql"));
     private static readonly string DerivedMaxHealthMigrationPath = Path.GetFullPath(
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026032802_derive_player_max_health_from_constitution.sql"));
+    private static readonly string ExtractHoldBalanceMigrationPath = Path.GetFullPath(
+        Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026032803_extract_hold_balance.sql"));
     private static readonly string ItemWeightRebalanceMigrationPath = Path.GetFullPath(
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026032708_rebalance_item_weights.sql"));
     private static readonly string ReallocateStatsJsonNullGuardMigrationPath = Path.GetFullPath(
@@ -505,7 +507,7 @@ public sealed class HomeMarkupBindingTests
         var neutralBlockEnd = markup.IndexOf("@if (AwaitingDecision || EncounterType == EncounterType.Loot)", neutralBlockStart, StringComparison.Ordinal);
         var neutralBlock = markup.Substring(neutralBlockStart, neutralBlockEnd - neutralBlockStart);
         var extractAttemptIndex = extractionBlock.IndexOf("Attempt Extraction", StringComparison.Ordinal);
-        var stayIndex = extractionBlock.IndexOf("Stay at Extract", StringComparison.Ordinal);
+        var holdIndex = extractionBlock.IndexOf("Hold at Extract", StringComparison.Ordinal);
         var goDeeperIndex = neutralBlock.IndexOf("Go Deeper", StringComparison.Ordinal);
         var moveTowardIndex = neutralBlock.IndexOf("Move Toward Extract", StringComparison.Ordinal);
 
@@ -513,15 +515,15 @@ public sealed class HomeMarkupBindingTests
         Assert.True(neutralBlockStart > extractionBlockStart);
         Assert.True(neutralBlockEnd > neutralBlockStart);
         Assert.Contains("Attempt Extraction", extractionBlock);
-        Assert.Contains("Stay at Extract", extractionBlock);
+        Assert.Contains("Hold at Extract", extractionBlock);
         Assert.DoesNotContain("Go Deeper", extractionBlock);
         Assert.DoesNotContain("Move Toward Extract", extractionBlock);
         Assert.True(extractAttemptIndex >= 0);
-        Assert.True(stayIndex > extractAttemptIndex);
+        Assert.True(holdIndex > extractAttemptIndex);
         Assert.Contains("Go Deeper", neutralBlock);
         Assert.Contains("Move Toward Extract", neutralBlock);
         Assert.DoesNotContain("Attempt Extraction", neutralBlock);
-        Assert.DoesNotContain("Stay at Extract", neutralBlock);
+        Assert.DoesNotContain("Hold at Extract", neutralBlock);
         Assert.True(goDeeperIndex >= 0);
         Assert.True(moveTowardIndex > goDeeperIndex);
         var continueSearching = string.Concat("Continue", " Searching");
@@ -1318,6 +1320,22 @@ public sealed class HomeMarkupBindingTests
         Assert.Contains("enemy_dropped_items", deathDropBlock);
         Assert.Contains("enemy_loadout", deathDropBlock);
         Assert.DoesNotContain("game.random_enemy_loadout()", deathDropBlock);
+    }
+
+    [Fact]
+    public void ExtractHoldBalanceMigrationDefinesExtractHoldActionsAndState()
+    {
+        Assert.True(File.Exists(ExtractHoldBalanceMigrationPath));
+
+        var migration = File.ReadAllText(ExtractHoldBalanceMigrationPath);
+
+        Assert.Contains("start-extract-hold", migration);
+        Assert.Contains("resolve-extract-hold", migration);
+        Assert.Contains("'{extractHoldActive}'", migration);
+        Assert.Contains("'{holdAtExtractUntil}'", migration);
+        Assert.Contains("Extract Hold Encounter Table", migration);
+        Assert.Contains("extract_hold", migration);
+        Assert.Contains("pg_get_functiondef", migration);
     }
 
     [Fact]

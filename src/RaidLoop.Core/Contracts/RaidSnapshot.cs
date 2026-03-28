@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace RaidLoop.Core.Contracts;
 
 public sealed record RaidSnapshot(
@@ -29,4 +31,7 @@ public sealed record RaidSnapshot(
     IReadOnlyList<Item> EquippedItems,
     IReadOnlyList<string> LogEntries,
     int Encumbrance = 0,
-    int MaxEncumbrance = 0);
+    int MaxEncumbrance = 0,
+    bool ExtractHoldActive = false,
+    [property: JsonConverter(typeof(FlexibleNullableDateTimeOffsetJsonConverter))]
+    DateTimeOffset? HoldAtExtractUntil = null);

@@ -127,6 +127,65 @@ public sealed class ContractsTests
     }
 
     [Fact]
+    public void AuthBootstrapResponse_DeserializesLegacyExtractHoldTimestamp()
+    {
+        const string json = """
+            {
+              "isAuthenticated": true,
+              "userEmail": "player@example.com",
+              "snapshot": {
+                "money": 500,
+                "mainStash": [],
+                "onPersonItems": [],
+                "shopStock": [],
+                "playerConstitution": 10,
+                "playerMaxHealth": 30,
+                "randomCharacterAvailableAt": "2026-03-18T00:00:00Z",
+                "randomCharacter": null,
+                "activeRaid": {
+                  "health": 30,
+                  "backpackCapacity": 3,
+                  "ammo": 8,
+                  "weaponMalfunction": false,
+                  "medkits": 1,
+                  "lootSlots": 0,
+                  "challenge": 4,
+                  "distanceFromExtract": 0,
+                  "encounterType": "Extraction",
+                  "encounterTitle": "Extraction Opportunity",
+                  "encounterDescription": "Holding at extract.",
+                  "enemyName": "",
+                  "enemyHealth": 0,
+                  "enemyDexterity": 0,
+                  "enemyConstitution": 0,
+                  "enemyStrength": 0,
+                  "lootContainer": "",
+                  "awaitingDecision": false,
+                  "contactState": "None",
+                  "surpriseSide": "None",
+                  "initiativeWinner": "None",
+                  "openingActionsRemaining": 0,
+                  "surprisePersistenceEligible": false,
+                  "discoveredLoot": [],
+                  "carriedLoot": [],
+                  "equippedItems": [],
+                  "logEntries": [],
+                  "encumbrance": 0,
+                  "maxEncumbrance": 0,
+                  "extractHoldActive": true,
+                  "holdAtExtractUntil": "2026-03-28 12:34:56"
+                }
+              }
+            }
+            """;
+
+        var roundTrip = JsonSerializer.Deserialize<AuthBootstrapResponse>(json, new JsonSerializerOptions(JsonSerializerDefaults.Web));
+
+        Assert.NotNull(roundTrip);
+        Assert.Equal(DateTimeOffset.Parse("2026-03-28T12:34:56Z"), roundTrip!.Snapshot.ActiveRaid!.HoldAtExtractUntil);
+    }
+
+    [Fact]
     public void GameActionRequest_HasExplicitActionEnvelope()
     {
         var request = new GameActionRequest(

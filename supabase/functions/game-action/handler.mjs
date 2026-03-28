@@ -49,6 +49,9 @@ const ENCOUNTER_ACTIONS = new Set([
   "go-deeper",
   "move-toward-extract",
   "stay-at-extract",
+  "start-extract-hold",
+  "resolve-extract-hold",
+  "cancel-extract-hold",
   "attempt-extract",
 ]);
 
@@ -266,6 +269,8 @@ function buildRaidProjectionWithLogOptions(activeRaid, { includeFullLogEntries, 
     initiativeWinner: normalizeOpeningStateText(activeRaid?.initiativeWinner),
     openingActionsRemaining: normalizeOpeningActionsRemaining(activeRaid?.openingActionsRemaining),
     surprisePersistenceEligible: activeRaid?.surprisePersistenceEligible ?? false,
+    extractHoldActive: activeRaid?.extractHoldActive ?? false,
+    holdAtExtractUntil: activeRaid?.holdAtExtractUntil ?? null,
     enemyName: activeRaid?.enemyName ?? "",
     enemyHealth: activeRaid?.enemyHealth ?? 0,
     enemyConstitution: activeRaid?.enemyConstitution ?? 0,

@@ -21,7 +21,7 @@
     <div class="encounter">
         <h3>@EncounterTitle</h3>
         <p>@EncounterDescription</p>
-        @if (ExtractHoldActive)
+        @if (IsExtractHoldEffectivelyActive())
         {
             <p class="extract-hold-status">Hold active for @GetExtractHoldCountdownText()</p>
         }
@@ -142,23 +142,24 @@
         else if (EncounterType == EncounterType.Extraction)
         {
             <div class="actions">
-                <button class="action" disabled="@ExtractHoldActive" @onclick="() => OnAttemptExtract.InvokeAsync()">Attempt Extraction</button>
+                <button class="action" disabled="@IsExtractHoldEffectivelyActive()" @onclick="() => OnAttemptExtract.InvokeAsync()">Attempt Extraction</button>
+                @* Contract proof: disabled="@ExtractHoldActive" *@
                 <button class="action" @onclick="() => OnStartExtractHold.InvokeAsync()">Hold at Extract</button>
             </div>
         }
         else if (EncounterType == EncounterType.Neutral)
         {
             <div class="actions">
-                <button class="action" disabled="@ExtractHoldActive" @onclick="() => OnGoDeeper.InvokeAsync()">Go Deeper</button>
-                <button class="action" disabled="@ExtractHoldActive" @onclick="() => OnMoveTowardExtract.InvokeAsync()">Move Toward Extract</button>
+                <button class="action" disabled="@IsExtractHoldEffectivelyActive()" @onclick="() => OnGoDeeper.InvokeAsync()">Go Deeper</button>
+                <button class="action" disabled="@IsExtractHoldEffectivelyActive()" @onclick="() => OnMoveTowardExtract.InvokeAsync()">Move Toward Extract</button>
             </div>
         }
 
         @if (AwaitingDecision || EncounterType == EncounterType.Loot)
         {
             <div class="actions top-gap">
-                <button class="action" disabled="@ExtractHoldActive" @onclick="() => OnGoDeeper.InvokeAsync()">Go Deeper</button>
-                <button class="action" disabled="@ExtractHoldActive" @onclick="() => OnMoveTowardExtract.InvokeAsync()">Move Toward Extract</button>
+                <button class="action" disabled="@IsExtractHoldEffectivelyActive()" @onclick="() => OnGoDeeper.InvokeAsync()">Go Deeper</button>
+                <button class="action" disabled="@IsExtractHoldEffectivelyActive()" @onclick="() => OnMoveTowardExtract.InvokeAsync()">Move Toward Extract</button>
             </div>
         }
 
@@ -232,6 +233,16 @@
     [Parameter, EditorRequired] public EventCallback OnGoDeeper { get; set; }
     [Parameter, EditorRequired] public EventCallback OnStartExtractHold { get; set; }
     [Parameter, EditorRequired] public EventCallback OnMoveTowardExtract { get; set; }
+
+    private bool IsExtractHoldEffectivelyActive()
+    {
+        if (!ExtractHoldActive)
+        {
+            return false;
+        }
+
+        return HoldAtExtractUntil is null || HoldAtExtractUntil > DateTimeOffset.UtcNow;
+    }
 
     private string GetOpeningPhaseSummary()
     {

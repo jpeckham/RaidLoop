@@ -290,6 +290,33 @@ public sealed class RaidActionApiTests
     }
 
     [Fact]
+    public void ExpiredExtractHold_IsNotTreatedAsActive()
+    {
+        var home = CreateHome(new FakeGameActionApiClient());
+        SeedRaid(home);
+
+        SetField(home, "_extractHoldActive", true);
+        SetField(home, "_holdAtExtractUntil", DateTimeOffset.UtcNow.AddSeconds(-1));
+
+        Assert.False(InvokePrivateBool(home, "IsExtractHoldEffectivelyActive"));
+    }
+
+    [Fact]
+    public async Task StartExtractHoldAsync_DoesNotDispatch_WhenExtractHoldIsAlreadyActive()
+    {
+        var actionClient = CreateActionClient("unused", _ => throw new InvalidOperationException("Should not dispatch."));
+        var home = CreateHome(actionClient);
+        SeedRaid(home);
+
+        SetField(home, "_extractHoldActive", true);
+        SetField(home, "_holdAtExtractUntil", DateTimeOffset.UtcNow.AddMinutes(1));
+
+        await InvokePrivateAsync(home, "StartExtractHoldAsync");
+
+        Assert.Empty(actionClient.Requests);
+    }
+
+    [Fact]
     public void HomeAndRaidHudMarkup_BindTheExtractHoldContract()
     {
         var homeMarkup = File.ReadAllText(HomeMarkupPath);

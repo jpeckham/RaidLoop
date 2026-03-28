@@ -1525,12 +1525,22 @@ public partial class Home : IDisposable
 
     private async Task StartExtractHoldAsync()
     {
-        if (_raid is null)
+        if (_raid is null || IsExtractHoldEffectivelyActive())
         {
             return;
         }
 
         await ExecuteRaidActionAsync("start-extract-hold", new { });
+    }
+
+    private bool IsExtractHoldEffectivelyActive()
+    {
+        if (!_extractHoldActive)
+        {
+            return false;
+        }
+
+        return _holdAtExtractUntil is null || _holdAtExtractUntil > DateTimeOffset.UtcNow;
     }
 
     private ValueTask ReportHandledErrorAsync(string message, string source, Exception exception, object? context = null)

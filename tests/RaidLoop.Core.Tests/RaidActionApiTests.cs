@@ -243,6 +243,52 @@ public sealed class RaidActionApiTests
     }
 
     [Fact]
+    public async Task StartExtractHoldAsync_CallsBackend_And_AppliesReturnedRaidSnapshot()
+    {
+        var actionClient = CreateActionClient("start-extract-hold", _ =>
+            CreateRaidResult("""
+                {
+                  "raid": {
+                    "health": 28,
+                    "ammo": 8,
+                    "weaponMalfunction": false,
+                    "encounterType": "Extraction",
+                    "encounterDescription": "Server extraction hold",
+                    "contactState": "None",
+                    "surpriseSide": "None",
+                    "initiativeWinner": "None",
+                    "openingActionsRemaining": 0,
+                    "surprisePersistenceEligible": false,
+                    "enemyName": "",
+                    "enemyHealth": 0,
+                    "lootContainer": "",
+                    "awaitingDecision": false,
+                    "challenge": 5,
+                    "distanceFromExtract": 0,
+                    "extractHoldActive": true,
+                    "holdAtExtractUntil": "2026-03-28T12:34:56Z",
+                    "discoveredLoot": [],
+                    "carriedLoot": [],
+                    "equippedItems": [
+                      { "name": "AK74", "type": 0, "value": 320, "slots": 1, "rarity": 2, "displayRarity": 3 },
+                      { "name": "Small Backpack", "type": 2, "value": 75, "slots": 2, "rarity": 2, "displayRarity": 3 }
+                    ],
+                    "logEntries": ["Raid updated on server."]
+                  }
+                }
+                """));
+        var home = CreateHome(actionClient);
+        SeedRaid(home);
+
+        await InvokePrivateAsync(home, "StartExtractHoldAsync");
+
+        Assert.Single(actionClient.Requests);
+        Assert.Equal(EncounterType.Extraction, Assert.IsType<EncounterType>(GetField(home, "_encounterType")));
+        Assert.True(Assert.IsType<bool>(GetField(home, "_extractHoldActive")));
+        Assert.Equal(DateTimeOffset.Parse("2026-03-28T12:34:56Z"), (DateTimeOffset?)GetField(home, "_holdAtExtractUntil"));
+    }
+
+    [Fact]
     public async Task AttemptExtractAsync_CallsBackend_And_AppliesReturnedRaidSnapshot()
     {
         var actionClient = CreateActionClient("attempt-extract", _ =>
@@ -286,6 +332,49 @@ public sealed class RaidActionApiTests
         Assert.Equal(5, Assert.IsType<int>(GetField(home, "_challenge")));
         Assert.Equal(0, Assert.IsType<int>(GetField(home, "_distanceFromExtract")));
         AssertOpeningPhaseFields(home, "None", "None", "None", 0, false);
+    }
+
+    [Fact]
+    public void ApplyActiveRaidSnapshot_TransfersExtractHoldFieldsIntoClientState()
+    {
+        var home = CreateHome(new FakeGameActionApiClient());
+
+        InvokePrivate(
+            home,
+            "ApplyActiveRaidSnapshot",
+            new RaidSnapshot(
+                Health: 30,
+                BackpackCapacity: 3,
+                Ammo: 8,
+                WeaponMalfunction: false,
+                Medkits: 1,
+                LootSlots: 0,
+                Challenge: 0,
+                DistanceFromExtract: 0,
+                EncounterType: "Extraction",
+                EncounterTitle: "Extraction",
+                EncounterDescription: "Holding extract.",
+                EnemyName: string.Empty,
+                EnemyHealth: 0,
+                EnemyDexterity: 0,
+                EnemyConstitution: 0,
+                EnemyStrength: 0,
+                LootContainer: string.Empty,
+                AwaitingDecision: false,
+                ContactState: "None",
+                SurpriseSide: "None",
+                InitiativeWinner: "None",
+                OpeningActionsRemaining: 0,
+                SurprisePersistenceEligible: false,
+                DiscoveredLoot: [],
+                CarriedLoot: [],
+                EquippedItems: [],
+                LogEntries: [],
+                ExtractHoldActive: true,
+                HoldAtExtractUntil: DateTimeOffset.Parse("2026-03-28T12:34:56Z")));
+
+        Assert.True(Assert.IsType<bool>(GetField(home, "_extractHoldActive")));
+        Assert.Equal(DateTimeOffset.Parse("2026-03-28T12:34:56Z"), (DateTimeOffset?)GetField(home, "_holdAtExtractUntil"));
     }
 
     [Fact]

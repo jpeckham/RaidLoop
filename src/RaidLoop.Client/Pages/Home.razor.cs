@@ -38,6 +38,8 @@ public partial class Home : IDisposable
     private bool _awaitingDecision;
     private int? _raidEncumbrance;
     private int? _raidMaxEncumbrance;
+    private bool _extractHoldActive;
+    private DateTimeOffset? _holdAtExtractUntil;
     private EncounterType _encounterType = EncounterType.Neutral;
     private string _encounterDescription = string.Empty;
     private string _contactState = string.Empty;
@@ -645,6 +647,8 @@ public partial class Home : IDisposable
         {
             _raidEncumbrance = null;
             _raidMaxEncumbrance = null;
+            _extractHoldActive = false;
+            _holdAtExtractUntil = null;
             _raid = new RaidState(_maxHealth, new RaidInventory());
             _inRaid = true;
             _awaitingDecision = false;
@@ -697,6 +701,18 @@ public partial class Home : IDisposable
             _raidMaxEncumbrance = parsedMaxEncumbrance;
             raidState.MaxEncumbrance = parsedMaxEncumbrance;
             raidMaxEncumbranceProjected = true;
+            hasRaidPatch = true;
+        }
+
+        if (TryGetBool(raid, "extractHoldActive", out var extractHoldActive))
+        {
+            _extractHoldActive = extractHoldActive;
+            hasRaidPatch = true;
+        }
+
+        if (TryGetNullableDateTimeOffset(raid, "holdAtExtractUntil", out var holdAtExtractUntil))
+        {
+            _holdAtExtractUntil = holdAtExtractUntil;
             hasRaidPatch = true;
         }
 
@@ -910,6 +926,8 @@ public partial class Home : IDisposable
         _raid = null;
         _raidEncumbrance = null;
         _raidMaxEncumbrance = null;
+        _extractHoldActive = false;
+        _holdAtExtractUntil = null;
         _inRaid = false;
         _awaitingDecision = false;
         _challenge = 0;
@@ -1192,6 +1210,28 @@ public partial class Home : IDisposable
         }
 
         value = string.Empty;
+        return false;
+    }
+
+    private static bool TryGetNullableDateTimeOffset(JsonElement parent, string propertyName, out DateTimeOffset? value)
+    {
+        if (TryGetProjection(parent, propertyName, out var property))
+        {
+            if (property.ValueKind == JsonValueKind.Null)
+            {
+                value = null;
+                return true;
+            }
+
+            if (property.ValueKind == JsonValueKind.String
+                && DateTimeOffset.TryParse(property.GetString(), out var parsed))
+            {
+                value = parsed;
+                return true;
+            }
+        }
+
+        value = default;
         return false;
     }
 
@@ -1478,6 +1518,16 @@ public partial class Home : IDisposable
         await ExecuteRaidActionAsync("move-toward-extract", new { });
     }
 
+    private async Task StartExtractHoldAsync()
+    {
+        if (_raid is null)
+        {
+            return;
+        }
+
+        await ExecuteRaidActionAsync("start-extract-hold", new { });
+    }
+
     private ValueTask ReportHandledErrorAsync(string message, string source, Exception exception, object? context = null)
     {
         return Telemetry.ReportErrorAsync(
@@ -1627,6 +1677,8 @@ public partial class Home : IDisposable
         {
             _raid = null;
             _inRaid = false;
+            _extractHoldActive = false;
+            _holdAtExtractUntil = null;
             _contactState = string.Empty;
             _surpriseSide = string.Empty;
             _initiativeWinner = string.Empty;
@@ -1651,6 +1703,8 @@ public partial class Home : IDisposable
         _raid.Inventory.BackpackCapacity = snapshot.BackpackCapacity;
         _raidEncumbrance = snapshot.Encumbrance > 0 || snapshot.MaxEncumbrance > 0 ? snapshot.Encumbrance : null;
         _raidMaxEncumbrance = snapshot.MaxEncumbrance > 0 ? snapshot.MaxEncumbrance : null;
+        _extractHoldActive = snapshot.ExtractHoldActive;
+        _holdAtExtractUntil = snapshot.HoldAtExtractUntil;
         if (_raidMaxEncumbrance is not null)
         {
             _raid.MaxEncumbrance = _raidMaxEncumbrance.Value;

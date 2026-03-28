@@ -29,4 +29,6 @@ public sealed record RaidSnapshot(
     IReadOnlyList<Item> EquippedItems,
     IReadOnlyList<string> LogEntries,
     int Encumbrance = 0,
-    int MaxEncumbrance = 0);
+    int MaxEncumbrance = 0,
+    bool ExtractHoldActive = false,
+    DateTimeOffset? HoldAtExtractUntil = null);

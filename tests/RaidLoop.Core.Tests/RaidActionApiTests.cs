@@ -329,10 +329,11 @@ public sealed class RaidActionApiTests
         Assert.Contains("public bool ExtractHoldActive { get; set; }", raidHudMarkup);
         Assert.Contains("public DateTimeOffset? HoldAtExtractUntil { get; set; }", raidHudMarkup);
         Assert.Contains("Hold active for @GetExtractHoldCountdownText()", raidHudMarkup);
-        Assert.Contains("disabled=\"@ExtractHoldActive\"", raidHudMarkup);
+        Assert.Contains("disabled=\"@IsExtractHoldEffectivelyActive()\"", raidHudMarkup);
         Assert.Contains("Hold at Extract", raidHudMarkup);
         Assert.Contains("@GetExtractHoldCountdownText()", raidHudMarkup);
         Assert.DoesNotContain("Stay at Extract", raidHudMarkup);
+        Assert.DoesNotContain("Contract proof: disabled=\"@ExtractHoldActive\"", raidHudMarkup);
     }
 
     [Fact]

@@ -143,8 +143,7 @@
         {
             <div class="actions">
                 <button class="action" disabled="@IsExtractHoldEffectivelyActive()" @onclick="() => OnAttemptExtract.InvokeAsync()">Attempt Extraction</button>
-                @* Contract proof: disabled="@ExtractHoldActive" *@
-                <button class="action" @onclick="() => OnStartExtractHold.InvokeAsync()">Hold at Extract</button>
+                <button class="action" disabled="@IsExtractHoldEffectivelyActive()" @onclick="() => OnStartExtractHold.InvokeAsync()">Hold at Extract</button>
             </div>
         }
         else if (EncounterType == EncounterType.Neutral)

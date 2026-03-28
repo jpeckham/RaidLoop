@@ -1,3 +1,4 @@
+using System.IO;
 using System.Reflection;
 using System.Text.Json;
 using RaidLoop.Client;
@@ -286,6 +287,19 @@ public sealed class RaidActionApiTests
         Assert.Equal(EncounterType.Extraction, Assert.IsType<EncounterType>(GetField(home, "_encounterType")));
         Assert.True(Assert.IsType<bool>(GetField(home, "_extractHoldActive")));
         Assert.Equal(DateTimeOffset.Parse("2026-03-28T12:34:56Z"), (DateTimeOffset?)GetField(home, "_holdAtExtractUntil"));
+    }
+
+    [Fact]
+    public void HomeAndRaidHudMarkup_BindTheExtractHoldContract()
+    {
+        var homeMarkup = File.ReadAllText(HomeMarkupPath);
+        var raidHudMarkup = File.ReadAllText(RaidHudPath);
+
+        Assert.Contains("OnStartExtractHold=\"StartExtractHoldAsync\"", homeMarkup);
+        Assert.DoesNotContain("OnStayAtExtract", homeMarkup);
+        Assert.Contains("Hold at Extract", raidHudMarkup);
+        Assert.Contains("@GetExtractHoldCountdownText()", raidHudMarkup);
+        Assert.DoesNotContain("Stay at Extract", raidHudMarkup);
     }
 
     [Fact]
@@ -585,6 +599,11 @@ public sealed class RaidActionApiTests
             }
         };
     }
+
+    private static readonly string HomeMarkupPath = Path.GetFullPath(
+        Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "RaidLoop.Client", "Pages", "Home.razor"));
+    private static readonly string RaidHudPath = Path.GetFullPath(
+        Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "RaidLoop.Client", "Components", "RaidHUD.razor"));
 
     private static void SetProperty(object instance, string propertyName, object value)
     {

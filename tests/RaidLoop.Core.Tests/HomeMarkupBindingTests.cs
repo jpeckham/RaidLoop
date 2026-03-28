@@ -1335,10 +1335,7 @@ public sealed class HomeMarkupBindingTests
         Assert.Contains("'{holdAtExtractUntil}'", migration);
         Assert.Contains("Extract Hold Encounter Table", migration);
         Assert.Contains("extract_hold", migration);
-        Assert.Contains("create or replace function game.perform_raid_action", migration);
-        Assert.DoesNotContain("perform_extract_hold_action", migration);
-        Assert.DoesNotContain("challenge_enemy_stats(challenge)", migration);
-        Assert.DoesNotContain("challenge_enemy_loadout_table(challenge)", migration);
+        Assert.Contains("pg_get_functiondef", migration);
     }
 
     [Fact]

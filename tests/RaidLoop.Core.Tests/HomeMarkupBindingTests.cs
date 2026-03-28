@@ -419,17 +419,9 @@ public sealed class HomeMarkupBindingTests
 
         Assert.Contains("RaidEncumbranceText=\"@GetRaidEncumbranceText()\"", homeMarkup);
         Assert.Contains("CanEquipItem=\"CanEquipRaidItem\"", homeMarkup);
-        Assert.Contains("ExtractHoldActive=\"_extractHoldActive\"", homeMarkup);
-        Assert.Contains("HoldAtExtractUntil=\"_holdAtExtractUntil\"", homeMarkup);
-        Assert.Contains("OnStartExtractHold=\"StartExtractHoldAsync\"", homeMarkup);
-        Assert.DoesNotContain("OnStayAtExtract", homeMarkup);
         Assert.Contains("<span class=\"encumbrance-label\">Encumbrance:</span>", raidHudMarkup);
         Assert.Contains("<span class=\"encumbrance-value @GetEncumbranceSeverityCssClass()\">@RaidEncumbranceText</span>", raidHudMarkup);
         Assert.Contains("<span class=\"encumbrance-tier @GetEncumbranceSeverityCssClass()\">@GetEncumbranceTierLabel()</span>", raidHudMarkup);
-        Assert.Contains("Hold at Extract", raidHudMarkup);
-        Assert.Contains("@GetExtractHoldCountdownText()", raidHudMarkup);
-        Assert.Contains("disabled=\"@ExtractHoldActive\"", raidHudMarkup);
-        Assert.DoesNotContain("Stay at Extract", raidHudMarkup);
         Assert.Contains("Too heavy to carry", raidHudMarkup);
         Assert.Contains("Too heavy to equip", raidHudMarkup);
         Assert.Contains(".encumbrance-value.encumbrance-medium", clientCss);
@@ -513,7 +505,7 @@ public sealed class HomeMarkupBindingTests
         var neutralBlockEnd = markup.IndexOf("@if (AwaitingDecision || EncounterType == EncounterType.Loot)", neutralBlockStart, StringComparison.Ordinal);
         var neutralBlock = markup.Substring(neutralBlockStart, neutralBlockEnd - neutralBlockStart);
         var extractAttemptIndex = extractionBlock.IndexOf("Attempt Extraction", StringComparison.Ordinal);
-        var holdIndex = extractionBlock.IndexOf("Hold at Extract", StringComparison.Ordinal);
+        var stayIndex = extractionBlock.IndexOf("Stay at Extract", StringComparison.Ordinal);
         var goDeeperIndex = neutralBlock.IndexOf("Go Deeper", StringComparison.Ordinal);
         var moveTowardIndex = neutralBlock.IndexOf("Move Toward Extract", StringComparison.Ordinal);
 
@@ -521,15 +513,15 @@ public sealed class HomeMarkupBindingTests
         Assert.True(neutralBlockStart > extractionBlockStart);
         Assert.True(neutralBlockEnd > neutralBlockStart);
         Assert.Contains("Attempt Extraction", extractionBlock);
-        Assert.Contains("Hold at Extract", extractionBlock);
+        Assert.Contains("Stay at Extract", extractionBlock);
         Assert.DoesNotContain("Go Deeper", extractionBlock);
         Assert.DoesNotContain("Move Toward Extract", extractionBlock);
         Assert.True(extractAttemptIndex >= 0);
-        Assert.True(holdIndex > extractAttemptIndex);
+        Assert.True(stayIndex > extractAttemptIndex);
         Assert.Contains("Go Deeper", neutralBlock);
         Assert.Contains("Move Toward Extract", neutralBlock);
         Assert.DoesNotContain("Attempt Extraction", neutralBlock);
-        Assert.DoesNotContain("Hold at Extract", neutralBlock);
+        Assert.DoesNotContain("Stay at Extract", neutralBlock);
         Assert.True(goDeeperIndex >= 0);
         Assert.True(moveTowardIndex > goDeeperIndex);
         var continueSearching = string.Concat("Continue", " Searching");

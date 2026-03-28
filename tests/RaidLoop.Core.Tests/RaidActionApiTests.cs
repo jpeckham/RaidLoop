@@ -296,7 +296,13 @@ public sealed class RaidActionApiTests
         var raidHudMarkup = File.ReadAllText(RaidHudPath);
 
         Assert.Contains("OnStartExtractHold=\"StartExtractHoldAsync\"", homeMarkup);
+        Assert.Contains("ExtractHoldActive=\"_extractHoldActive\"", homeMarkup);
+        Assert.Contains("HoldAtExtractUntil=\"_holdAtExtractUntil\"", homeMarkup);
         Assert.DoesNotContain("OnStayAtExtract", homeMarkup);
+        Assert.Contains("public bool ExtractHoldActive { get; set; }", raidHudMarkup);
+        Assert.Contains("public DateTimeOffset? HoldAtExtractUntil { get; set; }", raidHudMarkup);
+        Assert.Contains("Hold active for @GetExtractHoldCountdownText()", raidHudMarkup);
+        Assert.Contains("disabled=\"@ExtractHoldActive\"", raidHudMarkup);
         Assert.Contains("Hold at Extract", raidHudMarkup);
         Assert.Contains("@GetExtractHoldCountdownText()", raidHudMarkup);
         Assert.DoesNotContain("Stay at Extract", raidHudMarkup);

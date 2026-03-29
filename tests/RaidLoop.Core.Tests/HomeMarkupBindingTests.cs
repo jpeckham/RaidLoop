@@ -52,6 +52,8 @@ public sealed class HomeMarkupBindingTests
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026032603_add_player_stat_system.sql"));
     private static readonly string RaidSessionPersistenceHotfixMigrationPath = Path.GetFullPath(
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026032606_restore_raid_session_persistence_for_stat_aware_raid_start.sql"));
+    private static readonly string ItemIdentityMigrationPath = Path.GetFullPath(
+        Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026032904_add_item_identity_keys.sql"));
     private static readonly string StrengthEncumbranceMigrationPath = Path.GetFullPath(
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026032701_add_strength_encumbrance.sql"));
     private static readonly string D20EncumbranceMigrationPath = Path.GetFullPath(
@@ -1320,6 +1322,22 @@ public sealed class HomeMarkupBindingTests
         Assert.Contains("enemy_dropped_items", deathDropBlock);
         Assert.Contains("enemy_loadout", deathDropBlock);
         Assert.DoesNotContain("game.random_enemy_loadout()", deathDropBlock);
+    }
+
+    [Fact]
+    public void ItemIdentityMigrationAddsSurrogateKeyAndKeyedPayloadBackfill()
+    {
+        Assert.True(File.Exists(ItemIdentityMigrationPath), $"Expected item identity migration at '{ItemIdentityMigrationPath}'.");
+
+        var migration = File.ReadAllText(ItemIdentityMigrationPath);
+
+        Assert.Contains("add column if not exists item_def_id int generated always as identity", migration);
+        Assert.Contains("item_key text not null", migration);
+        Assert.Contains("unique (item_key)", migration);
+        Assert.Contains("update game.item_defs", migration);
+        Assert.Contains("update public.game_saves", migration);
+        Assert.Contains("update public.raid_sessions", migration);
+        Assert.Contains("itemKey", migration);
     }
 
     [Fact]

@@ -90,6 +90,33 @@ test("local profile_bootstrap re-derives stale raid max encumbrance and max heal
   assert.equal(bootstrap.activeRaid.maxEncumbrance, 175);
 });
 
+test("local profile_bootstrap exposes keyed item identities for legacy saved items", async () => {
+  const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? DEFAULT_SUPABASE_URL;
+  const publishableKey = Deno.env.get("SUPABASE_PUBLISHABLE_KEY") ?? DEFAULT_PUBLISHABLE_KEY;
+  const repository = createProfileRpcRepository({ supabaseUrl, publishableKey, fetchImpl: fetch });
+  const { accessToken, userId } = await signUpLocalUser(supabaseUrl, publishableKey);
+
+  await seedMainCharacterProfile(repository, supabaseUrl, publishableKey, accessToken, userId);
+
+  const saveRow = await getSingleRow(supabaseUrl, publishableKey, accessToken, "game_saves", userId);
+  const legacyPayload = structuredClone(saveRow.payload);
+  legacyPayload.mainStash = [
+    createItem("Makarov", 0, 12, 1, 0, 1, 2),
+    createItem("6B2 body armor", 1, 14, 1, 0, 1, 9),
+  ];
+  legacyPayload.onPersonItems = [
+    { item: createItem("AK74", 0, 34, 1, 2, 3, 7), isEquipped: true },
+  ];
+
+  await updateRow(supabaseUrl, publishableKey, accessToken, "game_saves", userId, { payload: legacyPayload });
+
+  const bootstrap = await repository.bootstrapProfile(accessToken);
+
+  assert.equal(bootstrap.snapshot.mainStash[0].itemKey, "light_pistol");
+  assert.equal(bootstrap.snapshot.mainStash[1].itemKey, "soft_armor_vest");
+  assert.equal(bootstrap.snapshot.onPersonItems[0].item.itemKey, "field_carbine");
+});
+
 test("local start-main-raid uses accepted stats for raid max health and encumbrance", async () => {
   const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? DEFAULT_SUPABASE_URL;
   const publishableKey = Deno.env.get("SUPABASE_PUBLISHABLE_KEY") ?? DEFAULT_PUBLISHABLE_KEY;

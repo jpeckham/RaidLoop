@@ -80,3 +80,34 @@ test("profile-bootstrap returns hydrated snapshot payload", async () => {
   assert.equal(body.snapshot.mainStash[0].name, "Makarov");
   assert.equal(body.snapshot.shopStock[0].name, "Makarov");
 });
+
+test("profile-bootstrap returns keyed item identities in hydrated snapshot payload", async () => {
+  const accessToken = [
+    "eyJhbGciOiJub25lIn0",
+    "eyJlbWFpbCI6InJhaWRlckBleGFtcGxlLmNvbSJ9",
+    "signature",
+  ].join(".");
+
+  const handler = createProfileBootstrapHandler({
+    bootstrapProfile: async () => ({
+      Money: 500,
+      MainStash: [{ Name: "Makarov", Type: 0, Value: 12, Slots: 1, Rarity: 0, DisplayRarity: 1 }],
+      OnPersonItems: [],
+      ShopStock: [{ Name: "Makarov", Type: 0, Value: 12, Slots: 1, Rarity: 0, DisplayRarity: 1 }],
+      RandomCharacterAvailableAt: "0001-01-01T00:00:00+00:00",
+      RandomCharacter: null,
+    }),
+  });
+
+  const response = await handler(new Request("https://example.test/profile-bootstrap", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  }));
+
+  const body = await response.json();
+
+  assert.equal(body.snapshot.mainStash[0].itemKey, "light_pistol");
+  assert.equal(body.snapshot.shopStock[0].itemKey, "light_pistol");
+});

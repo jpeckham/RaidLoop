@@ -49,7 +49,7 @@ public sealed class RaidStartApiTests
                             "discoveredLoot": [],
                             "carriedLoot": [],
                             "equippedItems": [
-                              { "name": "Field Carbine", "type": 0, "value": 320, "slots": 1, "rarity": 2, "displayRarity": 3 },
+                              { "name": "AK74", "type": 0, "value": 320, "slots": 1, "rarity": 2, "displayRarity": 3 },
                               { "name": "Small Backpack", "type": 2, "value": 75, "slots": 2, "rarity": 2, "displayRarity": 3 }
                             ],
                             "logEntries": ["Raid started on server."]
@@ -67,7 +67,7 @@ public sealed class RaidStartApiTests
 
         SetField(home, "_onPersonItems", new List<OnPersonEntry>
         {
-            new(ItemCatalog.Create("Field Carbine"), true),
+            new(ItemCatalog.Create("AK74"), true),
             new(ItemCatalog.Create("Small Backpack"), true)
         });
 
@@ -88,7 +88,7 @@ public sealed class RaidStartApiTests
         Assert.Equal(1, Assert.IsType<int>(GetField(home, "_openingActionsRemaining")));
         Assert.False(Assert.IsType<bool>(GetField(home, "_surprisePersistenceEligible")));
         var raid = Assert.IsType<RaidState>(GetField(home, "_raid"));
-        Assert.Equal("Field Carbine", raid.Inventory.EquippedWeapon?.Name);
+        Assert.Equal("AK74", raid.Inventory.EquippedWeapon?.Name);
         Assert.Equal("Small Backpack", raid.Inventory.EquippedBackpack?.Name);
         Assert.Equal("40/100 lbs", InvokePrivate<string>(home, "GetRaidEncumbranceText"));
     }
@@ -111,7 +111,7 @@ public sealed class RaidStartApiTests
                             "randomCharacter": {
                               "name": "Ghost-101",
                               "inventory": [
-                                { "name": "Light Pistol", "type": 0, "value": 60, "slots": 1, "rarity": 0, "displayRarity": 1, "weight": 4 }
+                                { "name": "Makarov", "type": 0, "value": 60, "slots": 1, "rarity": 0, "displayRarity": 1, "weight": 4 }
                               ],
                               "stats": {
                                 "strength": 12,
@@ -149,7 +149,7 @@ public sealed class RaidStartApiTests
                             "discoveredLoot": [],
                             "carriedLoot": [],
                             "equippedItems": [
-                              { "name": "Light Pistol", "type": 0, "value": 60, "slots": 1, "rarity": 0, "displayRarity": 1 }
+                              { "name": "Makarov", "type": 0, "value": 60, "slots": 1, "rarity": 0, "displayRarity": 1 }
                             ],
                             "logEntries": ["Raid started on server."]
                           }
@@ -203,7 +203,7 @@ public sealed class RaidStartApiTests
                             "randomCharacter": {
                               "name": "Ghost-101",
                               "inventory": [
-                                { "name": "Light Pistol", "type": 0, "value": 60, "slots": 1, "rarity": 0, "displayRarity": 1, "weight": 4 }
+                                { "name": "Makarov", "type": 0, "value": 60, "slots": 1, "rarity": 0, "displayRarity": 1, "weight": 4 }
                               ],
                               "stats": {
                                 "strength": 12,
@@ -239,7 +239,7 @@ public sealed class RaidStartApiTests
                             "discoveredLoot": [],
                             "carriedLoot": [],
                             "equippedItems": [
-                              { "name": "Light Pistol", "type": 0, "value": 60, "slots": 1, "rarity": 0, "displayRarity": 1 }
+                              { "name": "Makarov", "type": 0, "value": 60, "slots": 1, "rarity": 0, "displayRarity": 1 }
                             ],
                             "logEntries": ["Raid started on server."]
                           }
@@ -273,7 +273,7 @@ public sealed class RaidStartApiTests
         Assert.Equal(0, Assert.IsType<int>(GetField(home, "_openingActionsRemaining")));
         Assert.False(Assert.IsType<bool>(GetField(home, "_surprisePersistenceEligible")));
         var raid = Assert.IsType<RaidState>(GetField(home, "_raid"));
-        Assert.Equal("Light Pistol", raid.Inventory.EquippedWeapon?.Name);
+        Assert.Equal("Makarov", raid.Inventory.EquippedWeapon?.Name);
         AssertRandomCharacterStats(GetField(home, "_randomCharacter"), new PlayerStats(12, 11, 10, 9, 8, 13));
     }
 

@@ -16,7 +16,7 @@
 - Modify: `tests/RaidLoop.Core.Tests/RaidEngineTests.cs`
 
 **Step 1: Write the failing tests**
-- Add tests for weapon damage ranges (Light Pistol/Drum SMG/Field Carbine/Battle Rifle), armor reduction tiers (6B2/6B13/6B43), deterministic damage roll with a fake RNG, and armor floor behavior.
+- Add tests for weapon damage ranges (Makarov/PPSH/AK74/AK47), armor reduction tiers (6B2/6B13/6B43), deterministic damage roll with a fake RNG, and armor floor behavior.
 
 **Step 2: Run test to verify it fails**
 Run: `dotnet test tests/RaidLoop.Core.Tests/RaidLoop.Core.Tests.csproj --filter "FullyQualifiedName~CombatBalance"`

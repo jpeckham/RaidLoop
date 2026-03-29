@@ -1,13 +1,13 @@
 # Light Gear Weight Adjustments Design
 
-**Goal:** Reduce the weight burden of common starter gear by making Medkits lighter, reducing the Light Pistol and Small Backpack weights, and slightly increasing Soft Armor Vest to reflect its current role.
+**Goal:** Reduce the weight burden of common starter gear by making Medkits lighter, reducing the Makarov and Small Backpack weights, and slightly increasing 6B2 body armor to reflect its current role.
 
 **Scope:** Current-authority only. Update the shared item catalog used by the client/tests and add a forward Supabase migration that updates `game.item_defs` for the same four items. Do not rewrite historical snapshot migrations.
 
 **Design:**
 - Set `Medkit` to `1 lb`.
-- Set `Light Pistol` to `2 lb`.
-- Set `Soft Armor Vest` to `9 lb`.
+- Set `Makarov` to `2 lb`.
+- Set `6B2 body armor` to `9 lb`.
 - Set `Small Backpack` to `1 lb`.
 - Keep the integer-weight model intact.
 

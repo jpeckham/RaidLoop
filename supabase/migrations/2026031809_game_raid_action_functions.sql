@@ -70,22 +70,22 @@ volatile
 as $$
     select case floor(random() * 5)::int
         when 0 then jsonb_build_array(
-            jsonb_build_object('name', 'Light Pistol', 'type', 0, 'value', 12, 'slots', 1, 'rarity', 0, 'displayRarity', 1)
+            jsonb_build_object('name', 'Makarov', 'type', 0, 'value', 12, 'slots', 1, 'rarity', 0, 'displayRarity', 1)
         )
         when 1 then jsonb_build_array(
-            jsonb_build_object('name', 'Drum SMG', 'type', 0, 'value', 20, 'slots', 1, 'rarity', 1, 'displayRarity', 2),
+            jsonb_build_object('name', 'PPSH', 'type', 0, 'value', 20, 'slots', 1, 'rarity', 1, 'displayRarity', 2),
             jsonb_build_object('name', 'Bandage', 'type', 4, 'value', 4, 'slots', 1, 'rarity', 0, 'displayRarity', 0)
         )
         when 2 then jsonb_build_array(
-            jsonb_build_object('name', 'Field Carbine', 'type', 0, 'value', 34, 'slots', 1, 'rarity', 2, 'displayRarity', 3),
-            jsonb_build_object('name', 'Soft Armor Vest', 'type', 1, 'value', 14, 'slots', 1, 'rarity', 0, 'displayRarity', 1)
+            jsonb_build_object('name', 'AK74', 'type', 0, 'value', 34, 'slots', 1, 'rarity', 2, 'displayRarity', 3),
+            jsonb_build_object('name', '6B2 body armor', 'type', 1, 'value', 14, 'slots', 1, 'rarity', 0, 'displayRarity', 1)
         )
         when 3 then jsonb_build_array(
-            jsonb_build_object('name', 'Marksman Rifle', 'type', 0, 'value', 44, 'slots', 1, 'rarity', 3, 'displayRarity', 4)
+            jsonb_build_object('name', 'SVDS', 'type', 0, 'value', 44, 'slots', 1, 'rarity', 3, 'displayRarity', 4)
         )
         else jsonb_build_array(
-            jsonb_build_object('name', 'Battle Rifle', 'type', 0, 'value', 38, 'slots', 1, 'rarity', 2, 'displayRarity', 3),
-            jsonb_build_object('name', 'Medium Plate Carrier', 'type', 1, 'value', 40, 'slots', 1, 'rarity', 3, 'displayRarity', 4)
+            jsonb_build_object('name', 'AK47', 'type', 0, 'value', 38, 'slots', 1, 'rarity', 2, 'displayRarity', 3),
+            jsonb_build_object('name', 'FORT Defender-2', 'type', 1, 'value', 40, 'slots', 1, 'rarity', 3, 'displayRarity', 4)
         )
     end;
 $$;
@@ -99,17 +99,17 @@ as $$
         when 'Weapons Crate' then
             case floor(random() * 4)::int
                 when 0 then jsonb_build_array(
-                    jsonb_build_object('name', 'Light Pistol', 'type', 0, 'value', 12, 'slots', 1, 'rarity', 0, 'displayRarity', 1),
+                    jsonb_build_object('name', 'Makarov', 'type', 0, 'value', 12, 'slots', 1, 'rarity', 0, 'displayRarity', 1),
                     jsonb_build_object('name', 'Ammo Box', 'type', 4, 'value', 6, 'slots', 1, 'rarity', 0, 'displayRarity', 0)
                 )
                 when 1 then jsonb_build_array(
-                    jsonb_build_object('name', 'Drum SMG', 'type', 0, 'value', 20, 'slots', 1, 'rarity', 1, 'displayRarity', 2)
+                    jsonb_build_object('name', 'PPSH', 'type', 0, 'value', 20, 'slots', 1, 'rarity', 1, 'displayRarity', 2)
                 )
                 when 2 then jsonb_build_array(
-                    jsonb_build_object('name', 'Field Carbine', 'type', 0, 'value', 34, 'slots', 1, 'rarity', 2, 'displayRarity', 3)
+                    jsonb_build_object('name', 'AK74', 'type', 0, 'value', 34, 'slots', 1, 'rarity', 2, 'displayRarity', 3)
                 )
                 else jsonb_build_array(
-                    jsonb_build_object('name', 'Marksman Rifle', 'type', 0, 'value', 44, 'slots', 1, 'rarity', 3, 'displayRarity', 4)
+                    jsonb_build_object('name', 'SVDS', 'type', 0, 'value', 44, 'slots', 1, 'rarity', 3, 'displayRarity', 4)
                 )
             end
         when 'Medical Container' then
@@ -141,7 +141,7 @@ as $$
                     jsonb_build_object('name', 'Medkit', 'type', 3, 'value', 10, 'slots', 1, 'rarity', 0, 'displayRarity', 1)
                 )
                 else jsonb_build_array(
-                    jsonb_build_object('name', 'Light Pistol', 'type', 0, 'value', 12, 'slots', 1, 'rarity', 0, 'displayRarity', 1)
+                    jsonb_build_object('name', 'Makarov', 'type', 0, 'value', 12, 'slots', 1, 'rarity', 0, 'displayRarity', 1)
                 )
             end
     end;
@@ -154,31 +154,31 @@ volatile
 as $$
     with bounds as (
         select case
-            when weapon_name = 'Drum SMG' and attack_mode = 'standard' then 6
-            when weapon_name = 'Field Carbine' and attack_mode = 'standard' then 8
-            when weapon_name = 'Marksman Rifle' and attack_mode = 'standard' then 11
-            when weapon_name = 'Battle Rifle' and attack_mode = 'standard' then 9
-            when weapon_name = 'Support Machine Gun' and attack_mode = 'standard' then 12
-            when weapon_name = 'Light Pistol' and attack_mode = 'burst' then 8
-            when weapon_name = 'Drum SMG' and attack_mode = 'burst' then 10
-            when weapon_name = 'Field Carbine' and attack_mode = 'burst' then 12
-            when weapon_name = 'Marksman Rifle' and attack_mode = 'burst' then 15
-            when weapon_name = 'Battle Rifle' and attack_mode = 'burst' then 13
-            when weapon_name = 'Support Machine Gun' and attack_mode = 'burst' then 16
+            when weapon_name = 'PPSH' and attack_mode = 'standard' then 6
+            when weapon_name = 'AK74' and attack_mode = 'standard' then 8
+            when weapon_name = 'SVDS' and attack_mode = 'standard' then 11
+            when weapon_name = 'AK47' and attack_mode = 'standard' then 9
+            when weapon_name = 'PKP' and attack_mode = 'standard' then 12
+            when weapon_name = 'Makarov' and attack_mode = 'burst' then 8
+            when weapon_name = 'PPSH' and attack_mode = 'burst' then 10
+            when weapon_name = 'AK74' and attack_mode = 'burst' then 12
+            when weapon_name = 'SVDS' and attack_mode = 'burst' then 15
+            when weapon_name = 'AK47' and attack_mode = 'burst' then 13
+            when weapon_name = 'PKP' and attack_mode = 'burst' then 16
             else 5
         end as damage_min,
         case
-            when weapon_name = 'Drum SMG' and attack_mode = 'standard' then 10
-            when weapon_name = 'Field Carbine' and attack_mode = 'standard' then 12
-            when weapon_name = 'Marksman Rifle' and attack_mode = 'standard' then 16
-            when weapon_name = 'Battle Rifle' and attack_mode = 'standard' then 14
-            when weapon_name = 'Support Machine Gun' and attack_mode = 'standard' then 18
-            when weapon_name = 'Light Pistol' and attack_mode = 'burst' then 12
-            when weapon_name = 'Drum SMG' and attack_mode = 'burst' then 15
-            when weapon_name = 'Field Carbine' and attack_mode = 'burst' then 17
-            when weapon_name = 'Marksman Rifle' and attack_mode = 'burst' then 21
-            when weapon_name = 'Battle Rifle' and attack_mode = 'burst' then 19
-            when weapon_name = 'Support Machine Gun' and attack_mode = 'burst' then 24
+            when weapon_name = 'PPSH' and attack_mode = 'standard' then 10
+            when weapon_name = 'AK74' and attack_mode = 'standard' then 12
+            when weapon_name = 'SVDS' and attack_mode = 'standard' then 16
+            when weapon_name = 'AK47' and attack_mode = 'standard' then 14
+            when weapon_name = 'PKP' and attack_mode = 'standard' then 18
+            when weapon_name = 'Makarov' and attack_mode = 'burst' then 12
+            when weapon_name = 'PPSH' and attack_mode = 'burst' then 15
+            when weapon_name = 'AK74' and attack_mode = 'burst' then 17
+            when weapon_name = 'SVDS' and attack_mode = 'burst' then 21
+            when weapon_name = 'AK47' and attack_mode = 'burst' then 19
+            when weapon_name = 'PKP' and attack_mode = 'burst' then 24
             else 8
         end as damage_max
     )
@@ -592,11 +592,11 @@ begin
         else
             incoming := 3 + floor(random() * 6)::int;
             reduced_damage := greatest(1, incoming - case
-                when coalesce(equipped_armor->>'name', '') = 'Assault Plate Carrier' then 6
-                when coalesce(equipped_armor->>'name', '') = 'Heavy Plate Carrier' then 5
-                when coalesce(equipped_armor->>'name', '') = 'Medium Plate Carrier' then 4
-                when coalesce(equipped_armor->>'name', '') = 'Light Plate Carrier' then 3
-                when coalesce(equipped_armor->>'name', '') = 'Soft Armor Vest' then 1
+                when coalesce(equipped_armor->>'name', '') = 'NFM THOR' then 6
+                when coalesce(equipped_armor->>'name', '') = '6B43 Zabralo-Sh body armor' then 5
+                when coalesce(equipped_armor->>'name', '') = 'FORT Defender-2' then 4
+                when coalesce(equipped_armor->>'name', '') = '6B13 assault armor' then 3
+                when coalesce(equipped_armor->>'name', '') = '6B2 body armor' then 1
                 else 0
             end);
             health := greatest(health - reduced_damage, 0);
@@ -622,11 +622,11 @@ begin
             if encounter_type = 'Combat' then
                 incoming := 3 + floor(random() * 6)::int;
                 reduced_damage := greatest(1, incoming - case
-                    when coalesce(equipped_armor->>'name', '') = 'Assault Plate Carrier' then 6
-                    when coalesce(equipped_armor->>'name', '') = 'Heavy Plate Carrier' then 5
-                    when coalesce(equipped_armor->>'name', '') = 'Medium Plate Carrier' then 4
-                    when coalesce(equipped_armor->>'name', '') = 'Light Plate Carrier' then 3
-                    when coalesce(equipped_armor->>'name', '') = 'Soft Armor Vest' then 1
+                    when coalesce(equipped_armor->>'name', '') = 'NFM THOR' then 6
+                    when coalesce(equipped_armor->>'name', '') = '6B43 Zabralo-Sh body armor' then 5
+                    when coalesce(equipped_armor->>'name', '') = 'FORT Defender-2' then 4
+                    when coalesce(equipped_armor->>'name', '') = '6B13 assault armor' then 3
+                    when coalesce(equipped_armor->>'name', '') = '6B2 body armor' then 1
                     else 0
                 end);
                 health := greatest(health - reduced_damage, 0);
@@ -655,11 +655,11 @@ begin
 
             incoming := 3 + floor(random() * 6)::int;
             reduced_damage := greatest(1, incoming - case
-                when coalesce(equipped_armor->>'name', '') = 'Assault Plate Carrier' then 6
-                when coalesce(equipped_armor->>'name', '') = 'Heavy Plate Carrier' then 5
-                when coalesce(equipped_armor->>'name', '') = 'Medium Plate Carrier' then 4
-                when coalesce(equipped_armor->>'name', '') = 'Light Plate Carrier' then 3
-                when coalesce(equipped_armor->>'name', '') = 'Soft Armor Vest' then 1
+                when coalesce(equipped_armor->>'name', '') = 'NFM THOR' then 6
+                when coalesce(equipped_armor->>'name', '') = '6B43 Zabralo-Sh body armor' then 5
+                when coalesce(equipped_armor->>'name', '') = 'FORT Defender-2' then 4
+                when coalesce(equipped_armor->>'name', '') = '6B13 assault armor' then 3
+                when coalesce(equipped_armor->>'name', '') = '6B2 body armor' then 1
                 else 0
             end);
             health := greatest(health - reduced_damage, 0);
@@ -691,11 +691,11 @@ begin
                 log_entries := game.raid_append_log(log_entries, 'Flee failed.');
                 incoming := 3 + floor(random() * 6)::int;
                 reduced_damage := greatest(1, incoming - case
-                    when coalesce(equipped_armor->>'name', '') = 'Assault Plate Carrier' then 6
-                    when coalesce(equipped_armor->>'name', '') = 'Heavy Plate Carrier' then 5
-                    when coalesce(equipped_armor->>'name', '') = 'Medium Plate Carrier' then 4
-                    when coalesce(equipped_armor->>'name', '') = 'Light Plate Carrier' then 3
-                    when coalesce(equipped_armor->>'name', '') = 'Soft Armor Vest' then 1
+                    when coalesce(equipped_armor->>'name', '') = 'NFM THOR' then 6
+                    when coalesce(equipped_armor->>'name', '') = '6B43 Zabralo-Sh body armor' then 5
+                    when coalesce(equipped_armor->>'name', '') = 'FORT Defender-2' then 4
+                    when coalesce(equipped_armor->>'name', '') = '6B13 assault armor' then 3
+                    when coalesce(equipped_armor->>'name', '') = '6B2 body armor' then 1
                     else 0
                 end);
                 health := greatest(health - reduced_damage, 0);

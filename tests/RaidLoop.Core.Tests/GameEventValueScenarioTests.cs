@@ -27,7 +27,7 @@ public class GameEventValueScenarioTests : IDisposable
     public async Task TakeLootAsync_EmitsLootAcquiredWithItemValue()
     {
         var home = CreateHome();
-        var loot = new Item("Battle Rifle", ItemType.Weapon, Weight: 10, Value: 20, Slots: 1, Rarity: Rarity.Legendary);
+        var loot = new Item("AK47", ItemType.Weapon, Weight: 10, Value: 20, Slots: 1, Rarity: Rarity.Legendary);
         var raid = new RaidState(
             health: 30,
             inventory: RaidInventory.FromItems([], [], backpackCapacity: 4));
@@ -47,7 +47,7 @@ public class GameEventValueScenarioTests : IDisposable
     public async Task SellStashItemAsync_UsesItemValueForPayout()
     {
         var home = CreateHome();
-        var soldItem = new Item("Battle Rifle", ItemType.Weapon, Weight: 10, Value: 20, Slots: 1, Rarity: Rarity.Legendary);
+        var soldItem = new Item("AK47", ItemType.Weapon, Weight: 10, Value: 20, Slots: 1, Rarity: Rarity.Legendary);
 
         SetField(home, "_mainGame", new GameState([soldItem]));
         SetField(home, "_money", 0);

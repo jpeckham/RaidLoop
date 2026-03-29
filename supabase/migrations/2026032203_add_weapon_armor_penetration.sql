@@ -5,11 +5,11 @@ immutable
 as $$
 begin
     return case
-        when weapon_name = 'Light Pistol' then 1
-        when weapon_name = 'Drum SMG' then 1
-        when weapon_name = 'Field Carbine' then 2
-        when weapon_name = 'Battle Rifle' then 2
-        when weapon_name = 'Marksman Rifle' then 3
+        when weapon_name = 'Makarov' then 1
+        when weapon_name = 'PPSH' then 1
+        when weapon_name = 'AK74' then 2
+        when weapon_name = 'AK47' then 2
+        when weapon_name = 'SVDS' then 3
         else 0
     end;
 end;
@@ -22,11 +22,11 @@ immutable
 as $$
 begin
     return case
-        when armor_name = 'Assault Plate Carrier' then 6
-        when armor_name = 'Heavy Plate Carrier' then 5
-        when armor_name = 'Medium Plate Carrier' then 4
-        when armor_name = 'Light Plate Carrier' then 3
-        when armor_name = 'Soft Armor Vest' then 1
+        when armor_name = 'NFM THOR' then 6
+        when armor_name = '6B43 Zabralo-Sh body armor' then 5
+        when armor_name = 'FORT Defender-2' then 4
+        when armor_name = '6B13 assault armor' then 3
+        when armor_name = '6B2 body armor' then 1
         else 0
     end;
 end;

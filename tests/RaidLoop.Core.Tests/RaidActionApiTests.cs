@@ -37,7 +37,7 @@ public sealed class RaidActionApiTests
                     "discoveredLoot": [],
                     "carriedLoot": [],
                     "equippedItems": [
-                      { "name": "Field Carbine", "type": 0, "value": 320, "slots": 1, "rarity": 2, "displayRarity": 3 },
+                      { "name": "AK74", "type": 0, "value": 320, "slots": 1, "rarity": 2, "displayRarity": 3 },
                       { "name": "Small Backpack", "type": 2, "value": 75, "slots": 2, "rarity": 2, "displayRarity": 3 }
                     ],
                     "logEntries": ["Raid updated on server."]
@@ -86,7 +86,7 @@ public sealed class RaidActionApiTests
                       { "name": "Bandage", "type": 4, "value": 15, "slots": 1, "rarity": 0, "displayRarity": 0 }
                     ],
                     "equippedItems": [
-                      { "name": "Field Carbine", "type": 0, "value": 320, "slots": 1, "rarity": 2, "displayRarity": 3 },
+                      { "name": "AK74", "type": 0, "value": 320, "slots": 1, "rarity": 2, "displayRarity": 3 },
                       { "name": "Small Backpack", "type": 2, "value": 75, "slots": 2, "rarity": 2, "displayRarity": 3 }
                     ],
                     "logEntries": ["Raid updated on server."]
@@ -134,7 +134,7 @@ public sealed class RaidActionApiTests
                     ],
                     "carriedLoot": [],
                     "equippedItems": [
-                      { "name": "Field Carbine", "type": 0, "value": 320, "slots": 1, "rarity": 2, "displayRarity": 3 },
+                      { "name": "AK74", "type": 0, "value": 320, "slots": 1, "rarity": 2, "displayRarity": 3 },
                       { "name": "Small Backpack", "type": 2, "value": 75, "slots": 2, "rarity": 2, "displayRarity": 3 }
                     ],
                     "logEntries": ["Raid updated on server."]
@@ -181,7 +181,7 @@ public sealed class RaidActionApiTests
                     "discoveredLoot": [],
                     "carriedLoot": [],
                     "equippedItems": [
-                      { "name": "Field Carbine", "type": 0, "value": 320, "slots": 1, "rarity": 2, "displayRarity": 3 },
+                      { "name": "AK74", "type": 0, "value": 320, "slots": 1, "rarity": 2, "displayRarity": 3 },
                       { "name": "Small Backpack", "type": 2, "value": 75, "slots": 2, "rarity": 2, "displayRarity": 3 }
                     ],
                     "logEntries": ["Moved one step closer to extract."]
@@ -225,7 +225,7 @@ public sealed class RaidActionApiTests
                     "discoveredLoot": [],
                     "carriedLoot": [],
                     "equippedItems": [
-                      { "name": "Field Carbine", "type": 0, "value": 320, "slots": 1, "rarity": 2, "displayRarity": 3 },
+                      { "name": "AK74", "type": 0, "value": 320, "slots": 1, "rarity": 2, "displayRarity": 3 },
                       { "name": "Small Backpack", "type": 2, "value": 75, "slots": 2, "rarity": 2, "displayRarity": 3 }
                     ],
                     "logEntries": ["You drifted one step away from extract."]
@@ -271,7 +271,7 @@ public sealed class RaidActionApiTests
                     "discoveredLoot": [],
                     "carriedLoot": [],
                     "equippedItems": [
-                      { "name": "Field Carbine", "type": 0, "value": 320, "slots": 1, "rarity": 2, "displayRarity": 3 },
+                      { "name": "AK74", "type": 0, "value": 320, "slots": 1, "rarity": 2, "displayRarity": 3 },
                       { "name": "Small Backpack", "type": 2, "value": 75, "slots": 2, "rarity": 2, "displayRarity": 3 }
                     ],
                     "logEntries": ["Raid updated on server."]
@@ -457,7 +457,7 @@ public sealed class RaidActionApiTests
                     "discoveredLoot": [],
                     "carriedLoot": [],
                     "equippedItems": [
-                      { "name": "Field Carbine", "type": 0, "value": 320, "slots": 1, "rarity": 2, "displayRarity": 3 },
+                      { "name": "AK74", "type": 0, "value": 320, "slots": 1, "rarity": 2, "displayRarity": 3 },
                       { "name": "Small Backpack", "type": 2, "value": 75, "slots": 2, "rarity": 2, "displayRarity": 3 }
                     ],
                     "logEntries": ["Raid updated on server."]
@@ -581,13 +581,13 @@ public sealed class RaidActionApiTests
         var home = CreateHome(new FakeGameActionApiClient());
         var raid = new RaidState(
             30,
-            RaidInventory.FromItems([ItemCatalog.Create("Light Pistol"), ItemCatalog.Create("Small Backpack")], [], 3));
+            RaidInventory.FromItems([ItemCatalog.Create("Makarov"), ItemCatalog.Create("Small Backpack")], [], 3));
         raid.MaxEncumbrance = 9;
 
         SetField(home, "_raid", raid);
 
-        Assert.False(InvokePrivateBool(home, "CanLootItem", ItemCatalog.Create("Light Plate Carrier")));
-        Assert.False(InvokePrivateBool(home, "CanEquipRaidItem", ItemCatalog.Create("Light Plate Carrier")));
+        Assert.False(InvokePrivateBool(home, "CanLootItem", ItemCatalog.Create("6B13 assault armor")));
+        Assert.False(InvokePrivateBool(home, "CanEquipRaidItem", ItemCatalog.Create("6B13 assault armor")));
     }
 
     [Fact]
@@ -616,8 +616,8 @@ public sealed class RaidActionApiTests
                 null));
 
         Assert.Equal("98/100 lbs", InvokePrivate<string>(home, "GetRaidEncumbranceText"));
-        Assert.False(InvokePrivateBool(home, "CanLootItem", ItemCatalog.Create("Light Plate Carrier")));
-        Assert.False(InvokePrivateBool(home, "CanEquipRaidItem", ItemCatalog.Create("Light Plate Carrier")));
+        Assert.False(InvokePrivateBool(home, "CanLootItem", ItemCatalog.Create("6B13 assault armor")));
+        Assert.False(InvokePrivateBool(home, "CanEquipRaidItem", ItemCatalog.Create("6B13 assault armor")));
     }
 
     [Fact]
@@ -655,7 +655,7 @@ public sealed class RaidActionApiTests
                           { "name": "Bandage", "type": 3, "value": 15, "slots": 1, "rarity": 0, "displayRarity": 0, "weight": 1 }
                         ],
                         "equippedItems": [
-                          { "name": "Field Carbine", "type": 0, "value": 320, "slots": 1, "rarity": 2, "displayRarity": 3, "weight": 9 },
+                          { "name": "AK74", "type": 0, "value": 320, "slots": 1, "rarity": 2, "displayRarity": 3, "weight": 9 },
                           { "name": "Small Backpack", "type": 2, "value": 75, "slots": 2, "rarity": 2, "displayRarity": 3, "weight": 4 }
                         ]
                       }
@@ -670,11 +670,11 @@ public sealed class RaidActionApiTests
     public void CanEquipRaidItem_DoesNotConsumeEqualButDistinctCarriedItem_WhenEvaluatingDiscoveredLoot()
     {
         var home = CreateHome(new FakeGameActionApiClient());
-        var carriedArmor = ItemCatalog.Create("Light Plate Carrier");
-        var discoveredArmor = ItemCatalog.Create("Light Plate Carrier");
+        var carriedArmor = ItemCatalog.Create("6B13 assault armor");
+        var discoveredArmor = ItemCatalog.Create("6B13 assault armor");
         var raid = new RaidState(
             30,
-            RaidInventory.FromItems([ItemCatalog.Create("Light Pistol"), ItemCatalog.Create("Small Backpack")], [carriedArmor], 3));
+            RaidInventory.FromItems([ItemCatalog.Create("Makarov"), ItemCatalog.Create("Small Backpack")], [carriedArmor], 3));
         raid.MaxEncumbrance = 16;
 
         SetField(home, "_raid", raid);
@@ -696,7 +696,7 @@ public sealed class RaidActionApiTests
         SetField(home, "_maxHealth", 34);
         SetField(home, "_raid", new RaidState(
             30,
-            RaidInventory.FromItems([ItemCatalog.Create("Field Carbine"), ItemCatalog.Create("Small Backpack")], [], 3)));
+            RaidInventory.FromItems([ItemCatalog.Create("AK74"), ItemCatalog.Create("Small Backpack")], [], 3)));
         SetField(home, "_encounterType", EncounterType.Combat);
         SetField(home, "_contactState", "PlayerAmbush");
         SetField(home, "_surpriseSide", "Player");

@@ -61,25 +61,25 @@ You prepare gear, run raids, fight or loot, and try to extract with profit.
 ## Item Tiers And Examples
 
 ### Starter / Lower Tier
-- `Light Pistol`
-- `Drum SMG`
-- `Field Carbine`
-- `Soft Armor Vest`
-- `Light Plate Carrier`
+- `Makarov`
+- `PPSH`
+- `AK74`
+- `6B2 body armor`
+- `6B13 assault armor`
 - `Small Backpack`
 - `Tactical Backpack`
 
 ### Epic
-- `Marksman Rifle`
-- `Medium Plate Carrier`
-- `Hiking Backpack`
+- `SVDS`
+- `FORT Defender-2`
+- `Tasmanian Tiger Trooper 35`
 
 ### Legendary
-- `Battle Rifle`
-- `Support Machine Gun`
-- `Heavy Plate Carrier`
-- `Assault Plate Carrier`
-- `Raid Backpack`
+- `AK47`
+- `PKP`
+- `6B43 Zabralo-Sh body armor`
+- `NFM THOR`
+- `6Sh118`
 
 ### Sell-Only Items
 - `Bandage`

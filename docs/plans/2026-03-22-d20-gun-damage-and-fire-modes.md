@@ -26,19 +26,19 @@ Status: Completed
 
 Add tests that require:
 - d20-style base damage ranges for each weapon:
-  - `Light Pistol` = `2d6`
-  - `Drum SMG` = `2d4`
-  - `Field Carbine` = `2d8`
-  - `Battle Rifle` = `2d10`
-  - `Marksman Rifle` = `2d12`
-  - `Support Machine Gun` = `2d12`
+  - `Makarov` = `2d6`
+  - `PPSH` = `2d4`
+  - `AK74` = `2d8`
+  - `AK47` = `2d10`
+  - `SVDS` = `2d12`
+  - `PKP` = `2d12`
 - authored fire-mode support:
-  - `Light Pistol` = `single`, `burst`
-  - `Drum SMG` = `single`, `burst`, `full-auto`
-  - `Field Carbine` = `single`, `burst`, `full-auto`
-  - `Battle Rifle` = `single`, `burst`, `full-auto`
-  - `Marksman Rifle` = `single`, `burst`
-  - `Support Machine Gun` = `burst`, `full-auto`
+  - `Makarov` = `single`, `burst`
+  - `PPSH` = `single`, `burst`, `full-auto`
+  - `AK74` = `single`, `burst`, `full-auto`
+  - `AK47` = `single`, `burst`, `full-auto`
+  - `SVDS` = `single`, `burst`
+  - `PKP` = `burst`, `full-auto`
 - `RaidHUD.razor` renders a `Full Auto` action callback and supports hiding `Attack` / `Burst Fire` / `Full Auto` independently
 
 **Step 2: Run tests to verify they fail**
@@ -78,8 +78,8 @@ Status: Completed
 Extend the core combat tests to assert:
 - `CombatBalance.GetDamageRange(...)` returns the new d20-style min/max ranges
 - fire-mode helpers distinguish `single`, `burst`, and `full-auto`
-- Support Machine Gun does not support `single`
-- Light Pistol supports `burst` but not `full-auto`
+- PKP does not support `single`
+- Makarov supports `burst` but not `full-auto`
 - full-auto capable weapons are limited to the authored list
 
 **Step 2: Run test to verify it fails**
@@ -235,12 +235,12 @@ Extend the migration-content test to assert the new migration defines:
 - a helper for burst attack penalty or mode attack bonus adjustment
 - a helper for d20-style weapon damage dice, such as `game.roll_weapon_damage_d20`
 - authored SQL branches for:
-  - `Light Pistol = 2d6`
-  - `Drum SMG = 2d4`
-  - `Field Carbine = 2d8`
-  - `Battle Rifle = 2d10`
-  - `Marksman Rifle = 2d12`
-  - `Support Machine Gun = 2d12`
+  - `Makarov = 2d6`
+  - `PPSH = 2d4`
+  - `AK74 = 2d8`
+  - `AK47 = 2d10`
+  - `SVDS = 2d12`
+  - `PKP = 2d12`
 - extra dice by mode:
   - `0` for attack
   - `+1` die for burst
@@ -394,7 +394,7 @@ git diff -- src/RaidLoop.Core/CombatBalance.cs src/RaidLoop.Client/Components/Ra
 
 Confirm:
 - d20 dice ranges match the approved weapon list
-- Support Machine Gun lacks `Attack` but supports `Burst Fire` and `Full Auto`
+- PKP lacks `Attack` but supports `Burst Fire` and `Full Auto`
 - burst and full-auto ammo spends and penalties match the approved rules
 - armor penetration remains intact
 - `full-auto` is handled as a combat action in the Edge Function wrapper

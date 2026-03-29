@@ -180,11 +180,11 @@ begin
             if attack_hit then
                 incoming := 3 + floor(random() * 6)::int;
                 reduced_damage := greatest(1, incoming - case
-                    when coalesce(equipped_armor->>'name', '') = 'Assault Plate Carrier' then 6
-                    when coalesce(equipped_armor->>'name', '') = 'Heavy Plate Carrier' then 5
-                    when coalesce(equipped_armor->>'name', '') = 'Medium Plate Carrier' then 4
-                    when coalesce(equipped_armor->>'name', '') = 'Light Plate Carrier' then 3
-                    when coalesce(equipped_armor->>'name', '') = 'Soft Armor Vest' then 1
+                    when coalesce(equipped_armor->>'name', '') = 'NFM THOR' then 6
+                    when coalesce(equipped_armor->>'name', '') = '6B43 Zabralo-Sh body armor' then 5
+                    when coalesce(equipped_armor->>'name', '') = 'FORT Defender-2' then 4
+                    when coalesce(equipped_armor->>'name', '') = '6B13 assault armor' then 3
+                    when coalesce(equipped_armor->>'name', '') = '6B2 body armor' then 1
                     else 0
                 end);
                 health := greatest(health - reduced_damage, 0);
@@ -215,11 +215,11 @@ begin
                 if attack_hit then
                     incoming := 3 + floor(random() * 6)::int;
                     reduced_damage := greatest(1, incoming - case
-                        when coalesce(equipped_armor->>'name', '') = 'Assault Plate Carrier' then 6
-                        when coalesce(equipped_armor->>'name', '') = 'Heavy Plate Carrier' then 5
-                        when coalesce(equipped_armor->>'name', '') = 'Medium Plate Carrier' then 4
-                        when coalesce(equipped_armor->>'name', '') = 'Light Plate Carrier' then 3
-                        when coalesce(equipped_armor->>'name', '') = 'Soft Armor Vest' then 1
+                        when coalesce(equipped_armor->>'name', '') = 'NFM THOR' then 6
+                        when coalesce(equipped_armor->>'name', '') = '6B43 Zabralo-Sh body armor' then 5
+                        when coalesce(equipped_armor->>'name', '') = 'FORT Defender-2' then 4
+                        when coalesce(equipped_armor->>'name', '') = '6B13 assault armor' then 3
+                        when coalesce(equipped_armor->>'name', '') = '6B2 body armor' then 1
                         else 0
                     end);
                     health := greatest(health - reduced_damage, 0);
@@ -253,11 +253,11 @@ begin
             if attack_hit then
                 incoming := 3 + floor(random() * 6)::int;
                 reduced_damage := greatest(1, incoming - case
-                    when coalesce(equipped_armor->>'name', '') = 'Assault Plate Carrier' then 6
-                    when coalesce(equipped_armor->>'name', '') = 'Heavy Plate Carrier' then 5
-                    when coalesce(equipped_armor->>'name', '') = 'Medium Plate Carrier' then 4
-                    when coalesce(equipped_armor->>'name', '') = 'Light Plate Carrier' then 3
-                    when coalesce(equipped_armor->>'name', '') = 'Soft Armor Vest' then 1
+                    when coalesce(equipped_armor->>'name', '') = 'NFM THOR' then 6
+                    when coalesce(equipped_armor->>'name', '') = '6B43 Zabralo-Sh body armor' then 5
+                    when coalesce(equipped_armor->>'name', '') = 'FORT Defender-2' then 4
+                    when coalesce(equipped_armor->>'name', '') = '6B13 assault armor' then 3
+                    when coalesce(equipped_armor->>'name', '') = '6B2 body armor' then 1
                     else 0
                 end);
                 health := greatest(health - reduced_damage, 0);
@@ -294,11 +294,11 @@ begin
                 if attack_hit then
                     incoming := 3 + floor(random() * 6)::int;
                     reduced_damage := greatest(1, incoming - case
-                        when coalesce(equipped_armor->>'name', '') = 'Assault Plate Carrier' then 6
-                        when coalesce(equipped_armor->>'name', '') = 'Heavy Plate Carrier' then 5
-                        when coalesce(equipped_armor->>'name', '') = 'Medium Plate Carrier' then 4
-                        when coalesce(equipped_armor->>'name', '') = 'Light Plate Carrier' then 3
-                        when coalesce(equipped_armor->>'name', '') = 'Soft Armor Vest' then 1
+                        when coalesce(equipped_armor->>'name', '') = 'NFM THOR' then 6
+                        when coalesce(equipped_armor->>'name', '') = '6B43 Zabralo-Sh body armor' then 5
+                        when coalesce(equipped_armor->>'name', '') = 'FORT Defender-2' then 4
+                        when coalesce(equipped_armor->>'name', '') = '6B13 assault armor' then 3
+                        when coalesce(equipped_armor->>'name', '') = '6B2 body armor' then 1
                         else 0
                     end);
                     health := greatest(health - reduced_damage, 0);

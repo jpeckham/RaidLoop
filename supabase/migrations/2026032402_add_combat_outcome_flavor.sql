@@ -3,19 +3,19 @@ alter table game.item_defs
 
 update game.item_defs
 set armor_hit_bonus = case item_key
-    when 'soft_armor_vest' then 1
-    when 'light_plate_carrier' then 2
-    when 'medium_plate_carrier' then 3
-    when 'heavy_plate_carrier' then 4
-    when 'assault_plate_carrier' then 5
+    when '6b2_body_armor' then 1
+    when '6b13_assault_armor' then 2
+    when 'fort_defender_2' then 3
+    when '6b43_zabralo_sh_body_armor' then 4
+    when 'nfm_thor' then 5
     else armor_hit_bonus
 end
 where item_key in (
-    'soft_armor_vest',
-    'light_plate_carrier',
-    'medium_plate_carrier',
-    'heavy_plate_carrier',
-    'assault_plate_carrier');
+    '6b2_body_armor',
+    '6b13_assault_armor',
+    'fort_defender_2',
+    '6b43_zabralo_sh_body_armor',
+    'nfm_thor');
 
 create or replace function game.weapon_armor_penetration(weapon_name text)
 returns int

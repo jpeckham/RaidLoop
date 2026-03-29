@@ -191,7 +191,7 @@ public static class CombatBalance
     {
         return NormalizeWeaponName(weaponName) switch
         {
-            "Support Machine Gun" => false,
+            "PKP" => false,
             _ => true
         };
     }
@@ -200,12 +200,12 @@ public static class CombatBalance
     {
         return NormalizeWeaponName(weaponName) switch
         {
-            "Light Pistol" => true,
-            "Drum SMG" => true,
-            "Field Carbine" => true,
-            "Battle Rifle" => true,
-            "Marksman Rifle" => true,
-            "Support Machine Gun" => true,
+            "Makarov" => true,
+            "PPSH" => true,
+            "AK74" => true,
+            "AK47" => true,
+            "SVDS" => true,
+            "PKP" => true,
             "Rusty Knife" => false,
             _ => false
         };
@@ -215,8 +215,8 @@ public static class CombatBalance
     {
         return NormalizeWeaponName(weaponName) switch
         {
-            "Light Pistol" => false,
-            "Marksman Rifle" => false,
+            "Makarov" => false,
+            "SVDS" => false,
             "Rusty Knife" => false,
             _ => true
         };
@@ -226,12 +226,12 @@ public static class CombatBalance
     {
         return NormalizeWeaponName(weaponName) switch
         {
-            "Light Pistol" => 3,
-            "Drum SMG" => 2,
-            "Field Carbine" => 2,
-            "Battle Rifle" => 2,
-            "Marksman Rifle" => 2,
-            "Support Machine Gun" => 2,
+            "Makarov" => 3,
+            "PPSH" => 2,
+            "AK74" => 2,
+            "AK47" => 2,
+            "SVDS" => 2,
+            "PKP" => 2,
             _ => 3
         };
     }
@@ -240,12 +240,12 @@ public static class CombatBalance
     {
         return NormalizeArmorName(armorName) switch
         {
-            "Assault Plate Carrier" => 6,
-            "Heavy Plate Carrier" => 5,
-            "Medium Plate Carrier" => 4,
-            "Light Plate Carrier" => 3,
-            "Reinforced Vest" => 2,
-            "Soft Armor Vest" => 1,
+            "NFM THOR" => 6,
+            "6B43 Zabralo-Sh body armor" => 5,
+            "FORT Defender-2" => 4,
+            "6B13 assault armor" => 3,
+            "BNTI Kirasa-N" => 2,
+            "6B2 body armor" => 1,
             _ => 0
         };
     }
@@ -264,23 +264,23 @@ public static class CombatBalance
             "Bandage" => 60,
             "Medkit" => 120,
             "Ammo Box" => 80,
-            "Light Pistol" => 240,
-            "Drum SMG" => 650,
-            "Field Carbine" => 1250,
-            "Marksman Rifle" => 2200,
-            "Battle Rifle" => 1500,
-            "Support Machine Gun" => 3200,
-            "Soft Armor Vest" => 380,
-            "Reinforced Vest" => 640,
-            "Light Plate Carrier" => 900,
-            "Medium Plate Carrier" => 1500,
-            "Heavy Plate Carrier" => 1800,
-            "Assault Plate Carrier" => 2600,
+            "Makarov" => 240,
+            "PPSH" => 650,
+            "AK74" => 1250,
+            "SVDS" => 2200,
+            "AK47" => 1500,
+            "PKP" => 3200,
+            "6B2 body armor" => 380,
+            "BNTI Kirasa-N" => 640,
+            "6B13 assault armor" => 900,
+            "FORT Defender-2" => 1500,
+            "6B43 Zabralo-Sh body armor" => 1800,
+            "NFM THOR" => 2600,
             "Small Backpack" => 100,
             "Large Backpack" => 200,
             "Tactical Backpack" => 300,
-            "Hiking Backpack" => 1600,
-            "Raid Backpack" => 2400,
+            "Tasmanian Tiger Trooper 35" => 1600,
+            "6Sh118" => 2400,
             _ => 100
         };
     }
@@ -289,11 +289,11 @@ public static class CombatBalance
     {
         return NormalizeWeaponName(weaponName) switch
         {
-            "Drum SMG" => 35,
-            "Field Carbine" => 30,
-            "Marksman Rifle" => 20,
-            "Battle Rifle" => 30,
-            "Support Machine Gun" => 100,
+            "PPSH" => 35,
+            "AK74" => 30,
+            "SVDS" => 20,
+            "AK47" => 30,
+            "PKP" => 100,
             "Rusty Knife" => 0,
             _ => 8
         };
@@ -308,8 +308,8 @@ public static class CombatBalance
     {
         return backpackName switch
         {
-            "Raid Backpack" => 10,
-            "Hiking Backpack" => 8,
+            "6Sh118" => 10,
+            "Tasmanian Tiger Trooper 35" => 8,
             "Tactical Backpack" => 6,
             "Large Backpack" => 4,
             "Small Backpack" => 3,
@@ -335,10 +335,10 @@ public static class CombatBalance
     {
         return weaponName switch
         {
-            "Hunting Rifle" => "Field Carbine",
-            "Rusty SMG" => "Drum SMG",
-            "Sawed Shotgun" => "Battle Rifle",
-            "Compact Carbine" => "Field Carbine",
+            "Hunting Rifle" => "AK74",
+            "Rusty SMG" => "PPSH",
+            "Sawed Shotgun" => "AK47",
+            "Compact Carbine" => "AK74",
             _ => weaponName
         };
     }
@@ -347,8 +347,8 @@ public static class CombatBalance
     {
         return armorName switch
         {
-            "Soft Vest" => "Soft Armor Vest",
-            "Plate Carrier" => "Light Plate Carrier",
+            "Soft Vest" => "6B2 body armor",
+            "Plate Carrier" => "6B13 assault armor",
             _ => armorName
         };
     }
@@ -389,12 +389,12 @@ public static class CombatBalance
     {
         return NormalizeWeaponName(weaponName) switch
         {
-            "Drum SMG" => 4,
-            "Field Carbine" => 8,
-            "Marksman Rifle" => 12,
-            "Battle Rifle" => 10,
-            "Support Machine Gun" => 12,
-            "Light Pistol" => 6,
+            "PPSH" => 4,
+            "AK74" => 8,
+            "SVDS" => 12,
+            "AK47" => 10,
+            "PKP" => 12,
+            "Makarov" => 6,
             "Rusty Knife" => 6,
             _ => 6
         };

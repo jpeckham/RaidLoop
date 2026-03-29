@@ -52,30 +52,30 @@ Use the latest runtime definitions, not historical duplicates:
 
 Current authored item rows and values to seed into `game.item_defs`:
 
-- Weapons: Rusty Knife `(type 0, value 1, slots 1, rarity 0, displayRarity 1)`, Light Pistol `(60, 1, 0, 1)`, Drum SMG `(160, 1, 1, 2)`, Field Carbine `(320, 1, 2, 3)`, Battle Rifle `(375, 1, 2, 3)`, Marksman Rifle `(550, 1, 3, 4)`, Support Machine Gun `(800, 1, 4, 5)`
-- Armor: Soft Armor Vest `(95, 1, 0, 1)`, Light Plate Carrier `(225, 1, 2, 3)`, Medium Plate Carrier `(375, 1, 3, 4)`, Heavy Plate Carrier `(450, 1, 4, 5)`, Assault Plate Carrier `(650, 1, 4, 5)`
-- Backpacks: Small Backpack `(25, 1, 1, 2)`, Tactical Backpack `(75, 2, 2, 3)`, Hiking Backpack `(400, 3, 3, 4)`, Raid Backpack `(600, 4, 4, 5)`
+- Weapons: Rusty Knife `(type 0, value 1, slots 1, rarity 0, displayRarity 1)`, Makarov `(60, 1, 0, 1)`, PPSH `(160, 1, 1, 2)`, AK74 `(320, 1, 2, 3)`, AK47 `(375, 1, 2, 3)`, SVDS `(550, 1, 3, 4)`, PKP `(800, 1, 4, 5)`
+- Armor: 6B2 body armor `(95, 1, 0, 1)`, 6B13 assault armor `(225, 1, 2, 3)`, FORT Defender-2 `(375, 1, 3, 4)`, 6B43 Zabralo-Sh body armor `(450, 1, 4, 5)`, NFM THOR `(650, 1, 4, 5)`
+- Backpacks: Small Backpack `(25, 1, 1, 2)`, Tactical Backpack `(75, 2, 2, 3)`, Tasmanian Tiger Trooper 35 `(400, 3, 3, 4)`, 6Sh118 `(600, 4, 4, 5)`
 - Consumables and loot: Medkit `(30, 1, 0, 1)`, Bandage `(15, 1, 0, 0)`, Ammo Box `(20, 1, 0, 0)`, Scrap Metal `(18, 1, 0, 0)`, Rare Scope `(80, 1, 2, 0)`, Legendary Trigger Group `(150, 1, 4, 0)`
 
 Current non-item rule values to preserve:
 
-- `game.weapon_magazine_capacity`: Drum SMG `35`, Field Carbine `30`, Marksman Rifle `20`, Battle Rifle `30`, Support Machine Gun `100`, Rusty Knife `0`, default `8`
-- `game.backpack_capacity`: Raid Backpack `10`, Hiking Backpack `8`, Tactical Backpack `6`, Small Backpack `3`, default `2`
-- `game.weapon_armor_penetration`: Light Pistol `1`, Drum SMG `1`, Field Carbine `2`, Battle Rifle `2`, Marksman Rifle `3`, default `0`
-- `game.armor_damage_reduction`: Assault Plate Carrier `6`, Heavy Plate Carrier `5`, Medium Plate Carrier `4`, Light Plate Carrier `3`, Soft Armor Vest `1`, default `0`
-- `game.weapon_supports_single_shot`: only Support Machine Gun is blocked
-- `game.weapon_supports_burst_fire`: Light Pistol, Drum SMG, Field Carbine, Battle Rifle, Marksman Rifle, Support Machine Gun are allowed
-- `game.weapon_supports_full_auto`: Drum SMG, Field Carbine, Battle Rifle, Support Machine Gun are allowed
-- `game.weapon_burst_attack_penalty`: Light Pistol `3`, Drum SMG `2`, Field Carbine `2`, Battle Rifle `2`, Marksman Rifle `2`, Support Machine Gun `2`, default `3`
-- `game.roll_weapon_damage_d20`: die sizes are Drum SMG `4`, Field Carbine `8`, Battle Rifle `10`, Marksman Rifle `12`, Support Machine Gun `12`, Light Pistol `6`, default `6`; attack-mode die counts are `attack=2`, `burst-fire=3`, `full-auto=4`
+- `game.weapon_magazine_capacity`: PPSH `35`, AK74 `30`, SVDS `20`, AK47 `30`, PKP `100`, Rusty Knife `0`, default `8`
+- `game.backpack_capacity`: 6Sh118 `10`, Tasmanian Tiger Trooper 35 `8`, Tactical Backpack `6`, Small Backpack `3`, default `2`
+- `game.weapon_armor_penetration`: Makarov `1`, PPSH `1`, AK74 `2`, AK47 `2`, SVDS `3`, default `0`
+- `game.armor_damage_reduction`: NFM THOR `6`, 6B43 Zabralo-Sh body armor `5`, FORT Defender-2 `4`, 6B13 assault armor `3`, 6B2 body armor `1`, default `0`
+- `game.weapon_supports_single_shot`: only PKP is blocked
+- `game.weapon_supports_burst_fire`: Makarov, PPSH, AK74, AK47, SVDS, PKP are allowed
+- `game.weapon_supports_full_auto`: PPSH, AK74, AK47, PKP are allowed
+- `game.weapon_burst_attack_penalty`: Makarov `3`, PPSH `2`, AK74 `2`, AK47 `2`, SVDS `2`, PKP `2`, default `3`
+- `game.roll_weapon_damage_d20`: die sizes are PPSH `4`, AK74 `8`, AK47 `10`, SVDS `12`, PKP `12`, Makarov `6`, default `6`; attack-mode die counts are `attack=2`, `burst-fire=3`, `full-auto=4`
 
 Current content-generation weights/outcomes to preserve:
 
-- `game.random_enemy_loadout`: weights are equivalent to `110` Light Pistol, `110` Bandage + Soft Armor Vest, `110` Soft Armor Vest, `60` Drum SMG + Bandage, `6` Field Carbine + Soft Armor Vest, `6` Battle Rifle + Bandage, `6` Light Plate Carrier, `3` Marksman Rifle, `3` Medium Plate Carrier, `3` Support Machine Gun, `3` Assault Plate Carrier
-- `game.random_loot_items_for_container('Weapons Crate')`: weights are equivalent to `40` Light Pistol + Ammo Box, `12` Drum SMG, `3` Field Carbine, `3` Battle Rifle, `3` Marksman Rifle, `2` Support Machine Gun
+- `game.random_enemy_loadout`: weights are equivalent to `110` Makarov, `110` Bandage + 6B2 body armor, `110` 6B2 body armor, `60` PPSH + Bandage, `6` AK74 + 6B2 body armor, `6` AK47 + Bandage, `6` 6B13 assault armor, `3` SVDS, `3` FORT Defender-2, `3` PKP, `3` NFM THOR
+- `game.random_loot_items_for_container('Weapons Crate')`: weights are equivalent to `40` Makarov + Ammo Box, `12` PPSH, `3` AK74, `3` AK47, `3` SVDS, `2` PKP
 - `game.random_loot_items_for_container('Medical Container')`: weights are `4` Medkit + Bandage, `3` Bandage + Ammo Box, `2` Medkit, `1` Medkit + Ammo Box
 - `game.random_loot_items_for_container('Dead Body')`: delegates to `game.random_enemy_loadout()`
-- `game.random_loot_items_for_container(other)`: weights are equivalent to `40` split evenly across Bandage + Ammo Box, Scrap Metal, and Medkit, then `36` Drum SMG, `9` Rare Scope, `9` Field Carbine, `9` Marksman Rifle, `6` Legendary Trigger Group
+- `game.random_loot_items_for_container(other)`: weights are equivalent to `40` split evenly across Bandage + Ammo Box, Scrap Metal, and Medkit, then `36` PPSH, `9` Rare Scope, `9` AK74, `9` SVDS, `6` Legendary Trigger Group
 - `game.generate_raid_encounter`: extraction-route check first, then `roll < 50` combat, `roll < 80` loot, else neutral
 - `game.generate_raid_encounter` combat enemy name weighting: Scavenger `65%`, Patrol Guard `35%`
 - `game.generate_raid_encounter` combat HP range: `12 + floor(random() * 9)` so `12` through `20`
@@ -120,21 +120,21 @@ Define the expected row count and key columns for the current item set:
 Expected current authored items:
 
 - Rusty Knife
-- Light Pistol
-- Drum SMG
-- Field Carbine
-- Marksman Rifle
-- Battle Rifle
-- Support Machine Gun
-- Soft Armor Vest
-- Light Plate Carrier
-- Medium Plate Carrier
-- Heavy Plate Carrier
-- Assault Plate Carrier
+- Makarov
+- PPSH
+- AK74
+- SVDS
+- AK47
+- PKP
+- 6B2 body armor
+- 6B13 assault armor
+- FORT Defender-2
+- 6B43 Zabralo-Sh body armor
+- NFM THOR
 - Small Backpack
 - Tactical Backpack
-- Hiking Backpack
-- Raid Backpack
+- Tasmanian Tiger Trooper 35
+- 6Sh118
 - Medkit
 - Bandage
 - Ammo Box
@@ -210,14 +210,14 @@ git commit -m "feat: add canonical item definitions table"
 
 Document the expected lookups:
 
-- `game.authored_item('Field Carbine')` returns the same JSON shape as before
-- `game.weapon_magazine_capacity('Support Machine Gun')` returns `100`
-- `game.backpack_capacity('Raid Backpack')` returns `10`
-- `game.weapon_armor_penetration('Marksman Rifle')` returns `3`
-- `game.armor_damage_reduction('Assault Plate Carrier')` returns `6`
-- `game.weapon_supports_single_shot('Support Machine Gun')` returns `false`
-- `game.weapon_supports_full_auto('Battle Rifle')` returns `true`
-- `game.weapon_burst_attack_penalty('Light Pistol')` returns `3`
+- `game.authored_item('AK74')` returns the same JSON shape as before
+- `game.weapon_magazine_capacity('PKP')` returns `100`
+- `game.backpack_capacity('6Sh118')` returns `10`
+- `game.weapon_armor_penetration('SVDS')` returns `3`
+- `game.armor_damage_reduction('NFM THOR')` returns `6`
+- `game.weapon_supports_single_shot('PKP')` returns `false`
+- `game.weapon_supports_full_auto('AK47')` returns `true`
+- `game.weapon_burst_attack_penalty('Makarov')` returns `3`
 
 **Step 2: Replace hard-coded `case` logic with table lookups**
 

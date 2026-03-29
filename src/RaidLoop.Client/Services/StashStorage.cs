@@ -156,11 +156,11 @@ public sealed class StashStorage
         return NormalizeSave(new GameSave(
             MainStash:
             [
-                ItemCatalog.Create("Light Pistol"),
-                ItemCatalog.Create("Drum SMG"),
-                ItemCatalog.Create("Field Carbine"),
-                ItemCatalog.Create("Soft Armor Vest"),
-                ItemCatalog.Create("Light Plate Carrier"),
+                ItemCatalog.Create("Makarov"),
+                ItemCatalog.Create("PPSH"),
+                ItemCatalog.Create("AK74"),
+                ItemCatalog.Create("6B2 body armor"),
+                ItemCatalog.Create("6B13 assault armor"),
                 ItemCatalog.Create("Small Backpack"),
                 ItemCatalog.Create("Tactical Backpack"),
                 ItemCatalog.Create("Medkit"),

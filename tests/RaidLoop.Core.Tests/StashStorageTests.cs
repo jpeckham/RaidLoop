@@ -13,7 +13,7 @@ public sealed class StashStorageTests
         var raw = JsonSerializer.Serialize(new GameSave(
             MainStash:
             [
-                new Item("Light Pistol", ItemType.Weapon, Weight: 4, Value: 1, Slots: 1),
+                new Item("Makarov", ItemType.Weapon, Weight: 4, Value: 1, Slots: 1),
                 new Item("Bandage", ItemType.Sellable, Weight: 1, Value: 1, Slots: 1)
             ],
             RandomCharacterAvailableAt: DateTimeOffset.MinValue,
@@ -28,7 +28,7 @@ public sealed class StashStorageTests
 
         var save = await storage.LoadAsync();
 
-        Assert.Equal(ItemCatalog.Get("Light Pistol"), save.MainStash[0]);
+        Assert.Equal(ItemCatalog.Get("Makarov"), save.MainStash[0]);
         Assert.Equal(ItemCatalog.Get("Bandage"), save.MainStash[1]);
         Assert.Equal(ItemCatalog.Get("Medkit"), save.OnPersonItems[0].Item);
     }
@@ -50,7 +50,7 @@ public sealed class StashStorageTests
 
         var save = await storage.LoadAsync();
 
-        Assert.Equal([ItemCatalog.Get("Field Carbine")], save.MainStash);
+        Assert.Equal([ItemCatalog.Get("AK74")], save.MainStash);
     }
 
     [Fact]
@@ -87,7 +87,7 @@ public sealed class StashStorageTests
         const string raw = """
             {
               "mainStash": [
-                { "name": "Light Pistol", "type": 0, "value": 60, "slots": 1, "weight": 4 }
+                { "name": "Makarov", "type": 0, "value": 60, "slots": 1, "weight": 4 }
               ],
               "randomCharacterAvailableAt": "2026-03-20T08:00:00Z",
               "randomCharacter": {
@@ -110,7 +110,7 @@ public sealed class StashStorageTests
         Assert.Equal("Ghost-101", save.RandomCharacter!.Name);
         Assert.Equal(PlayerStats.Default, save.RandomCharacter.Stats);
         Assert.Equal("Bandage", Assert.Single(save.RandomCharacter.Inventory).Name);
-        Assert.Equal("Light Pistol", Assert.Single(save.MainStash).Name);
+        Assert.Equal("Makarov", Assert.Single(save.MainStash).Name);
         Assert.Empty(save.OnPersonItems);
         Assert.Equal(500, save.Money);
     }

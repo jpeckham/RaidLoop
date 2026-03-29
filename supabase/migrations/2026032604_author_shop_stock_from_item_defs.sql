@@ -6,36 +6,36 @@ update game.item_defs
 set shop_enabled = true,
     shop_order = case name
         when 'Medkit' then 10
-        when 'Light Pistol' then 20
-        when 'Soft Armor Vest' then 30
-        when 'Drum SMG' then 40
+        when 'Makarov' then 20
+        when '6B2 body armor' then 30
+        when 'PPSH' then 40
         when 'Small Backpack' then 50
-        when 'Field Carbine' then 60
-        when 'Light Plate Carrier' then 70
+        when 'AK74' then 60
+        when '6B13 assault armor' then 70
         when 'Tactical Backpack' then 80
-        when 'Marksman Rifle' then 90
-        when 'Medium Plate Carrier' then 100
-        when 'Hiking Backpack' then 110
-        when 'Support Machine Gun' then 120
-        when 'Assault Plate Carrier' then 130
-        when 'Raid Backpack' then 140
+        when 'SVDS' then 90
+        when 'FORT Defender-2' then 100
+        when 'Tasmanian Tiger Trooper 35' then 110
+        when 'PKP' then 120
+        when 'NFM THOR' then 130
+        when '6Sh118' then 140
         else shop_order
     end
 where name in (
     'Medkit',
-    'Light Pistol',
-    'Soft Armor Vest',
-    'Drum SMG',
+    'Makarov',
+    '6B2 body armor',
+    'PPSH',
     'Small Backpack',
-    'Field Carbine',
-    'Light Plate Carrier',
+    'AK74',
+    '6B13 assault armor',
     'Tactical Backpack',
-    'Marksman Rifle',
-    'Medium Plate Carrier',
-    'Hiking Backpack',
-    'Support Machine Gun',
-    'Assault Plate Carrier',
-    'Raid Backpack'
+    'SVDS',
+    'FORT Defender-2',
+    'Tasmanian Tiger Trooper 35',
+    'PKP',
+    'NFM THOR',
+    '6Sh118'
 );
 
 update game.item_defs
@@ -43,19 +43,19 @@ set shop_enabled = false,
     shop_order = 0
 where name not in (
     'Medkit',
-    'Light Pistol',
-    'Soft Armor Vest',
-    'Drum SMG',
+    'Makarov',
+    '6B2 body armor',
+    'PPSH',
     'Small Backpack',
-    'Field Carbine',
-    'Light Plate Carrier',
+    'AK74',
+    '6B13 assault armor',
     'Tactical Backpack',
-    'Marksman Rifle',
-    'Medium Plate Carrier',
-    'Hiking Backpack',
-    'Support Machine Gun',
-    'Assault Plate Carrier',
-    'Raid Backpack'
+    'SVDS',
+    'FORT Defender-2',
+    'Tasmanian Tiger Trooper 35',
+    'PKP',
+    'NFM THOR',
+    '6Sh118'
 );
 
 create or replace function game.shop_stock()

@@ -2,7 +2,7 @@
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
-**Goal:** Apply the new current authoritative weights for Medkit, Light Pistol, Soft Armor Vest, and Small Backpack across shared code and authoritative SQL.
+**Goal:** Apply the new current authoritative weights for Medkit, Makarov, 6B2 body armor, and Small Backpack across shared code and authoritative SQL.
 
 **Architecture:** Keep weights as integers. Update the shared `ItemCatalog` for client/core behavior and add a new forward migration that patches `game.item_defs` so the backend authoritative weight lookup stays aligned. Lock the change with focused tests before and after implementation.
 

@@ -450,7 +450,7 @@ public sealed class HomeMarkupBindingTests
         var migration = File.ReadAllText(PlayerStatSystemMigrationPath.Replace("2026032603_add_player_stat_system.sql", "2026032604_author_shop_stock_from_item_defs.sql"));
 
         Assert.Contains("_shopStock = snapshot.ShopStock.Select(item => new ShopStock(item)).ToList();", codeBehind);
-        Assert.DoesNotContain("new(ItemCatalog.Create(\"Light Pistol\"))", codeBehind);
+        Assert.DoesNotContain("new(ItemCatalog.Create(\"Makarov\"))", codeBehind);
         Assert.Contains("add column if not exists shop_enabled boolean not null default false", migration);
         Assert.Contains("create or replace function game.shop_stock()", migration);
         Assert.Contains("jsonb_build_object('ShopStock', game.shop_stock())", migration);
@@ -860,8 +860,8 @@ public sealed class HomeMarkupBindingTests
         var migration = File.ReadAllText(SellPriceRebalanceMigrationPath);
 
         Assert.Contains("when 'Medkit' then jsonb_build_object('name', 'Medkit', 'type', 3, 'value', 30", migration);
-        Assert.Contains("when 'Field Carbine' then jsonb_build_object('name', 'Field Carbine', 'type', 0, 'value', 320", migration);
-        Assert.Contains("when 'Assault Plate Carrier' then jsonb_build_object('name', 'Assault Plate Carrier', 'type', 1, 'value', 650", migration);
+        Assert.Contains("when 'AK74' then jsonb_build_object('name', 'AK74', 'type', 0, 'value', 320", migration);
+        Assert.Contains("when 'NFM THOR' then jsonb_build_object('name', 'NFM THOR', 'type', 1, 'value', 650", migration);
     }
 
     [Fact]
@@ -875,8 +875,8 @@ public sealed class HomeMarkupBindingTests
         Assert.Contains("floor(random() * 63)::int", migration);
         Assert.Contains("roll < 55", migration);
         Assert.Contains("roll < 40", migration);
-        Assert.Contains("game.authored_item('Marksman Rifle')", migration);
-        Assert.Contains("game.authored_item('Medium Plate Carrier')", migration);
+        Assert.Contains("game.authored_item('SVDS')", migration);
+        Assert.Contains("game.authored_item('FORT Defender-2')", migration);
         Assert.DoesNotContain("case floor(random() * 5)::int", migration);
         Assert.DoesNotContain("case floor(random() * 4)::int", migration);
     }
@@ -1058,13 +1058,13 @@ public sealed class HomeMarkupBindingTests
 
         Assert.Contains("update game.item_defs", migration);
         Assert.Contains("when 'Rusty Knife' then 1", migration);
-        Assert.Contains("when 'Light Pistol' then 2", migration);
-        Assert.Contains("when 'Drum SMG' then 12", migration);
-        Assert.Contains("when 'Field Carbine' then 7", migration);
-        Assert.Contains("when 'Soft Armor Vest' then 9", migration);
-        Assert.Contains("when 'Light Plate Carrier' then 7", migration);
+        Assert.Contains("when 'Makarov' then 2", migration);
+        Assert.Contains("when 'PPSH' then 12", migration);
+        Assert.Contains("when 'AK74' then 7", migration);
+        Assert.Contains("when '6B2 body armor' then 9", migration);
+        Assert.Contains("when '6B13 assault armor' then 7", migration);
         Assert.Contains("when 'Tactical Backpack' then 2", migration);
-        Assert.Contains("when 'Raid Backpack' then 8", migration);
+        Assert.Contains("when '6Sh118' then 8", migration);
         Assert.Contains("when 'Small Backpack' then 1", migration);
         Assert.Contains("when 'Medkit' then 1", migration);
         Assert.Contains("when 'Ammo Box' then 4", migration);
@@ -1096,17 +1096,17 @@ public sealed class HomeMarkupBindingTests
         Assert.Contains("create or replace function game.challenge_enemy_loadout_table(challenge int)", migration);
         Assert.Contains("create or replace function game.challenge_enemy_stats(challenge int)", migration);
         Assert.Contains("create or replace function game.challenge_encounter_loot_table(entry_key text, loot_table_key text, challenge int)", migration);
-        Assert.Contains("'light_pistol'", migration);
-        Assert.DoesNotContain("'drum_smg', 10),\r\n    ('challenge0", migration);
+        Assert.Contains("'makarov'", migration);
+        Assert.DoesNotContain("'ppsh', 10),\r\n    ('challenge0", migration);
         Assert.Contains("'small_backpack'", migration);
         Assert.Contains("'large_backpack'", migration);
-        Assert.DoesNotContain("'drum_smg', 'challenge_0_enemy_loadout'", migration);
-        Assert.DoesNotContain("'soft_armor_vest', 'challenge_0_enemy_loadout'", migration);
-        Assert.Contains("'soft_armor_vest'", migration);
-        Assert.Contains("'reinforced_vest'", migration);
-        Assert.Contains("'field_carbine'", migration);
-        Assert.Contains("'medium_plate_carrier'", migration);
-        Assert.Contains("'support_machine_gun'", migration);
+        Assert.DoesNotContain("'ppsh', 'challenge_0_enemy_loadout'", migration);
+        Assert.DoesNotContain("'6b2_body_armor', 'challenge_0_enemy_loadout'", migration);
+        Assert.Contains("'6b2_body_armor'", migration);
+        Assert.Contains("'bnti_kirasa_n'", migration);
+        Assert.Contains("'ak74'", migration);
+        Assert.Contains("'fort_defender_2'", migration);
+        Assert.Contains("'pkp'", migration);
         Assert.Contains("weight = case entry_key", migration);
         Assert.Contains("when 'raid_combat_travel_player_spots_camp' then 60", migration);
         Assert.Contains("when 'raid_neutral_travel_area_clear' then 80", migration);
@@ -1165,15 +1165,15 @@ public sealed class HomeMarkupBindingTests
         var migration = File.ReadAllText(WeaponArmorPenetrationMigrationPath);
 
         Assert.Contains("create or replace function game.weapon_armor_penetration", migration);
-        Assert.Contains("when weapon_name = 'Light Pistol' then", migration);
-        Assert.Contains("when weapon_name = 'Battle Rifle' then", migration);
-        Assert.Contains("when weapon_name = 'Marksman Rifle' then", migration);
+        Assert.Contains("when weapon_name = 'Makarov' then", migration);
+        Assert.Contains("when weapon_name = 'AK47' then", migration);
+        Assert.Contains("when weapon_name = 'SVDS' then", migration);
         Assert.Contains("create or replace function game.armor_damage_reduction", migration);
-        Assert.Contains("when armor_name = 'Assault Plate Carrier' then 6", migration);
-        Assert.Contains("when armor_name = 'Heavy Plate Carrier' then 5", migration);
-        Assert.Contains("when armor_name = 'Medium Plate Carrier' then 4", migration);
-        Assert.Contains("when armor_name = 'Light Plate Carrier' then 3", migration);
-        Assert.Contains("when armor_name = 'Soft Armor Vest' then 1", migration);
+        Assert.Contains("when armor_name = 'NFM THOR' then 6", migration);
+        Assert.Contains("when armor_name = '6B43 Zabralo-Sh body armor' then 5", migration);
+        Assert.Contains("when armor_name = 'FORT Defender-2' then 4", migration);
+        Assert.Contains("when armor_name = '6B13 assault armor' then 3", migration);
+        Assert.Contains("when armor_name = '6B2 body armor' then 1", migration);
         Assert.Contains("create or replace function game.apply_armor_damage_reduction", migration);
         Assert.Contains("greatest(0,", migration);
         Assert.Contains("greatest(1,", migration);
@@ -1199,17 +1199,17 @@ public sealed class HomeMarkupBindingTests
         Assert.Contains("create or replace function game.weapon_supports_full_auto", migration);
         Assert.Contains("create or replace function game.weapon_burst_attack_penalty", migration);
         Assert.Contains("create or replace function game.roll_weapon_damage_d20", migration);
-        Assert.Contains("when 'Light Pistol' then 6", migration);
-        Assert.Contains("when 'Drum SMG' then 4", migration);
-        Assert.Contains("when 'Field Carbine' then 8", migration);
-        Assert.Contains("when 'Battle Rifle' then 10", migration);
-        Assert.Contains("when 'Marksman Rifle' then 12", migration);
-        Assert.Contains("when 'Support Machine Gun' then 12", migration);
+        Assert.Contains("when 'Makarov' then 6", migration);
+        Assert.Contains("when 'PPSH' then 4", migration);
+        Assert.Contains("when 'AK74' then 8", migration);
+        Assert.Contains("when 'AK47' then 10", migration);
+        Assert.Contains("when 'SVDS' then 12", migration);
+        Assert.Contains("when 'PKP' then 12", migration);
         Assert.Contains("action in ('attack', 'burst-fire', 'full-auto')", migration);
         Assert.Contains("ammo < 3", migration);
         Assert.Contains("ammo < 10", migration);
         Assert.Contains("'full-auto'", migration);
-        Assert.Contains("when 'Light Pistol' then 3", migration);
+        Assert.Contains("when 'Makarov' then 3", migration);
         Assert.Contains("else 2", migration);
         Assert.Contains("game.weapon_burst_attack_penalty(equipped_weapon_name)", migration);
         Assert.Contains("game.roll_attack_d20(game.ability_modifier(player_dexterity) - 4", migration);
@@ -1250,7 +1250,7 @@ public sealed class HomeMarkupBindingTests
         Assert.Contains("evades your attack", migration);
         Assert.Contains("absorbed by armor", migration);
         Assert.Contains("armor absorbs", migration);
-        Assert.Contains("heavy_plate_carrier", migration);
+        Assert.Contains("6b43_zabralo_sh_body_armor", migration);
     }
 
     [Fact]

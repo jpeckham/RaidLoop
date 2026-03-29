@@ -20,7 +20,7 @@
 
 Add tests that assert:
 - representative items sell for roughly 25% of their buy price
-- the new SQL migration defines updated authored values for key items like `Medkit`, `Field Carbine`, and `Assault Plate Carrier`
+- the new SQL migration defines updated authored values for key items like `Medkit`, `AK74`, and `NFM THOR`
 
 **Step 2: Run test to verify it fails**
 

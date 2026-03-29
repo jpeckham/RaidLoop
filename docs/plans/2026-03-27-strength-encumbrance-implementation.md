@@ -47,23 +47,23 @@ Implement:
 
 Suggested weight table:
 - `Rusty Knife`: 2
-- `Light Pistol`: 4
-- `Drum SMG`: 8
-- `Field Carbine`: 9
-- `Battle Rifle`: 10
-- `Marksman Rifle`: 11
-- `Support Machine Gun`: 18
-- `Soft Armor Vest`: 8
-- `Reinforced Vest`: 12
-- `Light Plate Carrier`: 18
-- `Medium Plate Carrier`: 24
-- `Heavy Plate Carrier`: 30
-- `Assault Plate Carrier`: 22
+- `Makarov`: 4
+- `PPSH`: 8
+- `AK74`: 9
+- `AK47`: 10
+- `SVDS`: 11
+- `PKP`: 18
+- `6B2 body armor`: 8
+- `BNTI Kirasa-N`: 12
+- `6B13 assault armor`: 18
+- `FORT Defender-2`: 24
+- `6B43 Zabralo-Sh body armor`: 30
+- `NFM THOR`: 22
 - `Small Backpack`: 4
 - `Large Backpack`: 6
 - `Tactical Backpack`: 8
-- `Hiking Backpack`: 10
-- `Raid Backpack`: 14
+- `Tasmanian Tiger Trooper 35`: 10
+- `6Sh118`: 14
 - `Medkit`: 3
 - `Bandage`: 1
 - `Ammo Box`: 2

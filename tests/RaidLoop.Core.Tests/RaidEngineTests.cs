@@ -45,20 +45,20 @@ public class RaidEngineTests
     }
 
     [Theory]
-    [InlineData("Light Pistol", AttackMode.Standard, 2, 12)]
-    [InlineData("Drum SMG", AttackMode.Standard, 2, 8)]
-    [InlineData("Field Carbine", AttackMode.Standard, 2, 16)]
-    [InlineData("Marksman Rifle", AttackMode.Standard, 2, 24)]
-    [InlineData("Battle Rifle", AttackMode.Standard, 2, 20)]
-    [InlineData("Drum SMG", AttackMode.Burst, 3, 12)]
-    [InlineData("Field Carbine", AttackMode.Burst, 3, 24)]
-    [InlineData("Marksman Rifle", AttackMode.Burst, 3, 36)]
-    [InlineData("Battle Rifle", AttackMode.Burst, 3, 30)]
-    [InlineData("Support Machine Gun", AttackMode.Burst, 3, 36)]
-    [InlineData("Drum SMG", AttackMode.FullAuto, 4, 16)]
-    [InlineData("Field Carbine", AttackMode.FullAuto, 4, 32)]
-    [InlineData("Battle Rifle", AttackMode.FullAuto, 4, 40)]
-    [InlineData("Support Machine Gun", AttackMode.FullAuto, 4, 48)]
+    [InlineData("Makarov", AttackMode.Standard, 2, 12)]
+    [InlineData("PPSH", AttackMode.Standard, 2, 8)]
+    [InlineData("AK74", AttackMode.Standard, 2, 16)]
+    [InlineData("SVDS", AttackMode.Standard, 2, 24)]
+    [InlineData("AK47", AttackMode.Standard, 2, 20)]
+    [InlineData("PPSH", AttackMode.Burst, 3, 12)]
+    [InlineData("AK74", AttackMode.Burst, 3, 24)]
+    [InlineData("SVDS", AttackMode.Burst, 3, 36)]
+    [InlineData("AK47", AttackMode.Burst, 3, 30)]
+    [InlineData("PKP", AttackMode.Burst, 3, 36)]
+    [InlineData("PPSH", AttackMode.FullAuto, 4, 16)]
+    [InlineData("AK74", AttackMode.FullAuto, 4, 32)]
+    [InlineData("AK47", AttackMode.FullAuto, 4, 40)]
+    [InlineData("PKP", AttackMode.FullAuto, 4, 48)]
     public void CombatBalance_WeaponDamageProfiles_AreConfigured(string weapon, AttackMode mode, int min, int max)
     {
         var range = CombatBalance.GetDamageRange(weapon, mode);
@@ -68,12 +68,12 @@ public class RaidEngineTests
     }
 
     [Theory]
-    [InlineData("Soft Armor Vest", 1)]
-    [InlineData("Reinforced Vest", 2)]
-    [InlineData("Light Plate Carrier", 3)]
-    [InlineData("Medium Plate Carrier", 4)]
-    [InlineData("Heavy Plate Carrier", 5)]
-    [InlineData("Assault Plate Carrier", 6)]
+    [InlineData("6B2 body armor", 1)]
+    [InlineData("BNTI Kirasa-N", 2)]
+    [InlineData("6B13 assault armor", 3)]
+    [InlineData("FORT Defender-2", 4)]
+    [InlineData("6B43 Zabralo-Sh body armor", 5)]
+    [InlineData("NFM THOR", 6)]
     [InlineData("Unknown armor", 0)]
     public void CombatBalance_ArmorReduction_ByQuality(string armorName, int reduction)
     {
@@ -85,20 +85,20 @@ public class RaidEngineTests
     {
         var rng = new SequenceRng([0, 1, 0, 1, 2, 3]);
 
-        var light_pistol = CombatBalance.RollDamage("Light Pistol", AttackMode.Standard, rng);
-        var battle_rifle = CombatBalance.RollDamage("Battle Rifle", AttackMode.FullAuto, rng);
+        var makarov = CombatBalance.RollDamage("Makarov", AttackMode.Standard, rng);
+        var ak47 = CombatBalance.RollDamage("AK47", AttackMode.FullAuto, rng);
 
-        Assert.Equal(3, light_pistol);
-        Assert.Equal(10, battle_rifle);
+        Assert.Equal(3, makarov);
+        Assert.Equal(10, ak47);
     }
 
     [Theory]
-    [InlineData("Light Pistol", true, true, false)]
-    [InlineData("Drum SMG", true, true, true)]
-    [InlineData("Field Carbine", true, true, true)]
-    [InlineData("Battle Rifle", true, true, true)]
-    [InlineData("Marksman Rifle", true, true, false)]
-    [InlineData("Support Machine Gun", false, true, true)]
+    [InlineData("Makarov", true, true, false)]
+    [InlineData("PPSH", true, true, true)]
+    [InlineData("AK74", true, true, true)]
+    [InlineData("AK47", true, true, true)]
+    [InlineData("SVDS", true, true, false)]
+    [InlineData("PKP", false, true, true)]
     [InlineData("Rusty Knife", true, false, false)]
     public void CombatBalance_WeaponFireModes_AreConfigured(string weapon, bool supportsSingle, bool supportsBurst, bool supportsFullAuto)
     {
@@ -108,12 +108,12 @@ public class RaidEngineTests
     }
 
     [Theory]
-    [InlineData("Light Pistol", 3)]
-    [InlineData("Drum SMG", 2)]
-    [InlineData("Field Carbine", 2)]
-    [InlineData("Battle Rifle", 2)]
-    [InlineData("Marksman Rifle", 2)]
-    [InlineData("Support Machine Gun", 2)]
+    [InlineData("Makarov", 3)]
+    [InlineData("PPSH", 2)]
+    [InlineData("AK74", 2)]
+    [InlineData("AK47", 2)]
+    [InlineData("SVDS", 2)]
+    [InlineData("PKP", 2)]
     [InlineData("Rusty Knife", 3)]
     public void CombatBalance_BurstAttackPenalty_IsConfiguredPerWeapon(string weapon, int expectedPenalty)
     {
@@ -246,34 +246,34 @@ public class RaidEngineTests
     }
 
     [Theory]
-    [InlineData("Light Pistol", 240)]
-    [InlineData("Drum SMG", 650)]
-    [InlineData("Field Carbine", 1250)]
-    [InlineData("Marksman Rifle", 2200)]
-    [InlineData("Battle Rifle", 1500)]
-    [InlineData("Support Machine Gun", 3200)]
-    [InlineData("Soft Armor Vest", 380)]
-    [InlineData("Reinforced Vest", 640)]
-    [InlineData("Light Plate Carrier", 900)]
-    [InlineData("Medium Plate Carrier", 1500)]
-    [InlineData("Heavy Plate Carrier", 1800)]
-    [InlineData("Assault Plate Carrier", 2600)]
+    [InlineData("Makarov", 240)]
+    [InlineData("PPSH", 650)]
+    [InlineData("AK74", 1250)]
+    [InlineData("SVDS", 2200)]
+    [InlineData("AK47", 1500)]
+    [InlineData("PKP", 3200)]
+    [InlineData("6B2 body armor", 380)]
+    [InlineData("BNTI Kirasa-N", 640)]
+    [InlineData("6B13 assault armor", 900)]
+    [InlineData("FORT Defender-2", 1500)]
+    [InlineData("6B43 Zabralo-Sh body armor", 1800)]
+    [InlineData("NFM THOR", 2600)]
     [InlineData("Small Backpack", 100)]
     [InlineData("Large Backpack", 200)]
-    [InlineData("Hiking Backpack", 1600)]
-    [InlineData("Raid Backpack", 2400)]
+    [InlineData("Tasmanian Tiger Trooper 35", 1600)]
+    [InlineData("6Sh118", 2400)]
     public void CombatBalance_Prices_AreConfigured(string itemName, int buyPrice)
     {
         Assert.Equal(buyPrice, CombatBalance.GetBuyPrice(itemName));
     }
 
     [Theory]
-    [InlineData("Light Pistol", 8)]
-    [InlineData("Drum SMG", 35)]
-    [InlineData("Field Carbine", 30)]
-    [InlineData("Marksman Rifle", 20)]
-    [InlineData("Battle Rifle", 30)]
-    [InlineData("Support Machine Gun", 100)]
+    [InlineData("Makarov", 8)]
+    [InlineData("PPSH", 35)]
+    [InlineData("AK74", 30)]
+    [InlineData("SVDS", 20)]
+    [InlineData("AK47", 30)]
+    [InlineData("PKP", 100)]
     [InlineData("Rusty Knife", 0)]
     [InlineData("Unknown Weapon", 8)]
     public void CombatBalance_AmmoCapacity_ByWeapon(string weaponName, int capacity)
@@ -283,12 +283,12 @@ public class RaidEngineTests
 
     [Theory]
     [InlineData("Rusty Knife", false)]
-    [InlineData("Light Pistol", true)]
-    [InlineData("Drum SMG", true)]
-    [InlineData("Field Carbine", true)]
-    [InlineData("Marksman Rifle", true)]
-    [InlineData("Battle Rifle", true)]
-    [InlineData("Support Machine Gun", true)]
+    [InlineData("Makarov", true)]
+    [InlineData("PPSH", true)]
+    [InlineData("AK74", true)]
+    [InlineData("SVDS", true)]
+    [InlineData("AK47", true)]
+    [InlineData("PKP", true)]
     public void CombatBalance_WeaponAmmoUsage_ByWeapon(string weaponName, bool usesAmmo)
     {
         Assert.Equal(usesAmmo, CombatBalance.WeaponUsesAmmo(weaponName));
@@ -298,8 +298,8 @@ public class RaidEngineTests
     [InlineData("Small Backpack", 3)]
     [InlineData("Large Backpack", 4)]
     [InlineData("Tactical Backpack", 6)]
-    [InlineData("Hiking Backpack", 8)]
-    [InlineData("Raid Backpack", 10)]
+    [InlineData("Tasmanian Tiger Trooper 35", 8)]
+    [InlineData("6Sh118", 10)]
     [InlineData(null, 2)]
     public void CombatBalance_BackpackCapacity_ByBackpack(string? backpackName, int capacity)
     {
@@ -350,8 +350,8 @@ public class RaidEngineTests
         var items = new[]
         {
             ItemCatalog.Get("Rusty Knife"),
-            ItemCatalog.Get("Light Pistol"),
-            ItemCatalog.Get("Soft Armor Vest"),
+            ItemCatalog.Get("Makarov"),
+            ItemCatalog.Get("6B2 body armor"),
             ItemCatalog.Get("Medkit"),
             ItemCatalog.Get("Medkit")
         };
@@ -505,7 +505,7 @@ public class RaidEngineTests
         var state = new RaidState(
             health: 30,
             backpackCapacity: 2,
-            broughtItems: [ItemCatalog.Get("Light Pistol")],
+            broughtItems: [ItemCatalog.Get("Makarov")],
             raidLoot: []);
         state.Inventory.MaxEncumbrance = 2;
 
@@ -542,21 +542,21 @@ public class RaidEngineTests
             backpackCapacity: 2,
             broughtItems:
             [
-                ItemCatalog.Get("Light Pistol"),
+                ItemCatalog.Get("Makarov"),
                 ItemCatalog.Get("Small Backpack")
             ],
             raidLoot: []);
         state.Inventory.MaxEncumbrance = 9;
 
-        RaidEngine.StartDiscoveredLootEncounter(state, [ItemCatalog.Get("Light Plate Carrier")]);
+        RaidEngine.StartDiscoveredLootEncounter(state, [ItemCatalog.Get("6B13 assault armor")]);
 
         var equipped = RaidEngine.TryEquipFromDiscovered(state, state.Inventory.DiscoveredLoot[0]);
 
         Assert.False(equipped);
-        Assert.Equal("Light Pistol", state.Inventory.EquippedWeapon?.Name);
+        Assert.Equal("Makarov", state.Inventory.EquippedWeapon?.Name);
         Assert.Equal("Small Backpack", state.Inventory.EquippedBackpack?.Name);
         Assert.Single(state.Inventory.DiscoveredLoot);
-        Assert.Equal("Light Plate Carrier", state.Inventory.DiscoveredLoot[0].Name);
+        Assert.Equal("6B13 assault armor", state.Inventory.DiscoveredLoot[0].Name);
     }
 
     [Fact]
@@ -567,22 +567,22 @@ public class RaidEngineTests
             backpackCapacity: 2,
             broughtItems:
             [
-                ItemCatalog.Get("Light Pistol"),
+                ItemCatalog.Get("Makarov"),
                 ItemCatalog.Get("Small Backpack")
             ],
             raidLoot:
             [
-                ItemCatalog.Get("Light Plate Carrier")
+                ItemCatalog.Get("6B13 assault armor")
             ]);
         state.Inventory.MaxEncumbrance = 9;
 
         var equipped = RaidEngine.TryEquipFromCarried(state, state.Inventory.CarriedItems[0]);
 
         Assert.False(equipped);
-        Assert.Equal("Light Pistol", state.Inventory.EquippedWeapon?.Name);
+        Assert.Equal("Makarov", state.Inventory.EquippedWeapon?.Name);
         Assert.Equal("Small Backpack", state.Inventory.EquippedBackpack?.Name);
         Assert.Single(state.Inventory.CarriedItems);
-        Assert.Equal("Light Plate Carrier", state.Inventory.CarriedItems[0].Name);
+        Assert.Equal("6B13 assault armor", state.Inventory.CarriedItems[0].Name);
     }
 
     [Fact]
@@ -593,7 +593,7 @@ public class RaidEngineTests
             backpackCapacity: 4,
             broughtItems:
             [
-                ItemCatalog.Get("Light Pistol"),
+                ItemCatalog.Get("Makarov"),
                 ItemCatalog.Get("Large Backpack")
             ],
             raidLoot:
@@ -641,17 +641,17 @@ public class RaidEngineTests
         var state = new RaidState(
             health: 30,
             backpackCapacity: 2,
-            broughtItems: [new Item("Light Pistol", ItemType.Weapon, Weight: 4, Slots: 1)],
+            broughtItems: [new Item("Makarov", ItemType.Weapon, Weight: 4, Slots: 1)],
             raidLoot: []);
 
-        RaidEngine.StartDiscoveredLootEncounter(state, [new Item("Field Carbine", ItemType.Weapon, Weight: 9, Slots: 1)]);
+        RaidEngine.StartDiscoveredLootEncounter(state, [new Item("AK74", ItemType.Weapon, Weight: 9, Slots: 1)]);
 
         var equipped = RaidEngine.TryEquipFromDiscovered(state, state.Inventory.DiscoveredLoot[0]);
 
         Assert.True(equipped);
-        Assert.Equal("Field Carbine", state.Inventory.EquippedWeapon?.Name);
+        Assert.Equal("AK74", state.Inventory.EquippedWeapon?.Name);
         Assert.Single(state.Inventory.DiscoveredLoot);
-        Assert.Equal("Light Pistol", state.Inventory.DiscoveredLoot[0].Name);
+        Assert.Equal("Makarov", state.Inventory.DiscoveredLoot[0].Name);
     }
 
     [Fact]
@@ -662,7 +662,7 @@ public class RaidEngineTests
             backpackCapacity: 6,
             broughtItems:
             [
-                new Item("Light Pistol", ItemType.Weapon, Weight: 4, Slots: 1),
+                new Item("Makarov", ItemType.Weapon, Weight: 4, Slots: 1),
                 new Item("Tactical Backpack", ItemType.Backpack, Weight: 8, Slots: 1)
             ],
             raidLoot:

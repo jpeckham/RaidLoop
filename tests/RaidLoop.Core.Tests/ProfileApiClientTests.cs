@@ -20,9 +20,9 @@ public sealed class ProfileApiClientTests
                 UserEmail: "player@example.com",
                 Snapshot: new PlayerSnapshot(
                     Money: 640,
-                    MainStash: [ItemCatalog.CreateByKey("light_pistol")],
+                    MainStash: [ItemCatalog.CreateByKey("makarov")],
                     OnPersonItems: [new OnPersonSnapshot(ItemCatalog.CreateByKey("small_backpack"), true)],
-                    ShopStock: [ItemCatalog.CreateByKey("light_pistol"), ItemCatalog.CreateByKey("drum_smg")],
+                    ShopStock: [ItemCatalog.CreateByKey("makarov"), ItemCatalog.CreateByKey("ppsh")],
                     AcceptedStats: new PlayerStats(8, 12, 10, 9, 11, 14),
                     DraftStats: new PlayerStats(8, 13, 10, 9, 11, 14),
                     AvailableStatPoints: 6,
@@ -57,9 +57,9 @@ public sealed class ProfileApiClientTests
         Assert.Equal("publishable-key", Assert.Single(handler.LastRequest.Headers.GetValues("apikey")));
         Assert.True(response.IsAuthenticated);
         Assert.Equal(640, response.Snapshot.Money);
-        Assert.Equal("light_pistol", Assert.Single(response.Snapshot.MainStash).Key);
+        Assert.Equal("makarov", Assert.Single(response.Snapshot.MainStash).Key);
         Assert.Equal("small_backpack", Assert.Single(response.Snapshot.OnPersonItems).Item.Key);
-        Assert.Equal(["light_pistol", "drum_smg"], response.Snapshot.ShopStock.Select(item => item.Key).ToArray());
+        Assert.Equal(["makarov", "ppsh"], response.Snapshot.ShopStock.Select(item => item.Key).ToArray());
         Assert.Equal(12, response.Snapshot.AcceptedStats.Dexterity);
         Assert.Equal(13, response.Snapshot.DraftStats.Dexterity);
         Assert.Equal(6, response.Snapshot.AvailableStatPoints);
@@ -99,3 +99,4 @@ public sealed class ProfileApiClientTests
         }
     }
 }
+

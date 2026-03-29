@@ -175,29 +175,39 @@ test("local game_action re-derives stale raid session encumbrance from accepted 
 });
 
 async function signUpLocalUser(supabaseUrl, publishableKey) {
-  const email = `integration-${crypto.randomUUID()}@example.test`;
   const password = "password-123";
-  const response = await fetch(`${supabaseUrl}/auth/v1/signup`, {
-    method: "POST",
-    headers: {
-      apikey: publishableKey,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      email,
-      password,
-    }),
-  });
 
-  assert.equal(response.status, 200);
-  const body = await response.json();
-  assert.ok(body.access_token);
-  assert.ok(body.user?.id);
+  for (let attempt = 1; attempt <= 3; attempt += 1) {
+    const email = `integration-${crypto.randomUUID()}@example.test`;
+    const response = await fetch(`${supabaseUrl}/auth/v1/signup`, {
+      method: "POST",
+      headers: {
+        apikey: publishableKey,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email,
+        password,
+      }),
+    });
 
-  return {
-    accessToken: body.access_token,
-    userId: body.user.id,
-  };
+    if (response.status === 200) {
+      const body = await response.json();
+      assert.ok(body.access_token);
+      assert.ok(body.user?.id);
+
+      return {
+        accessToken: body.access_token,
+        userId: body.user.id,
+      };
+    }
+
+    if (attempt === 3 || response.status < 500) {
+      assert.equal(response.status, 200);
+    }
+
+    await new Promise(resolve => setTimeout(resolve, 250 * attempt));
+  }
 }
 
 async function seedMainCharacterProfile(repository, supabaseUrl, publishableKey, accessToken, userId, weapon = createItem("Rusty Knife", 0, 5, 1, 0, 0, 1)) {

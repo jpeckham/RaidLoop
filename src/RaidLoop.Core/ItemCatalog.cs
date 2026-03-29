@@ -14,124 +14,124 @@ public static class ItemCatalog
         });
 
         RegisterAuthored(
-            key: "light_pistol",
-            displayName: "Light Pistol",
+            key: "makarov",
+            displayName: "Makarov",
             itemType: ItemType.Weapon,
             weight: 2,
             value: 60,
             rarity: Rarity.Common,
             displayRarity: DisplayRarity.Common,
-            aliases: ["Makarov"]);
+            aliases: ["Light Pistol"]);
 
         RegisterAuthored(
-            key: "drum_smg",
-            displayName: "Drum SMG",
+            key: "ppsh",
+            displayName: "PPSH",
             itemType: ItemType.Weapon,
             weight: 12,
             value: 160,
             rarity: Rarity.Uncommon,
             displayRarity: DisplayRarity.Uncommon,
-            aliases: ["PPSH"]);
+            aliases: ["Drum SMG"]);
 
         RegisterAuthored(
-            key: "field_carbine",
-            displayName: "Field Carbine",
+            key: "ak74",
+            displayName: "AK74",
             itemType: ItemType.Weapon,
             weight: 7,
             value: 320,
             rarity: Rarity.Rare,
             displayRarity: DisplayRarity.Rare,
-            aliases: ["AK74"]);
+            aliases: ["Field Carbine"]);
 
         RegisterAuthored(
-            key: "marksman_rifle",
-            displayName: "Marksman Rifle",
+            key: "svds",
+            displayName: "SVDS",
             itemType: ItemType.Weapon,
             weight: 10,
             value: 550,
             rarity: Rarity.Epic,
             displayRarity: DisplayRarity.Epic,
-            aliases: ["SVDS"]);
+            aliases: ["Marksman Rifle"]);
 
         RegisterAuthored(
-            key: "battle_rifle",
-            displayName: "Battle Rifle",
+            key: "ak47",
+            displayName: "AK47",
             itemType: ItemType.Weapon,
             weight: 10,
             value: 375,
             rarity: Rarity.Rare,
             displayRarity: DisplayRarity.Rare,
-            aliases: ["AK47"]);
+            aliases: ["Battle Rifle"]);
 
         RegisterAuthored(
-            key: "support_machine_gun",
-            displayName: "Support Machine Gun",
+            key: "pkp",
+            displayName: "PKP",
             itemType: ItemType.Weapon,
             weight: 18,
             value: 800,
             rarity: Rarity.Legendary,
             displayRarity: DisplayRarity.Legendary,
-            aliases: ["PKP"]);
+            aliases: ["Support Machine Gun"]);
 
         RegisterAuthored(
-            key: "soft_armor_vest",
-            displayName: "Soft Armor Vest",
+            key: "6b2_body_armor",
+            displayName: "6B2 body armor",
             itemType: ItemType.Armor,
             weight: 9,
             value: 95,
             rarity: Rarity.Common,
             displayRarity: DisplayRarity.Common,
-            aliases: ["6B2 body armor"]);
+            aliases: ["Soft Armor Vest"]);
 
         RegisterAuthored(
-            key: "reinforced_vest",
-            displayName: "Reinforced Vest",
+            key: "bnti_kirasa_n",
+            displayName: "BNTI Kirasa-N",
             itemType: ItemType.Armor,
             weight: 7,
             value: 160,
             rarity: Rarity.Uncommon,
             displayRarity: DisplayRarity.Uncommon,
-            aliases: ["BNTI Kirasa-N"]);
+            aliases: ["Reinforced Vest"]);
 
         RegisterAuthored(
-            key: "light_plate_carrier",
-            displayName: "Light Plate Carrier",
+            key: "6b13_assault_armor",
+            displayName: "6B13 assault armor",
             itemType: ItemType.Armor,
             weight: 7,
             value: 225,
             rarity: Rarity.Rare,
             displayRarity: DisplayRarity.Rare,
-            aliases: ["6B13 assault armor"]);
+            aliases: ["Light Plate Carrier"]);
 
         RegisterAuthored(
-            key: "medium_plate_carrier",
-            displayName: "Medium Plate Carrier",
+            key: "fort_defender_2",
+            displayName: "FORT Defender-2",
             itemType: ItemType.Armor,
             weight: 22,
             value: 375,
             rarity: Rarity.Epic,
             displayRarity: DisplayRarity.Epic,
-            aliases: ["FORT Defender-2"]);
+            aliases: ["Medium Plate Carrier"]);
 
         RegisterAuthored(
-            key: "heavy_plate_carrier",
-            displayName: "Heavy Plate Carrier",
+            key: "6b43_zabralo_sh_body_armor",
+            displayName: "6B43 Zabralo-Sh body armor",
             itemType: ItemType.Armor,
             weight: 28,
             value: 450,
             rarity: Rarity.Legendary,
             displayRarity: DisplayRarity.Legendary,
-            aliases: ["6B43 Zabralo-Sh body armor"]);
+            aliases: ["Heavy Plate Carrier"]);
 
         RegisterAuthored(
-            key: "assault_plate_carrier",
-            displayName: "Assault Plate Carrier",
+            key: "nfm_thor",
+            displayName: "NFM THOR",
             itemType: ItemType.Armor,
             weight: 19,
             value: 650,
             rarity: Rarity.Legendary,
             displayRarity: DisplayRarity.Legendary,
-            aliases: ["NFM THOR"]);
+            aliases: ["Assault Plate Carrier"]);
 
         RegisterCanonical(new Item("Small Backpack", ItemType.Backpack, Value: 25, Slots: 1, Rarity: Rarity.Common, DisplayRarity: DisplayRarity.Common, Weight: 1)
         {
@@ -146,23 +146,23 @@ public static class ItemCatalog
             Key = "tactical_backpack"
         });
         RegisterAuthored(
-            key: "hiking_backpack",
-            displayName: "Hiking Backpack",
+            key: "tasmanian_tiger_trooper_35",
+            displayName: "Tasmanian Tiger Trooper 35",
             itemType: ItemType.Backpack,
             weight: 2,
             value: 400,
             rarity: Rarity.Epic,
             displayRarity: DisplayRarity.Epic,
-            aliases: ["Tasmanian Tiger Trooper 35"]);
+            aliases: ["Hiking Backpack"]);
         RegisterAuthored(
-            key: "raid_backpack",
-            displayName: "Raid Backpack",
+            key: "6sh118",
+            displayName: "6Sh118",
             itemType: ItemType.Backpack,
             weight: 8,
             value: 600,
             rarity: Rarity.Legendary,
             displayRarity: DisplayRarity.Legendary,
-            aliases: ["6Sh118"]);
+            aliases: ["Raid Backpack"]);
 
         RegisterCanonical(new Item("Medkit", ItemType.Consumable, Value: 30, Slots: 1, Rarity: Rarity.Common, DisplayRarity: DisplayRarity.Common, Weight: 1)
         {

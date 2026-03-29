@@ -37,7 +37,7 @@ public sealed class RaidActionApiTests
                     "discoveredLoot": [],
                     "carriedLoot": [],
                     "equippedItems": [
-                      { "name": "AK74", "itemKey": "field_carbine", "type": 0, "value": 320, "slots": 1, "rarity": 2, "displayRarity": 3 },
+                      { "name": "AK74", "itemKey": "ak74", "type": 0, "value": 320, "slots": 1, "rarity": 2, "displayRarity": 3 },
                       { "name": "Small Backpack", "itemKey": "small_backpack", "type": 2, "value": 75, "slots": 2, "rarity": 2, "displayRarity": 3 }
                     ],
                     "logEntries": ["Raid updated on server."]
@@ -56,7 +56,7 @@ public sealed class RaidActionApiTests
         Assert.Equal("Scav", Assert.IsType<string>(GetField(home, "_enemyName")));
         Assert.Equal(34, Assert.IsType<int>(GetField(home, "_maxHealth")));
         var raid = Assert.IsType<RaidState>(GetField(home, "_raid"));
-        Assert.Equal("field_carbine", raid.Inventory.EquippedWeapon?.Key);
+        Assert.Equal("ak74", raid.Inventory.EquippedWeapon?.Key);
         Assert.Equal("small_backpack", raid.Inventory.EquippedBackpack?.Key);
         AssertOpeningPhaseFields(home, "PlayerAmbush", "Player", "None", 1, true);
     }
@@ -89,7 +89,7 @@ public sealed class RaidActionApiTests
                       { "name": "Bandage", "itemKey": "bandage", "type": 4, "value": 15, "slots": 1, "rarity": 0, "displayRarity": 0 }
                     ],
                     "equippedItems": [
-                      { "name": "AK74", "itemKey": "field_carbine", "type": 0, "value": 320, "slots": 1, "rarity": 2, "displayRarity": 3 },
+                      { "name": "AK74", "itemKey": "ak74", "type": 0, "value": 320, "slots": 1, "rarity": 2, "displayRarity": 3 },
                       { "name": "Small Backpack", "itemKey": "small_backpack", "type": 2, "value": 75, "slots": 2, "rarity": 2, "displayRarity": 3 }
                     ],
                     "logEntries": ["Raid updated on server."]
@@ -461,7 +461,7 @@ public sealed class RaidActionApiTests
                     "discoveredLoot": [],
                     "carriedLoot": [],
                     "equippedItems": [
-                      { "name": "AK74", "itemKey": "field_carbine", "type": 0, "value": 320, "slots": 1, "rarity": 2, "displayRarity": 3 },
+                      { "name": "AK74", "itemKey": "ak74", "type": 0, "value": 320, "slots": 1, "rarity": 2, "displayRarity": 3 },
                       { "name": "Small Backpack", "itemKey": "small_backpack", "type": 2, "value": 75, "slots": 2, "rarity": 2, "displayRarity": 3 }
                     ],
                     "logEntries": ["Raid updated on server."]
@@ -479,7 +479,7 @@ public sealed class RaidActionApiTests
         Assert.Equal(5, Assert.IsType<int>(GetField(home, "_challenge")));
         Assert.Equal(0, Assert.IsType<int>(GetField(home, "_distanceFromExtract")));
         var raid = Assert.IsType<RaidState>(GetField(home, "_raid"));
-        Assert.Equal("field_carbine", raid.Inventory.EquippedWeapon?.Key);
+        Assert.Equal("ak74", raid.Inventory.EquippedWeapon?.Key);
         Assert.Equal("small_backpack", raid.Inventory.EquippedBackpack?.Key);
         AssertOpeningPhaseFields(home, "None", "None", "None", 0, false);
     }
@@ -833,3 +833,4 @@ public sealed class RaidActionApiTests
         }
     }
 }
+

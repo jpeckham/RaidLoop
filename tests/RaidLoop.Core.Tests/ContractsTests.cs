@@ -195,7 +195,7 @@ public sealed class ContractsTests
               "snapshot": {
                 "money": 500,
                 "mainStash": [
-                  { "itemKey": "light_pistol", "name": "Light Pistol", "type": 0, "value": 60, "slots": 1, "rarity": 0, "displayRarity": 1 }
+                  { "itemKey": "makarov", "name": "Makarov", "type": 0, "value": 60, "slots": 1, "rarity": 0, "displayRarity": 1 }
                 ],
                 "onPersonItems": [],
                 "shopStock": [],
@@ -210,7 +210,7 @@ public sealed class ContractsTests
 
         var serialized = RoundTripBootstrapJson(json);
 
-        Assert.Contains("\"itemKey\":\"light_pistol\"", serialized);
+        Assert.Contains("\"itemKey\":\"makarov\"", serialized);
     }
 
     [Fact]
@@ -225,7 +225,7 @@ public sealed class ContractsTests
                 "mainStash": [],
                 "onPersonItems": [
                   {
-                    "item": { "itemKey": "raid_backpack", "name": "Raid Backpack", "type": 2, "value": 600, "slots": 4, "rarity": 4, "displayRarity": 4 },
+                    "item": { "itemKey": "6sh118", "name": "6Sh118", "type": 2, "value": 600, "slots": 4, "rarity": 4, "displayRarity": 4 },
                     "isEquipped": true
                   }
                 ],
@@ -241,7 +241,7 @@ public sealed class ContractsTests
 
         var serialized = RoundTripBootstrapJson(json);
 
-        Assert.Contains("\"itemKey\":\"raid_backpack\"", serialized);
+        Assert.Contains("\"itemKey\":\"6sh118\"", serialized);
     }
 
     [Fact]
@@ -285,11 +285,11 @@ public sealed class ContractsTests
                   "openingActionsRemaining": 1,
                   "surprisePersistenceEligible": false,
                   "discoveredLoot": [
-                    { "itemKey": "soft_armor_vest", "name": "Soft Armor Vest", "type": 1, "value": 95, "slots": 1, "rarity": 0, "displayRarity": 1 }
+                    { "itemKey": "6b2_body_armor", "name": "6B2 body armor", "type": 1, "value": 95, "slots": 1, "rarity": 0, "displayRarity": 1 }
                   ],
                   "carriedLoot": [],
                   "equippedItems": [
-                    { "itemKey": "field_carbine", "name": "Field Carbine", "type": 0, "value": 320, "slots": 1, "rarity": 2, "displayRarity": 3 }
+                    { "itemKey": "ak74", "name": "AK74", "type": 0, "value": 320, "slots": 1, "rarity": 2, "displayRarity": 3 }
                   ],
                   "logEntries": ["Raid started."],
                   "encumbrance": 19,
@@ -303,8 +303,8 @@ public sealed class ContractsTests
 
         var serialized = RoundTripBootstrapJson(json);
 
-        Assert.Contains("\"itemKey\":\"soft_armor_vest\"", serialized);
-        Assert.Contains("\"itemKey\":\"field_carbine\"", serialized);
+        Assert.Contains("\"itemKey\":\"6b2_body_armor\"", serialized);
+        Assert.Contains("\"itemKey\":\"ak74\"", serialized);
     }
 
     [Fact]
@@ -408,3 +408,5 @@ public sealed class ContractsTests
         return JsonSerializer.Serialize(roundTrip, new JsonSerializerOptions(JsonSerializerDefaults.Web));
     }
 }
+
+

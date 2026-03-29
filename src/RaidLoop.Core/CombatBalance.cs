@@ -191,7 +191,7 @@ public static class CombatBalance
     {
         return NormalizeItemName(weaponName) switch
         {
-            "support_machine_gun" => false,
+            "pkp" => false,
             _ => true
         };
     }
@@ -200,12 +200,12 @@ public static class CombatBalance
     {
         return NormalizeItemName(weaponName) switch
         {
-            "light_pistol" => true,
-            "drum_smg" => true,
-            "field_carbine" => true,
-            "battle_rifle" => true,
-            "marksman_rifle" => true,
-            "support_machine_gun" => true,
+            "makarov" => true,
+            "ppsh" => true,
+            "ak74" => true,
+            "ak47" => true,
+            "svds" => true,
+            "pkp" => true,
             "Rusty Knife" => false,
             _ => false
         };
@@ -216,8 +216,8 @@ public static class CombatBalance
         return NormalizeItemName(weaponName) switch
         {
             "rusty_knife" => false,
-            "light_pistol" => false,
-            "marksman_rifle" => false,
+            "makarov" => false,
+            "svds" => false,
             "Rusty Knife" => false,
             _ => true
         };
@@ -227,12 +227,12 @@ public static class CombatBalance
     {
         return NormalizeItemName(weaponName) switch
         {
-            "light_pistol" => 3,
-            "drum_smg" => 2,
-            "field_carbine" => 2,
-            "battle_rifle" => 2,
-            "marksman_rifle" => 2,
-            "support_machine_gun" => 2,
+            "makarov" => 3,
+            "ppsh" => 2,
+            "ak74" => 2,
+            "ak47" => 2,
+            "svds" => 2,
+            "pkp" => 2,
             _ => 3
         };
     }
@@ -241,12 +241,12 @@ public static class CombatBalance
     {
         return NormalizeItemName(armorName) switch
         {
-            "assault_plate_carrier" => 6,
-            "heavy_plate_carrier" => 5,
-            "medium_plate_carrier" => 4,
-            "light_plate_carrier" => 3,
-            "reinforced_vest" => 2,
-            "soft_armor_vest" => 1,
+            "nfm_thor" => 6,
+            "6b43_zabralo_sh_body_armor" => 5,
+            "fort_defender_2" => 4,
+            "6b13_assault_armor" => 3,
+            "bnti_kirasa_n" => 2,
+            "6b2_body_armor" => 1,
             _ => 0
         };
     }
@@ -265,23 +265,23 @@ public static class CombatBalance
             "bandage" => 60,
             "medkit" => 120,
             "ammo_box" => 80,
-            "light_pistol" => 240,
-            "drum_smg" => 650,
-            "field_carbine" => 1250,
-            "marksman_rifle" => 2200,
-            "battle_rifle" => 1500,
-            "support_machine_gun" => 3200,
-            "soft_armor_vest" => 380,
-            "reinforced_vest" => 640,
-            "light_plate_carrier" => 900,
-            "medium_plate_carrier" => 1500,
-            "heavy_plate_carrier" => 1800,
-            "assault_plate_carrier" => 2600,
+            "makarov" => 240,
+            "ppsh" => 650,
+            "ak74" => 1250,
+            "svds" => 2200,
+            "ak47" => 1500,
+            "pkp" => 3200,
+            "6b2_body_armor" => 380,
+            "bnti_kirasa_n" => 640,
+            "6b13_assault_armor" => 900,
+            "fort_defender_2" => 1500,
+            "6b43_zabralo_sh_body_armor" => 1800,
+            "nfm_thor" => 2600,
             "small_backpack" => 100,
             "large_backpack" => 200,
             "tactical_backpack" => 300,
-            "hiking_backpack" => 1600,
-            "raid_backpack" => 2400,
+            "tasmanian_tiger_trooper_35" => 1600,
+            "6sh118" => 2400,
             _ => 100
         };
     }
@@ -291,11 +291,11 @@ public static class CombatBalance
         return NormalizeItemName(weaponName) switch
         {
             "rusty_knife" => 0,
-            "drum_smg" => 35,
-            "field_carbine" => 30,
-            "marksman_rifle" => 20,
-            "battle_rifle" => 30,
-            "support_machine_gun" => 100,
+            "ppsh" => 35,
+            "ak74" => 30,
+            "svds" => 20,
+            "ak47" => 30,
+            "pkp" => 100,
             "Rusty Knife" => 0,
             _ => 8
         };
@@ -310,8 +310,8 @@ public static class CombatBalance
     {
         return NormalizeItemName(backpackName ?? string.Empty) switch
         {
-            "raid_backpack" => 10,
-            "hiking_backpack" => 8,
+            "6sh118" => 10,
+            "tasmanian_tiger_trooper_35" => 8,
             "tactical_backpack" => 6,
             "large_backpack" => 4,
             "small_backpack" => 3,
@@ -342,16 +342,16 @@ public static class CombatBalance
     {
         return weaponName switch
         {
-            "Makarov" => "light_pistol",
-            "PPSH" => "drum_smg",
-            "AK74" => "field_carbine",
-            "SVDS" => "marksman_rifle",
-            "AK47" => "battle_rifle",
-            "PKP" => "support_machine_gun",
-            "Hunting Rifle" => "field_carbine",
-            "Rusty SMG" => "drum_smg",
-            "Sawed Shotgun" => "battle_rifle",
-            "Compact Carbine" => "field_carbine",
+            "Makarov" => "makarov",
+            "PPSH" => "ppsh",
+            "AK74" => "ak74",
+            "SVDS" => "svds",
+            "AK47" => "ak47",
+            "PKP" => "pkp",
+            "Hunting Rifle" => "ak74",
+            "Rusty SMG" => "ppsh",
+            "Sawed Shotgun" => "ak47",
+            "Compact Carbine" => "ak74",
             _ => weaponName
         };
     }
@@ -360,14 +360,14 @@ public static class CombatBalance
     {
         return armorName switch
         {
-            "6B2 body armor" => "soft_armor_vest",
-            "BNTI Kirasa-N" => "reinforced_vest",
-            "6B13 assault armor" => "light_plate_carrier",
-            "FORT Defender-2" => "medium_plate_carrier",
-            "6B43 Zabralo-Sh body armor" => "heavy_plate_carrier",
-            "NFM THOR" => "assault_plate_carrier",
-            "Soft Vest" => "soft_armor_vest",
-            "Plate Carrier" => "light_plate_carrier",
+            "6B2 body armor" => "6b2_body_armor",
+            "BNTI Kirasa-N" => "bnti_kirasa_n",
+            "6B13 assault armor" => "6b13_assault_armor",
+            "FORT Defender-2" => "fort_defender_2",
+            "6B43 Zabralo-Sh body armor" => "6b43_zabralo_sh_body_armor",
+            "NFM THOR" => "nfm_thor",
+            "Soft Vest" => "6b2_body_armor",
+            "Plate Carrier" => "6b13_assault_armor",
             _ => armorName
         };
     }
@@ -408,15 +408,16 @@ public static class CombatBalance
     {
         return NormalizeItemName(weaponName) switch
         {
-            "drum_smg" => 4,
-            "field_carbine" => 8,
-            "marksman_rifle" => 12,
-            "battle_rifle" => 10,
-            "support_machine_gun" => 12,
-            "light_pistol" => 6,
+            "ppsh" => 4,
+            "ak74" => 8,
+            "svds" => 12,
+            "ak47" => 10,
+            "pkp" => 12,
+            "makarov" => 6,
             "rusty_knife" => 6,
             "Rusty Knife" => 6,
             _ => 6
         };
     }
 }
+

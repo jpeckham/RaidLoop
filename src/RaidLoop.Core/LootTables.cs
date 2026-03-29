@@ -34,12 +34,12 @@ public static class LootTables
     {
         return new LootTable(WeaponsCrateProfile,
         [
-            ItemCatalog.CreateByKey("light_pistol"),
-            ItemCatalog.CreateByKey("drum_smg"),
-            ItemCatalog.CreateByKey("field_carbine"),
-            ItemCatalog.CreateByKey("marksman_rifle"),
-            ItemCatalog.CreateByKey("battle_rifle"),
-            ItemCatalog.CreateByKey("support_machine_gun")
+            ItemCatalog.CreateByKey("makarov"),
+            ItemCatalog.CreateByKey("ppsh"),
+            ItemCatalog.CreateByKey("ak74"),
+            ItemCatalog.CreateByKey("svds"),
+            ItemCatalog.CreateByKey("ak47"),
+            ItemCatalog.CreateByKey("pkp")
         ]);
     }
 
@@ -47,17 +47,17 @@ public static class LootTables
     {
         return new LootTable(ArmourCrateProfile,
         [
-            ItemCatalog.CreateByKey("soft_armor_vest"),
+            ItemCatalog.CreateByKey("6b2_body_armor"),
             ItemCatalog.CreateByKey("small_backpack"),
-            ItemCatalog.CreateByKey("reinforced_vest"),
+            ItemCatalog.CreateByKey("bnti_kirasa_n"),
             ItemCatalog.CreateByKey("large_backpack"),
-            ItemCatalog.CreateByKey("light_plate_carrier"),
+            ItemCatalog.CreateByKey("6b13_assault_armor"),
             ItemCatalog.CreateByKey("tactical_backpack"),
-            ItemCatalog.CreateByKey("medium_plate_carrier"),
-            ItemCatalog.CreateByKey("hiking_backpack"),
-            ItemCatalog.CreateByKey("heavy_plate_carrier"),
-            ItemCatalog.CreateByKey("assault_plate_carrier"),
-            ItemCatalog.CreateByKey("raid_backpack")
+            ItemCatalog.CreateByKey("fort_defender_2"),
+            ItemCatalog.CreateByKey("tasmanian_tiger_trooper_35"),
+            ItemCatalog.CreateByKey("6b43_zabralo_sh_body_armor"),
+            ItemCatalog.CreateByKey("nfm_thor"),
+            ItemCatalog.CreateByKey("6sh118")
         ]);
     }
 
@@ -69,10 +69,10 @@ public static class LootTables
             ItemCatalog.CreateByKey("ammo_box"),
             ItemCatalog.CreateByKey("scrap_metal"),
             ItemCatalog.CreateByKey("medkit"),
-            ItemCatalog.CreateByKey("drum_smg"),
+            ItemCatalog.CreateByKey("ppsh"),
             ItemCatalog.CreateByKey("rare_scope"),
-            ItemCatalog.CreateByKey("field_carbine"),
-            ItemCatalog.CreateByKey("marksman_rifle"),
+            ItemCatalog.CreateByKey("ak74"),
+            ItemCatalog.CreateByKey("svds"),
             ItemCatalog.CreateByKey("legendary_trigger_group")
         ]);
     }
@@ -81,18 +81,19 @@ public static class LootTables
     {
         return new LootTable(EnemyLoadoutProfile,
         [
-            ItemCatalog.CreateByKey("light_pistol"),
+            ItemCatalog.CreateByKey("makarov"),
             ItemCatalog.CreateByKey("bandage"),
-            ItemCatalog.CreateByKey("drum_smg"),
-            ItemCatalog.CreateByKey("soft_armor_vest"),
-            ItemCatalog.CreateByKey("reinforced_vest"),
-            ItemCatalog.CreateByKey("field_carbine"),
-            ItemCatalog.CreateByKey("light_plate_carrier"),
-            ItemCatalog.CreateByKey("marksman_rifle"),
-            ItemCatalog.CreateByKey("medium_plate_carrier"),
-            ItemCatalog.CreateByKey("battle_rifle"),
-            ItemCatalog.CreateByKey("support_machine_gun"),
-            ItemCatalog.CreateByKey("assault_plate_carrier")
+            ItemCatalog.CreateByKey("ppsh"),
+            ItemCatalog.CreateByKey("6b2_body_armor"),
+            ItemCatalog.CreateByKey("bnti_kirasa_n"),
+            ItemCatalog.CreateByKey("ak74"),
+            ItemCatalog.CreateByKey("6b13_assault_armor"),
+            ItemCatalog.CreateByKey("svds"),
+            ItemCatalog.CreateByKey("fort_defender_2"),
+            ItemCatalog.CreateByKey("ak47"),
+            ItemCatalog.CreateByKey("pkp"),
+            ItemCatalog.CreateByKey("nfm_thor")
         ]);
     }
 }
+

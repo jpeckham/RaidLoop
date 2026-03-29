@@ -93,7 +93,7 @@ begin
         encounter_type := 'Combat';
         encounter_title := 'Combat Encounter';
         encounter_description := 'Enemy contact on your position.';
-        enemy_name := case when random() < 0.65 then 'Scavenger' else 'Patrol Guard' end;
+        enemy_name := case when random() < 0.65 then 'Scav' else 'Patrol Guard' end;
         enemy_health := 12 + floor(random() * 9)::int;
     elsif encounter_roll < 0.8 then
         encounter_type := 'Loot';

@@ -38,8 +38,8 @@ Example:
     "ammoSpent": 1,
     "weaponMalfunctioned": true,
     "logEntriesAdded": [
-      "You hit Scavenger for 2.",
-      "Scavenger hits you for 3.",
+      "You hit Scav for 2.",
+      "Scav hits you for 3.",
       "Weapon jammed."
     ]
   },

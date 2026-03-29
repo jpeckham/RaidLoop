@@ -77,7 +77,7 @@ Current content-generation weights/outcomes to preserve:
 - `game.random_loot_items_for_container('Dead Body')`: delegates to `game.random_enemy_loadout()`
 - `game.random_loot_items_for_container(other)`: weights are equivalent to `40` split evenly across Bandage + Ammo Box, Scrap Metal, and Medkit, then `36` PPSH, `9` Rare Scope, `9` AK74, `9` SVDS, `6` Legendary Trigger Group
 - `game.generate_raid_encounter`: extraction-route check first, then `roll < 50` combat, `roll < 80` loot, else neutral
-- `game.generate_raid_encounter` combat enemy name weighting: Scavenger `65%`, Patrol Guard `35%`
+- `game.generate_raid_encounter` combat enemy name weighting: Scav `65%`, Patrol Guard `35%`
 - `game.generate_raid_encounter` combat HP range: `12 + floor(random() * 9)` so `12` through `20`
 - `game.generate_raid_encounter` extraction container selection: uniform over Filing Cabinet, Weapons Crate, Medical Container, Dead Body
 - `game.generate_raid_encounter` extraction trigger: `extractProgress >= extractRequired` and `random() < 0.35`

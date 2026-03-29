@@ -166,7 +166,7 @@ public static class CombatBalance
 
     public static DamageRange GetDamageRange(string weaponName, AttackMode mode)
     {
-        var normalizedWeapon = NormalizeWeaponName(weaponName);
+        var normalizedWeapon = NormalizeItemName(weaponName);
         var dieCount = GetDamageDieCount(mode);
         var dieSize = GetDamageDieSize(normalizedWeapon);
 
@@ -176,7 +176,7 @@ public static class CombatBalance
     public static int RollDamage(string weaponName, AttackMode mode, IRng rng)
     {
         var dieCount = GetDamageDieCount(mode);
-        var dieSize = GetDamageDieSize(NormalizeWeaponName(weaponName));
+        var dieSize = GetDamageDieSize(NormalizeItemName(weaponName));
         var total = 0;
 
         for (var currentDie = 0; currentDie < dieCount; currentDie++)
@@ -189,23 +189,23 @@ public static class CombatBalance
 
     public static bool SupportsSingleShot(string weaponName)
     {
-        return NormalizeWeaponName(weaponName) switch
+        return NormalizeItemName(weaponName) switch
         {
-            "PKP" => false,
+            "support_machine_gun" => false,
             _ => true
         };
     }
 
     public static bool SupportsBurstFire(string weaponName)
     {
-        return NormalizeWeaponName(weaponName) switch
+        return NormalizeItemName(weaponName) switch
         {
-            "Makarov" => true,
-            "PPSH" => true,
-            "AK74" => true,
-            "AK47" => true,
-            "SVDS" => true,
-            "PKP" => true,
+            "light_pistol" => true,
+            "drum_smg" => true,
+            "field_carbine" => true,
+            "battle_rifle" => true,
+            "marksman_rifle" => true,
+            "support_machine_gun" => true,
             "Rusty Knife" => false,
             _ => false
         };
@@ -213,10 +213,11 @@ public static class CombatBalance
 
     public static bool SupportsFullAuto(string weaponName)
     {
-        return NormalizeWeaponName(weaponName) switch
+        return NormalizeItemName(weaponName) switch
         {
-            "Makarov" => false,
-            "SVDS" => false,
+            "rusty_knife" => false,
+            "light_pistol" => false,
+            "marksman_rifle" => false,
             "Rusty Knife" => false,
             _ => true
         };
@@ -224,28 +225,28 @@ public static class CombatBalance
 
     public static int GetBurstAttackPenalty(string weaponName)
     {
-        return NormalizeWeaponName(weaponName) switch
+        return NormalizeItemName(weaponName) switch
         {
-            "Makarov" => 3,
-            "PPSH" => 2,
-            "AK74" => 2,
-            "AK47" => 2,
-            "SVDS" => 2,
-            "PKP" => 2,
+            "light_pistol" => 3,
+            "drum_smg" => 2,
+            "field_carbine" => 2,
+            "battle_rifle" => 2,
+            "marksman_rifle" => 2,
+            "support_machine_gun" => 2,
             _ => 3
         };
     }
 
     public static int GetArmorReduction(string armorName)
     {
-        return NormalizeArmorName(armorName) switch
+        return NormalizeItemName(armorName) switch
         {
-            "NFM THOR" => 6,
-            "6B43 Zabralo-Sh body armor" => 5,
-            "FORT Defender-2" => 4,
-            "6B13 assault armor" => 3,
-            "BNTI Kirasa-N" => 2,
-            "6B2 body armor" => 1,
+            "assault_plate_carrier" => 6,
+            "heavy_plate_carrier" => 5,
+            "medium_plate_carrier" => 4,
+            "light_plate_carrier" => 3,
+            "reinforced_vest" => 2,
+            "soft_armor_vest" => 1,
             _ => 0
         };
     }
@@ -261,39 +262,40 @@ public static class CombatBalance
     {
         return NormalizeItemName(itemName) switch
         {
-            "Bandage" => 60,
-            "Medkit" => 120,
-            "Ammo Box" => 80,
-            "Makarov" => 240,
-            "PPSH" => 650,
-            "AK74" => 1250,
-            "SVDS" => 2200,
-            "AK47" => 1500,
-            "PKP" => 3200,
-            "6B2 body armor" => 380,
-            "BNTI Kirasa-N" => 640,
-            "6B13 assault armor" => 900,
-            "FORT Defender-2" => 1500,
-            "6B43 Zabralo-Sh body armor" => 1800,
-            "NFM THOR" => 2600,
-            "Small Backpack" => 100,
-            "Large Backpack" => 200,
-            "Tactical Backpack" => 300,
-            "Tasmanian Tiger Trooper 35" => 1600,
-            "6Sh118" => 2400,
+            "bandage" => 60,
+            "medkit" => 120,
+            "ammo_box" => 80,
+            "light_pistol" => 240,
+            "drum_smg" => 650,
+            "field_carbine" => 1250,
+            "marksman_rifle" => 2200,
+            "battle_rifle" => 1500,
+            "support_machine_gun" => 3200,
+            "soft_armor_vest" => 380,
+            "reinforced_vest" => 640,
+            "light_plate_carrier" => 900,
+            "medium_plate_carrier" => 1500,
+            "heavy_plate_carrier" => 1800,
+            "assault_plate_carrier" => 2600,
+            "small_backpack" => 100,
+            "large_backpack" => 200,
+            "tactical_backpack" => 300,
+            "hiking_backpack" => 1600,
+            "raid_backpack" => 2400,
             _ => 100
         };
     }
 
     public static int GetMagazineCapacity(string weaponName)
     {
-        return NormalizeWeaponName(weaponName) switch
+        return NormalizeItemName(weaponName) switch
         {
-            "PPSH" => 35,
-            "AK74" => 30,
-            "SVDS" => 20,
-            "AK47" => 30,
-            "PKP" => 100,
+            "rusty_knife" => 0,
+            "drum_smg" => 35,
+            "field_carbine" => 30,
+            "marksman_rifle" => 20,
+            "battle_rifle" => 30,
+            "support_machine_gun" => 100,
             "Rusty Knife" => 0,
             _ => 8
         };
@@ -306,13 +308,13 @@ public static class CombatBalance
 
     public static int GetBackpackCapacity(string? backpackName)
     {
-        return backpackName switch
+        return NormalizeItemName(backpackName ?? string.Empty) switch
         {
-            "6Sh118" => 10,
-            "Tasmanian Tiger Trooper 35" => 8,
-            "Tactical Backpack" => 6,
-            "Large Backpack" => 4,
-            "Small Backpack" => 3,
+            "raid_backpack" => 10,
+            "hiking_backpack" => 8,
+            "tactical_backpack" => 6,
+            "large_backpack" => 4,
+            "small_backpack" => 3,
             _ => 2
         };
     }
@@ -325,6 +327,11 @@ public static class CombatBalance
 
     public static string NormalizeItemName(string itemName)
     {
+        if (ItemCatalog.TryGet(itemName, out var item) && item is not null)
+        {
+            return item.Key;
+        }
+
         var normalized = NormalizeWeaponName(itemName);
         normalized = NormalizeArmorName(normalized);
 
@@ -335,10 +342,16 @@ public static class CombatBalance
     {
         return weaponName switch
         {
-            "Hunting Rifle" => "AK74",
-            "Rusty SMG" => "PPSH",
-            "Sawed Shotgun" => "AK47",
-            "Compact Carbine" => "AK74",
+            "Makarov" => "light_pistol",
+            "PPSH" => "drum_smg",
+            "AK74" => "field_carbine",
+            "SVDS" => "marksman_rifle",
+            "AK47" => "battle_rifle",
+            "PKP" => "support_machine_gun",
+            "Hunting Rifle" => "field_carbine",
+            "Rusty SMG" => "drum_smg",
+            "Sawed Shotgun" => "battle_rifle",
+            "Compact Carbine" => "field_carbine",
             _ => weaponName
         };
     }
@@ -347,8 +360,14 @@ public static class CombatBalance
     {
         return armorName switch
         {
-            "Soft Vest" => "6B2 body armor",
-            "Plate Carrier" => "6B13 assault armor",
+            "6B2 body armor" => "soft_armor_vest",
+            "BNTI Kirasa-N" => "reinforced_vest",
+            "6B13 assault armor" => "light_plate_carrier",
+            "FORT Defender-2" => "medium_plate_carrier",
+            "6B43 Zabralo-Sh body armor" => "heavy_plate_carrier",
+            "NFM THOR" => "assault_plate_carrier",
+            "Soft Vest" => "soft_armor_vest",
+            "Plate Carrier" => "light_plate_carrier",
             _ => armorName
         };
     }
@@ -387,14 +406,15 @@ public static class CombatBalance
 
     private static int GetDamageDieSize(string weaponName)
     {
-        return NormalizeWeaponName(weaponName) switch
+        return NormalizeItemName(weaponName) switch
         {
-            "PPSH" => 4,
-            "AK74" => 8,
-            "SVDS" => 12,
-            "AK47" => 10,
-            "PKP" => 12,
-            "Makarov" => 6,
+            "drum_smg" => 4,
+            "field_carbine" => 8,
+            "marksman_rifle" => 12,
+            "battle_rifle" => 10,
+            "support_machine_gun" => 12,
+            "light_pistol" => 6,
+            "rusty_knife" => 6,
             "Rusty Knife" => 6,
             _ => 6
         };

@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace RaidLoop.Core;
 
 public enum ItemType
@@ -40,7 +42,50 @@ public sealed record Item(
     int Value = 1,
     int Slots = 1,
     Rarity Rarity = Rarity.Common,
-    DisplayRarity DisplayRarity = DisplayRarity.Common);
+    DisplayRarity DisplayRarity = DisplayRarity.Common)
+{
+    [JsonPropertyName("itemKey")]
+    public string Key { get; init; } = NormalizeItemKey(Name);
+
+    private static string NormalizeItemKey(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            return string.Empty;
+        }
+
+        var normalized = new List<char>(name.Length * 2);
+        var lastWasSeparator = false;
+
+        foreach (var character in name.Trim())
+        {
+            if (char.IsLetterOrDigit(character))
+            {
+                if (char.IsUpper(character) && normalized.Count > 0 && !lastWasSeparator)
+                {
+                    normalized.Add('_');
+                }
+
+                normalized.Add(char.ToLowerInvariant(character));
+                lastWasSeparator = false;
+                continue;
+            }
+
+            if (!lastWasSeparator && normalized.Count > 0)
+            {
+                normalized.Add('_');
+                lastWasSeparator = true;
+            }
+        }
+
+        if (normalized.Count > 0 && normalized[^1] == '_')
+        {
+            normalized.RemoveAt(normalized.Count - 1);
+        }
+
+        return new string(normalized.ToArray());
+    }
+}
 
 public sealed class GameState
 {

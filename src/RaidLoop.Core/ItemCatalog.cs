@@ -2,7 +2,9 @@ namespace RaidLoop.Core;
 
 public static class ItemCatalog
 {
-    private static readonly Dictionary<string, Item> Items = new(StringComparer.OrdinalIgnoreCase);
+    private static readonly Dictionary<string, Item> ItemsByKey = new(StringComparer.OrdinalIgnoreCase);
+    // Legacy label aliases stay as a compatibility bridge while the app moves to key-first lookups.
+    private static readonly Dictionary<string, Item> LegacyNames = new(StringComparer.OrdinalIgnoreCase);
 
     static ItemCatalog()
     {
@@ -190,7 +192,22 @@ public static class ItemCatalog
 
     public static Item Get(string name)
     {
-        if (!TryGet(name, out var item))
+        return GetByLegacyName(name);
+    }
+
+    public static Item GetByKey(string key)
+    {
+        if (!TryGetByKey(key, out var item))
+        {
+            throw new KeyNotFoundException($"No authored item definition exists for key '{key}'.");
+        }
+
+        return item!;
+    }
+
+    public static Item GetByLegacyName(string name)
+    {
+        if (!TryGetByLegacyName(name, out var item))
         {
             throw new KeyNotFoundException($"No authored item definition exists for '{name}'.");
         }
@@ -198,14 +215,58 @@ public static class ItemCatalog
         return item!;
     }
 
+    // Legacy compatibility lookup. New code should prefer TryGetByKey/CreateByKey.
     public static bool TryGet(string name, out Item? item)
     {
-        return Items.TryGetValue(name, out item);
+        return TryGetByLegacyName(name, out item);
+    }
+
+    public static bool TryGetByLegacyName(string name, out Item? item)
+    {
+        if (TryGetByKey(name, out item))
+        {
+            return true;
+        }
+
+        return LegacyNames.TryGetValue(name, out item);
+    }
+
+    public static bool TryGetKeyByLegacyName(string name, out string key)
+    {
+        if (TryGetByKey(name, out var item) && item is not null)
+        {
+            key = item.Key;
+            return true;
+        }
+
+        if (LegacyNames.TryGetValue(name, out item) && item is not null)
+        {
+            key = item.Key;
+            return true;
+        }
+
+        key = string.Empty;
+        return false;
+    }
+
+    public static bool TryGetByKey(string key, out Item? item)
+    {
+        return ItemsByKey.TryGetValue(key, out item);
     }
 
     public static Item Create(string name)
     {
-        return Get(name) with { };
+        return CreateLegacy(name);
+    }
+
+    public static Item CreateByKey(string key)
+    {
+        return GetByKey(key) with { };
+    }
+
+    public static Item CreateLegacy(string name)
+    {
+        return GetByLegacyName(name) with { };
     }
 
     private static void RegisterAuthored(
@@ -233,12 +294,12 @@ public static class ItemCatalog
 
     private static void RegisterCanonical(Item item)
     {
-        Items[item.Key] = item;
-        Items[item.Name] = item;
+        ItemsByKey[item.Key] = item;
+        LegacyNames[item.Name] = item;
     }
 
     private static void RegisterAlias(string alias, Item item)
     {
-        Items[alias] = item with { Name = alias };
+        LegacyNames[alias] = item with { Name = alias };
     }
 }

@@ -45,46 +45,26 @@ public sealed record Item(
     DisplayRarity DisplayRarity = DisplayRarity.Common)
 {
     [JsonPropertyName("itemKey")]
-    public string Key { get; init; } = NormalizeItemKey(Name);
-
-    private static string NormalizeItemKey(string name)
+    public string Key
     {
-        if (string.IsNullOrWhiteSpace(name))
+        get
         {
+            if (!string.IsNullOrWhiteSpace(_key))
+            {
+                return _key!;
+            }
+
+            if (ItemCatalog.TryGetKeyByLegacyName(Name, out var resolvedKey))
+            {
+                return resolvedKey;
+            }
+
             return string.Empty;
         }
-
-        var normalized = new List<char>(name.Length * 2);
-        var lastWasSeparator = false;
-
-        foreach (var character in name.Trim())
-        {
-            if (char.IsLetterOrDigit(character))
-            {
-                if (char.IsUpper(character) && normalized.Count > 0 && !lastWasSeparator)
-                {
-                    normalized.Add('_');
-                }
-
-                normalized.Add(char.ToLowerInvariant(character));
-                lastWasSeparator = false;
-                continue;
-            }
-
-            if (!lastWasSeparator && normalized.Count > 0)
-            {
-                normalized.Add('_');
-                lastWasSeparator = true;
-            }
-        }
-
-        if (normalized.Count > 0 && normalized[^1] == '_')
-        {
-            normalized.RemoveAt(normalized.Count - 1);
-        }
-
-        return new string(normalized.ToArray());
+        init => _key = value ?? string.Empty;
     }
+
+    private string? _key;
 }
 
 public sealed class GameState

@@ -112,9 +112,9 @@ test("local profile_bootstrap exposes keyed item identities for legacy saved ite
 
   const bootstrap = await repository.bootstrapProfile(accessToken);
 
-  assert.equal(bootstrap.snapshot.mainStash[0].itemKey, "light_pistol");
-  assert.equal(bootstrap.snapshot.mainStash[1].itemKey, "soft_armor_vest");
-  assert.equal(bootstrap.snapshot.onPersonItems[0].item.itemKey, "field_carbine");
+  assert.equal(bootstrap.mainStash[0].itemKey, "makarov");
+  assert.equal(bootstrap.mainStash[1].itemKey, "6b2_body_armor");
+  assert.equal(bootstrap.onPersonItems[0].item.itemKey, "ak74");
 });
 
 test("local start-main-raid uses accepted stats for raid max health and encumbrance", async () => {

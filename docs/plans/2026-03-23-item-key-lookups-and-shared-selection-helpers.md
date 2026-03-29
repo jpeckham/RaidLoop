@@ -80,9 +80,9 @@ git commit -m "docs: inventory duplicate lookup patterns"
 
 Add example verification queries for:
 
-- `game.item_def_by_name('AK74')`
-- `game.item_def_by_key('ak74')`
-- `game.item_key_for_name('AK74')`
+- `game.item_def_by_name('Field Carbine')`
+- `game.item_def_by_key('field_carbine')`
+- `game.item_key_for_name('Field Carbine')`
 
 Expected results:
 
@@ -128,10 +128,10 @@ git commit -m "feat: add canonical item lookup helpers"
 
 Document expected results for:
 
-- `game.weapon_magazine_capacity('PKP') = 100`
-- `game.backpack_capacity('6Sh118') = 10`
-- `game.weapon_supports_single_shot('PKP') = false`
-- `game.weapon_burst_attack_penalty('Makarov') = 3`
+- `game.weapon_magazine_capacity('Support Machine Gun') = 100`
+- `game.backpack_capacity('Raid Backpack') = 10`
+- `game.weapon_supports_single_shot('Support Machine Gun') = false`
+- `game.weapon_burst_attack_penalty('Light Pistol') = 3`
 
 **Step 2: Recreate the small stat helpers using the canonical item helpers**
 
@@ -309,7 +309,7 @@ Refactor repeated stat lookups to use the new canonical item helpers or resolved
 
 Run direct SQL checks against the local DB after migration application for:
 
-- `PKP` single-shot restriction
+- `Support Machine Gun` single-shot restriction
 - `full-auto` and `burst-fire` support values
 - armor reduction and penetration values used during combat
 

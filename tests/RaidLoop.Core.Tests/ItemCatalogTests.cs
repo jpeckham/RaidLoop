@@ -18,7 +18,7 @@ public sealed class ItemCatalogTests
     [Fact]
     public void KeyItems_HaveAuthoredValuesGreaterThanOne()
     {
-        Assert.True(ItemCatalog.Get("Makarov").Value > 1);
+        Assert.True(ItemCatalog.Get("Light Pistol").Value > 1);
         Assert.True(ItemCatalog.Get("Medkit").Value > 1);
         Assert.True(ItemCatalog.Get("Small Backpack").Value > 1);
     }
@@ -27,23 +27,23 @@ public sealed class ItemCatalogTests
     public void AuthoredItems_HaveRequestedWeights()
     {
         Assert.Equal(1, ItemCatalog.Get("Rusty Knife").Weight);
-        Assert.Equal(2, ItemCatalog.Get("Makarov").Weight);
-        Assert.Equal(12, ItemCatalog.Get("PPSH").Weight);
-        Assert.Equal(7, ItemCatalog.Get("AK74").Weight);
-        Assert.Equal(10, ItemCatalog.Get("SVDS").Weight);
-        Assert.Equal(10, ItemCatalog.Get("AK47").Weight);
-        Assert.Equal(18, ItemCatalog.Get("PKP").Weight);
-        Assert.Equal(9, ItemCatalog.Get("6B2 body armor").Weight);
-        Assert.Equal(7, ItemCatalog.Get("BNTI Kirasa-N").Weight);
+        Assert.Equal(2, ItemCatalog.Get("Light Pistol").Weight);
+        Assert.Equal(12, ItemCatalog.Get("Drum SMG").Weight);
+        Assert.Equal(7, ItemCatalog.Get("Field Carbine").Weight);
+        Assert.Equal(10, ItemCatalog.Get("Marksman Rifle").Weight);
+        Assert.Equal(10, ItemCatalog.Get("Battle Rifle").Weight);
+        Assert.Equal(18, ItemCatalog.Get("Support Machine Gun").Weight);
+        Assert.Equal(9, ItemCatalog.Get("Soft Armor Vest").Weight);
+        Assert.Equal(7, ItemCatalog.Get("Reinforced Vest").Weight);
         Assert.Equal(1, ItemCatalog.Get("Small Backpack").Weight);
         Assert.Equal(1, ItemCatalog.Get("Large Backpack").Weight);
         Assert.Equal(2, ItemCatalog.Get("Tactical Backpack").Weight);
-        Assert.Equal(2, ItemCatalog.Get("Tasmanian Tiger Trooper 35").Weight);
-        Assert.Equal(8, ItemCatalog.Get("6Sh118").Weight);
-        Assert.Equal(7, ItemCatalog.Get("6B13 assault armor").Weight);
-        Assert.Equal(22, ItemCatalog.Get("FORT Defender-2").Weight);
-        Assert.Equal(28, ItemCatalog.Get("6B43 Zabralo-Sh body armor").Weight);
-        Assert.Equal(19, ItemCatalog.Get("NFM THOR").Weight);
+        Assert.Equal(2, ItemCatalog.Get("Hiking Backpack").Weight);
+        Assert.Equal(8, ItemCatalog.Get("Raid Backpack").Weight);
+        Assert.Equal(7, ItemCatalog.Get("Light Plate Carrier").Weight);
+        Assert.Equal(22, ItemCatalog.Get("Medium Plate Carrier").Weight);
+        Assert.Equal(28, ItemCatalog.Get("Heavy Plate Carrier").Weight);
+        Assert.Equal(32, ItemCatalog.Get("Assault Plate Carrier").Weight);
         Assert.Equal(1, ItemCatalog.Get("Medkit").Weight);
         Assert.Equal(1, ItemCatalog.Get("Bandage").Weight);
         Assert.Equal(4, ItemCatalog.Get("Ammo Box").Weight);
@@ -56,11 +56,11 @@ public sealed class ItemCatalogTests
     public void HeavierGear_HasHigherWeightThanLighterGear()
     {
         var knife = ItemCatalog.Get("Rusty Knife");
-        var ak74 = ItemCatalog.Get("AK74");
+        var field_carbine = ItemCatalog.Get("Field Carbine");
         var tacticalBackpack = ItemCatalog.Get("Tactical Backpack");
-        var raidBackpack = ItemCatalog.Get("6Sh118");
+        var raidBackpack = ItemCatalog.Get("Raid Backpack");
 
-        Assert.True(ak74.Weight > knife.Weight);
+        Assert.True(field_carbine.Weight > knife.Weight);
         Assert.True(tacticalBackpack.Weight > ItemCatalog.Get("Small Backpack").Weight);
         Assert.True(raidBackpack.Weight > tacticalBackpack.Weight);
     }
@@ -81,37 +81,38 @@ public sealed class ItemCatalogTests
     [Fact]
     public void StrongerWeapons_CostMoreThanWeakerWeapons()
     {
-        var makarov = ItemCatalog.Get("Makarov");
-        var ppsh = ItemCatalog.Get("PPSH");
-        var ak74 = ItemCatalog.Get("AK74");
-        var svds = ItemCatalog.Get("SVDS");
-        var ak47 = ItemCatalog.Get("AK47");
-        var pkp = ItemCatalog.Get("PKP");
+        var lightPistol = ItemCatalog.Get("Light Pistol");
+        var drumSmg = ItemCatalog.Get("Drum SMG");
+        var fieldCarbine = ItemCatalog.Get("Field Carbine");
+        var battleRifle = ItemCatalog.Get("Battle Rifle");
+        var marksmanRifle = ItemCatalog.Get("Marksman Rifle");
+        var supportMachineGun = ItemCatalog.Get("Support Machine Gun");
 
-        Assert.Equal(ItemType.Weapon, makarov.Type);
-        Assert.True(ppsh.Value > makarov.Value);
-        Assert.True(ak74.Value > ppsh.Value);
-        Assert.True(ak47.Value > ak74.Value);
-        Assert.True(svds.Value > ak47.Value);
-        Assert.True(pkp.Value > ak47.Value);
+        Assert.Equal(ItemType.Weapon, lightPistol.Type);
+        Assert.True(drumSmg.Value > lightPistol.Value);
+        Assert.True(fieldCarbine.Value > drumSmg.Value);
+        Assert.True(battleRifle.Value > fieldCarbine.Value);
+        Assert.True(marksmanRifle.Value > battleRifle.Value);
+        Assert.True(supportMachineGun.Value > marksmanRifle.Value);
     }
 
     [Fact]
     public void StrongerArmor_CostsMoreThanWeakerArmor()
     {
-        var starterArmor = ItemCatalog.Get("6B2 body armor");
-        var uncommonArmor = ItemCatalog.Get("BNTI Kirasa-N");
-        var assaultArmor = ItemCatalog.Get("6B13 assault armor");
-        var epicArmor = ItemCatalog.Get("FORT Defender-2");
-        var heavyArmor = ItemCatalog.Get("6B43 Zabralo-Sh body armor");
-        var thorArmor = ItemCatalog.Get("NFM THOR");
+        var softArmorVest = ItemCatalog.Get("Soft Armor Vest");
+        var reinforcedVest = ItemCatalog.Get("Reinforced Vest");
+        var lightPlateCarrier = ItemCatalog.Get("Light Plate Carrier");
+        var mediumPlateCarrier = ItemCatalog.Get("Medium Plate Carrier");
+        var heavyPlateCarrier = ItemCatalog.Get("Heavy Plate Carrier");
+        var assaultPlateCarrier = ItemCatalog.Get("Assault Plate Carrier");
 
-        Assert.Equal(ItemType.Armor, starterArmor.Type);
-        Assert.True(uncommonArmor.Value > starterArmor.Value);
-        Assert.True(assaultArmor.Value > uncommonArmor.Value);
-        Assert.True(epicArmor.Value > assaultArmor.Value);
-        Assert.True(heavyArmor.Value > epicArmor.Value);
-        Assert.True(thorArmor.Value > heavyArmor.Value);
+        Assert.Equal(ItemType.Armor, softArmorVest.Type);
+        Assert.True(reinforcedVest.Value > softArmorVest.Value);
+        Assert.True(lightPlateCarrier.Value > reinforcedVest.Value);
+        Assert.True(mediumPlateCarrier.Value > lightPlateCarrier.Value);
+        Assert.True(heavyPlateCarrier.Value > mediumPlateCarrier.Value);
+        Assert.True(assaultPlateCarrier.Value > heavyPlateCarrier.Value);
+        Assert.True(assaultPlateCarrier.Weight > heavyPlateCarrier.Weight);
     }
 
     [Fact]
@@ -120,30 +121,30 @@ public sealed class ItemCatalogTests
         var smallBackpack = ItemCatalog.Get("Small Backpack");
         var largeBackpack = ItemCatalog.Get("Large Backpack");
         var tacticalBackpack = ItemCatalog.Get("Tactical Backpack");
-        var trooperBackpack = ItemCatalog.Get("Tasmanian Tiger Trooper 35");
-        var raidBackpack = ItemCatalog.Get("6Sh118");
+        var hikingBackpack = ItemCatalog.Get("Hiking Backpack");
+        var raidBackpack = ItemCatalog.Get("Raid Backpack");
 
         Assert.True(largeBackpack.Value > smallBackpack.Value);
         Assert.True(tacticalBackpack.Value > largeBackpack.Value);
-        Assert.True(trooperBackpack.Value > tacticalBackpack.Value);
-        Assert.True(raidBackpack.Value > trooperBackpack.Value);
+        Assert.True(hikingBackpack.Value > tacticalBackpack.Value);
+        Assert.True(raidBackpack.Value > hikingBackpack.Value);
     }
 
     [Theory]
     [InlineData("Bandage")]
     [InlineData("Ammo Box")]
     [InlineData("Medkit")]
-    [InlineData("Makarov")]
-    [InlineData("AK74")]
-    [InlineData("SVDS")]
-    [InlineData("AK47")]
-    [InlineData("PKP")]
-    [InlineData("6B13 assault armor")]
-    [InlineData("FORT Defender-2")]
-    [InlineData("6B43 Zabralo-Sh body armor")]
-    [InlineData("NFM THOR")]
-    [InlineData("Tasmanian Tiger Trooper 35")]
-    [InlineData("6Sh118")]
+    [InlineData("Light Pistol")]
+    [InlineData("Field Carbine")]
+    [InlineData("Marksman Rifle")]
+    [InlineData("Battle Rifle")]
+    [InlineData("Support Machine Gun")]
+    [InlineData("Light Plate Carrier")]
+    [InlineData("Medium Plate Carrier")]
+    [InlineData("Heavy Plate Carrier")]
+    [InlineData("Assault Plate Carrier")]
+    [InlineData("Hiking Backpack")]
+    [InlineData("Raid Backpack")]
     public void RepresentativeItems_SellForAboutQuarterOfBuyPrice(string itemName)
     {
         var item = ItemCatalog.Get(itemName);
@@ -156,12 +157,12 @@ public sealed class ItemCatalogTests
     [Fact]
     public void NewHighTierItems_UseRequestedDisplayRarity()
     {
-        Assert.Equal(DisplayRarity.Epic, ItemCatalog.Get("FORT Defender-2").DisplayRarity);
-        Assert.Equal(DisplayRarity.Epic, ItemCatalog.Get("SVDS").DisplayRarity);
-        Assert.Equal(DisplayRarity.Epic, ItemCatalog.Get("Tasmanian Tiger Trooper 35").DisplayRarity);
-        Assert.Equal(DisplayRarity.Legendary, ItemCatalog.Get("NFM THOR").DisplayRarity);
-        Assert.Equal(DisplayRarity.Legendary, ItemCatalog.Get("PKP").DisplayRarity);
-        Assert.Equal(DisplayRarity.Legendary, ItemCatalog.Get("6Sh118").DisplayRarity);
+        Assert.Equal(DisplayRarity.Epic, ItemCatalog.Get("Medium Plate Carrier").DisplayRarity);
+        Assert.Equal(DisplayRarity.Epic, ItemCatalog.Get("Marksman Rifle").DisplayRarity);
+        Assert.Equal(DisplayRarity.Epic, ItemCatalog.Get("Hiking Backpack").DisplayRarity);
+        Assert.Equal(DisplayRarity.Legendary, ItemCatalog.Get("Assault Plate Carrier").DisplayRarity);
+        Assert.Equal(DisplayRarity.Legendary, ItemCatalog.Get("Support Machine Gun").DisplayRarity);
+        Assert.Equal(DisplayRarity.Legendary, ItemCatalog.Get("Raid Backpack").DisplayRarity);
     }
 
     [Fact]
@@ -177,16 +178,16 @@ public sealed class ItemCatalogTests
     [Fact]
     public void Ak47_UsesRareDisplayAndLootTier()
     {
-        var ak47 = ItemCatalog.Get("AK47");
+        var battle_rifle = ItemCatalog.Get("Battle Rifle");
 
-        Assert.Equal(Rarity.Rare, ak47.Rarity);
-        Assert.Equal(DisplayRarity.Rare, ak47.DisplayRarity);
+        Assert.Equal(Rarity.Rare, battle_rifle.Rarity);
+        Assert.Equal(DisplayRarity.Rare, battle_rifle.DisplayRarity);
     }
 
     [Fact]
     public void Kirasa_UsesUncommonDisplayAndLootTier()
     {
-        var kirasa = ItemCatalog.Get("BNTI Kirasa-N");
+        var kirasa = ItemCatalog.Get("Reinforced Vest");
 
         Assert.Equal(Rarity.Uncommon, kirasa.Rarity);
         Assert.Equal(DisplayRarity.Uncommon, kirasa.DisplayRarity);
@@ -212,7 +213,7 @@ public sealed class ItemCatalogTests
     {
         var migration = ReadRandomLuckRunLoadoutFunction();
 
-        Assert.Contains("'Makarov'", migration);
+        Assert.Contains("'Light Pistol'", migration);
         Assert.Contains("'Medkit'", migration);
         Assert.Contains("'Bandage'", migration);
         Assert.Contains("'Ammo Box'", migration);
@@ -225,10 +226,10 @@ public sealed class ItemCatalogTests
     {
         var migration = ReadRandomLuckRunLoadoutFunction();
 
-        Assert.DoesNotContain("'SVDS'", migration);
-        Assert.DoesNotContain("'PKP'", migration);
-        Assert.DoesNotContain("'NFM THOR'", migration);
-        Assert.DoesNotContain("'6Sh118'", migration);
+        Assert.DoesNotContain("'Marksman Rifle'", migration);
+        Assert.DoesNotContain("'Support Machine Gun'", migration);
+        Assert.DoesNotContain("'Assault Plate Carrier'", migration);
+        Assert.DoesNotContain("'Raid Backpack'", migration);
     }
 
     [Fact]
@@ -284,13 +285,13 @@ public sealed class ItemCatalogTests
 
         Assert.Contains("update game.item_defs", migration);
         Assert.Contains("when 'Rusty Knife' then 1", migration);
-        Assert.Contains("when 'Makarov' then 2", migration);
-        Assert.Contains("when 'PPSH' then 12", migration);
-        Assert.Contains("when 'AK74' then 7", migration);
-        Assert.Contains("when '6B2 body armor' then 9", migration);
-        Assert.Contains("when '6B13 assault armor' then 7", migration);
+        Assert.Contains("when 'Light Pistol' then 2", migration);
+        Assert.Contains("when 'Drum SMG' then 12", migration);
+        Assert.Contains("when 'Field Carbine' then 7", migration);
+        Assert.Contains("when 'Soft Armor Vest' then 9", migration);
+        Assert.Contains("when 'Light Plate Carrier' then 7", migration);
         Assert.Contains("when 'Tactical Backpack' then 2", migration);
-        Assert.Contains("when '6Sh118' then 8", migration);
+        Assert.Contains("when 'Raid Backpack' then 8", migration);
         Assert.Contains("when 'Small Backpack' then 1", migration);
         Assert.Contains("when 'Medkit' then 1", migration);
         Assert.Contains("when 'Ammo Box' then 4", migration);
@@ -304,13 +305,13 @@ public sealed class ItemCatalogTests
         var migration = File.ReadAllText(StrengthEncumbranceMigrationPath);
 
         Assert.Contains("update game.item_defs", migration);
-        Assert.Contains("game.authored_item('Makarov')", migration);
+        Assert.Contains("game.authored_item('Light Pistol')", migration);
         Assert.Contains("game.authored_item('Small Backpack')", migration);
         Assert.Contains("game.authored_item('Tactical Backpack')", migration);
         Assert.Contains("game.authored_item('Medkit')", migration);
         Assert.Contains("game.authored_item('Bandage')", migration);
         Assert.Contains("game.authored_item('Ammo Box')", migration);
-        Assert.DoesNotContain("jsonb_build_object('name', 'Makarov'", migration);
+        Assert.DoesNotContain("jsonb_build_object('name', 'Light Pistol'", migration);
         Assert.DoesNotContain("jsonb_build_object('name', 'Medkit'", migration);
         Assert.Contains("create or replace function game.item_weight(item_name text)", migration);
         Assert.Contains("create or replace function game.random_luck_run_stats()", migration);

@@ -34,12 +34,12 @@ public static class LootTables
     {
         return new LootTable(WeaponsCrateProfile,
         [
-            ItemCatalog.Create("Makarov"),
-            ItemCatalog.Create("PPSH"),
-            ItemCatalog.Create("AK74"),
-            ItemCatalog.Create("SVDS"),
-            ItemCatalog.Create("AK47"),
-            ItemCatalog.Create("PKP")
+            ItemCatalog.Create("Light Pistol"),
+            ItemCatalog.Create("Drum SMG"),
+            ItemCatalog.Create("Field Carbine"),
+            ItemCatalog.Create("Marksman Rifle"),
+            ItemCatalog.Create("Battle Rifle"),
+            ItemCatalog.Create("Support Machine Gun")
         ]);
     }
 
@@ -47,17 +47,17 @@ public static class LootTables
     {
         return new LootTable(ArmourCrateProfile,
         [
-            ItemCatalog.Create("6B2 body armor"),
+            ItemCatalog.Create("Soft Armor Vest"),
             ItemCatalog.Create("Small Backpack"),
-            ItemCatalog.Create("BNTI Kirasa-N"),
+            ItemCatalog.Create("Reinforced Vest"),
             ItemCatalog.Create("Large Backpack"),
-            ItemCatalog.Create("6B13 assault armor"),
+            ItemCatalog.Create("Light Plate Carrier"),
             ItemCatalog.Create("Tactical Backpack"),
-            ItemCatalog.Create("FORT Defender-2"),
-            ItemCatalog.Create("Tasmanian Tiger Trooper 35"),
-            ItemCatalog.Create("6B43 Zabralo-Sh body armor"),
-            ItemCatalog.Create("NFM THOR"),
-            ItemCatalog.Create("6Sh118")
+            ItemCatalog.Create("Medium Plate Carrier"),
+            ItemCatalog.Create("Hiking Backpack"),
+            ItemCatalog.Create("Heavy Plate Carrier"),
+            ItemCatalog.Create("Assault Plate Carrier"),
+            ItemCatalog.Create("Raid Backpack")
         ]);
     }
 
@@ -69,10 +69,10 @@ public static class LootTables
             ItemCatalog.Create("Ammo Box"),
             ItemCatalog.Create("Scrap Metal"),
             ItemCatalog.Create("Medkit"),
-            ItemCatalog.Create("PPSH"),
+            ItemCatalog.Create("Drum SMG"),
             ItemCatalog.Create("Rare Scope"),
-            ItemCatalog.Create("AK74"),
-            ItemCatalog.Create("SVDS"),
+            ItemCatalog.Create("Field Carbine"),
+            ItemCatalog.Create("Marksman Rifle"),
             ItemCatalog.Create("Legendary Trigger Group")
         ]);
     }
@@ -81,18 +81,18 @@ public static class LootTables
     {
         return new LootTable(EnemyLoadoutProfile,
         [
-            ItemCatalog.Create("Makarov"),
+            ItemCatalog.Create("Light Pistol"),
             ItemCatalog.Create("Bandage"),
-            ItemCatalog.Create("PPSH"),
-            ItemCatalog.Create("6B2 body armor"),
-            ItemCatalog.Create("BNTI Kirasa-N"),
-            ItemCatalog.Create("AK74"),
-            ItemCatalog.Create("6B13 assault armor"),
-            ItemCatalog.Create("SVDS"),
-            ItemCatalog.Create("FORT Defender-2"),
-            ItemCatalog.Create("AK47"),
-            ItemCatalog.Create("PKP"),
-            ItemCatalog.Create("NFM THOR")
+            ItemCatalog.Create("Drum SMG"),
+            ItemCatalog.Create("Soft Armor Vest"),
+            ItemCatalog.Create("Reinforced Vest"),
+            ItemCatalog.Create("Field Carbine"),
+            ItemCatalog.Create("Light Plate Carrier"),
+            ItemCatalog.Create("Marksman Rifle"),
+            ItemCatalog.Create("Medium Plate Carrier"),
+            ItemCatalog.Create("Battle Rifle"),
+            ItemCatalog.Create("Support Machine Gun"),
+            ItemCatalog.Create("Assault Plate Carrier")
         ]);
     }
 }

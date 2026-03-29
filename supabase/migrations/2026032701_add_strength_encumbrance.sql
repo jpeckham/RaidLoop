@@ -4,23 +4,23 @@ alter table game.item_defs
 update game.item_defs
 set weight = case name
     when 'Rusty Knife' then 2
-    when 'Makarov' then 4
-    when 'PPSH' then 8
-    when 'AK74' then 9
-    when 'AK47' then 10
-    when 'SVDS' then 11
-    when 'PKP' then 18
-    when '6B2 body armor' then 8
-    when 'BNTI Kirasa-N' then 12
-    when '6B13 assault armor' then 18
-    when 'FORT Defender-2' then 24
-    when '6B43 Zabralo-Sh body armor' then 30
-    when 'NFM THOR' then 22
+    when 'Light Pistol' then 4
+    when 'Drum SMG' then 8
+    when 'Field Carbine' then 9
+    when 'Battle Rifle' then 10
+    when 'Marksman Rifle' then 11
+    when 'Support Machine Gun' then 18
+    when 'Soft Armor Vest' then 8
+    when 'Reinforced Vest' then 12
+    when 'Light Plate Carrier' then 18
+    when 'Medium Plate Carrier' then 24
+    when 'Heavy Plate Carrier' then 30
+    when 'Assault Plate Carrier' then 32
     when 'Small Backpack' then 4
     when 'Large Backpack' then 6
     when 'Tactical Backpack' then 8
-    when 'Tasmanian Tiger Trooper 35' then 10
-    when '6Sh118' then 14
+    when 'Hiking Backpack' then 10
+    when 'Raid Backpack' then 14
     when 'Medkit' then 3
     when 'Bandage' then 1
     when 'Ammo Box' then 2
@@ -186,7 +186,7 @@ language sql
 volatile
 as $$
     select jsonb_build_array(
-        game.authored_item('Makarov'),
+        game.authored_item('Light Pistol'),
         case when random() < 0.5
             then game.authored_item('Small Backpack')
             else game.authored_item('Tactical Backpack')

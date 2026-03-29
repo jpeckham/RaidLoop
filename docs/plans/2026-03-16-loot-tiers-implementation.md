@@ -21,7 +21,7 @@
 
 Add tests that assert:
 - `new Item("Pistol", ItemType.Weapon, 1).Rarity == Rarity.Common`
-- `new Item("AK74", ItemType.Weapon, 1, Rarity.Rare).Rarity == Rarity.Rare`
+- `new Item("Field Carbine", ItemType.Weapon, 1, Rarity.Rare).Rarity == Rarity.Rare`
 
 **Step 2: Run test to verify it fails**
 

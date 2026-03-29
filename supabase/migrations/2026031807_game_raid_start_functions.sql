@@ -4,11 +4,11 @@ language sql
 stable
 as $$
     select case weapon_name
-        when 'PPSH' then 35
-        when 'AK74' then 30
-        when 'SVDS' then 20
-        when 'AK47' then 30
-        when 'PKP' then 100
+        when 'Drum SMG' then 35
+        when 'Field Carbine' then 30
+        when 'Marksman Rifle' then 20
+        when 'Battle Rifle' then 30
+        when 'Support Machine Gun' then 100
         when 'Rusty Knife' then 0
         else 8
     end;
@@ -20,8 +20,8 @@ language sql
 stable
 as $$
     select case backpack_name
-        when '6Sh118' then 10
-        when 'Tasmanian Tiger Trooper 35' then 8
+        when 'Raid Backpack' then 10
+        when 'Hiking Backpack' then 8
         when 'Tactical Backpack' then 6
         when 'Small Backpack' then 3
         else 2
@@ -44,7 +44,7 @@ language sql
 volatile
 as $$
     select jsonb_build_array(
-        jsonb_build_object('name', 'Makarov', 'type', 0, 'value', 12, 'slots', 1, 'rarity', 0, 'displayRarity', 1),
+        jsonb_build_object('name', 'Light Pistol', 'type', 0, 'value', 12, 'slots', 1, 'rarity', 0, 'displayRarity', 1),
         case when random() < 0.5
             then jsonb_build_object('name', 'Small Backpack', 'type', 2, 'value', 18, 'slots', 1, 'rarity', 1, 'displayRarity', 2)
             else jsonb_build_object('name', 'Tactical Backpack', 'type', 2, 'value', 28, 'slots', 2, 'rarity', 2, 'displayRarity', 3)
@@ -81,7 +81,7 @@ as $$
             jsonb_build_object('name', 'Rare Scope', 'type', 5, 'value', 16, 'slots', 1, 'rarity', 2, 'displayRarity', 0)
         )
         else jsonb_build_array(
-            jsonb_build_object('name', 'Makarov', 'type', 0, 'value', 12, 'slots', 1, 'rarity', 0, 'displayRarity', 1)
+            jsonb_build_object('name', 'Light Pistol', 'type', 0, 'value', 12, 'slots', 1, 'rarity', 0, 'displayRarity', 1)
         )
     end;
 $$;

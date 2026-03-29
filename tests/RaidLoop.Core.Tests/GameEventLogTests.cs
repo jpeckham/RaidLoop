@@ -14,7 +14,7 @@ public class GameEventLogTests : IDisposable
     public void Append_StoresEventsInOrder()
     {
         GameEventLog.Append(new GameEvent("one", "raid-1", [new ItemSnapshot("Bandage", "Sellable", "Common", 1)], DateTimeOffset.UtcNow));
-        GameEventLog.Append(new GameEvent("two", "raid-1", [new ItemSnapshot("AK74", "Weapon", "Rare", 8)], DateTimeOffset.UtcNow));
+        GameEventLog.Append(new GameEvent("two", "raid-1", [new ItemSnapshot("Field Carbine", "Weapon", "Rare", 8)], DateTimeOffset.UtcNow));
 
         Assert.Collection(
             GameEventLog.Events,
@@ -44,7 +44,7 @@ public class GameEventLogTests : IDisposable
     [Fact]
     public void ItemSnapshot_PreservesValue()
     {
-        var snapshot = new ItemSnapshot("AK47", "Weapon", "Legendary", 20);
+        var snapshot = new ItemSnapshot("Battle Rifle", "Weapon", "Legendary", 20);
 
         Assert.Equal(20, snapshot.Value);
     }

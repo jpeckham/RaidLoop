@@ -5,21 +5,21 @@ stable
 as $$
     select case item_name
         when 'Rusty Knife' then jsonb_build_object('name', 'Rusty Knife', 'type', 0, 'value', 1, 'slots', 1, 'rarity', 0, 'displayRarity', 1)
-        when 'Makarov' then jsonb_build_object('name', 'Makarov', 'type', 0, 'value', 60, 'slots', 1, 'rarity', 0, 'displayRarity', 1)
-        when 'PPSH' then jsonb_build_object('name', 'PPSH', 'type', 0, 'value', 160, 'slots', 1, 'rarity', 1, 'displayRarity', 2)
-        when 'AK74' then jsonb_build_object('name', 'AK74', 'type', 0, 'value', 320, 'slots', 1, 'rarity', 2, 'displayRarity', 3)
-        when 'SVDS' then jsonb_build_object('name', 'SVDS', 'type', 0, 'value', 550, 'slots', 1, 'rarity', 3, 'displayRarity', 4)
-        when 'AK47' then jsonb_build_object('name', 'AK47', 'type', 0, 'value', 375, 'slots', 1, 'rarity', 2, 'displayRarity', 3)
-        when 'PKP' then jsonb_build_object('name', 'PKP', 'type', 0, 'value', 800, 'slots', 1, 'rarity', 4, 'displayRarity', 5)
-        when '6B2 body armor' then jsonb_build_object('name', '6B2 body armor', 'type', 1, 'value', 95, 'slots', 1, 'rarity', 0, 'displayRarity', 1)
-        when '6B13 assault armor' then jsonb_build_object('name', '6B13 assault armor', 'type', 1, 'value', 225, 'slots', 1, 'rarity', 2, 'displayRarity', 3)
-        when 'FORT Defender-2' then jsonb_build_object('name', 'FORT Defender-2', 'type', 1, 'value', 375, 'slots', 1, 'rarity', 3, 'displayRarity', 4)
-        when '6B43 Zabralo-Sh body armor' then jsonb_build_object('name', '6B43 Zabralo-Sh body armor', 'type', 1, 'value', 450, 'slots', 1, 'rarity', 4, 'displayRarity', 5)
-        when 'NFM THOR' then jsonb_build_object('name', 'NFM THOR', 'type', 1, 'value', 650, 'slots', 1, 'rarity', 4, 'displayRarity', 5)
+        when 'Light Pistol' then jsonb_build_object('name', 'Light Pistol', 'type', 0, 'value', 60, 'slots', 1, 'rarity', 0, 'displayRarity', 1)
+        when 'Drum SMG' then jsonb_build_object('name', 'Drum SMG', 'type', 0, 'value', 160, 'slots', 1, 'rarity', 1, 'displayRarity', 2)
+        when 'Field Carbine' then jsonb_build_object('name', 'Field Carbine', 'type', 0, 'value', 320, 'slots', 1, 'rarity', 2, 'displayRarity', 3)
+        when 'Marksman Rifle' then jsonb_build_object('name', 'Marksman Rifle', 'type', 0, 'value', 550, 'slots', 1, 'rarity', 3, 'displayRarity', 4)
+        when 'Battle Rifle' then jsonb_build_object('name', 'Battle Rifle', 'type', 0, 'value', 375, 'slots', 1, 'rarity', 2, 'displayRarity', 3)
+        when 'Support Machine Gun' then jsonb_build_object('name', 'Support Machine Gun', 'type', 0, 'value', 800, 'slots', 1, 'rarity', 4, 'displayRarity', 5)
+        when 'Soft Armor Vest' then jsonb_build_object('name', 'Soft Armor Vest', 'type', 1, 'value', 95, 'slots', 1, 'rarity', 0, 'displayRarity', 1)
+        when 'Light Plate Carrier' then jsonb_build_object('name', 'Light Plate Carrier', 'type', 1, 'value', 225, 'slots', 1, 'rarity', 2, 'displayRarity', 3)
+        when 'Medium Plate Carrier' then jsonb_build_object('name', 'Medium Plate Carrier', 'type', 1, 'value', 375, 'slots', 1, 'rarity', 3, 'displayRarity', 4)
+        when 'Heavy Plate Carrier' then jsonb_build_object('name', 'Heavy Plate Carrier', 'type', 1, 'value', 450, 'slots', 1, 'rarity', 4, 'displayRarity', 5)
+        when 'Assault Plate Carrier' then jsonb_build_object('name', 'Assault Plate Carrier', 'type', 1, 'value', 650, 'slots', 1, 'rarity', 4, 'displayRarity', 5)
         when 'Small Backpack' then jsonb_build_object('name', 'Small Backpack', 'type', 2, 'value', 25, 'slots', 1, 'rarity', 1, 'displayRarity', 2)
         when 'Tactical Backpack' then jsonb_build_object('name', 'Tactical Backpack', 'type', 2, 'value', 75, 'slots', 2, 'rarity', 2, 'displayRarity', 3)
-        when 'Tasmanian Tiger Trooper 35' then jsonb_build_object('name', 'Tasmanian Tiger Trooper 35', 'type', 2, 'value', 400, 'slots', 3, 'rarity', 3, 'displayRarity', 4)
-        when '6Sh118' then jsonb_build_object('name', '6Sh118', 'type', 2, 'value', 600, 'slots', 4, 'rarity', 4, 'displayRarity', 5)
+        when 'Hiking Backpack' then jsonb_build_object('name', 'Hiking Backpack', 'type', 2, 'value', 400, 'slots', 3, 'rarity', 3, 'displayRarity', 4)
+        when 'Raid Backpack' then jsonb_build_object('name', 'Raid Backpack', 'type', 2, 'value', 600, 'slots', 4, 'rarity', 4, 'displayRarity', 5)
         when 'Medkit' then jsonb_build_object('name', 'Medkit', 'type', 3, 'value', 30, 'slots', 1, 'rarity', 0, 'displayRarity', 1)
         when 'Bandage' then jsonb_build_object('name', 'Bandage', 'type', 4, 'value', 15, 'slots', 1, 'rarity', 0, 'displayRarity', 0)
         when 'Ammo Box' then jsonb_build_object('name', 'Ammo Box', 'type', 4, 'value', 20, 'slots', 1, 'rarity', 0, 'displayRarity', 0)
@@ -59,11 +59,11 @@ as $$
     select game.normalize_save_payload(
         jsonb_build_object(
             'mainStash', jsonb_build_array(
-                game.authored_item('Makarov'),
-                game.authored_item('PPSH'),
-                game.authored_item('AK74'),
-                game.authored_item('6B2 body armor'),
-                game.authored_item('6B13 assault armor'),
+                game.authored_item('Light Pistol'),
+                game.authored_item('Drum SMG'),
+                game.authored_item('Field Carbine'),
+                game.authored_item('Soft Armor Vest'),
+                game.authored_item('Light Plate Carrier'),
                 game.authored_item('Small Backpack'),
                 game.authored_item('Tactical Backpack'),
                 game.authored_item('Medkit'),
@@ -97,7 +97,7 @@ stable
 as $$
     select case item_name
         when 'Medkit' then game.authored_item('Medkit')
-        when 'Makarov' then game.authored_item('Makarov')
+        when 'Light Pistol' then game.authored_item('Light Pistol')
         when 'Small Backpack' then game.authored_item('Small Backpack')
         else null
     end;
@@ -109,7 +109,7 @@ language sql
 volatile
 as $$
     select jsonb_build_array(
-        game.authored_item('Makarov'),
+        game.authored_item('Light Pistol'),
         case when random() < 0.5
             then game.authored_item('Small Backpack')
             else game.authored_item('Tactical Backpack')
@@ -150,19 +150,19 @@ language sql
 volatile
 as $$
     select case floor(random() * 5)::int
-        when 0 then jsonb_build_array(game.authored_item('Makarov'))
+        when 0 then jsonb_build_array(game.authored_item('Light Pistol'))
         when 1 then jsonb_build_array(
-            game.authored_item('PPSH'),
+            game.authored_item('Drum SMG'),
             game.authored_item('Bandage')
         )
         when 2 then jsonb_build_array(
-            game.authored_item('AK74'),
-            game.authored_item('6B2 body armor')
+            game.authored_item('Field Carbine'),
+            game.authored_item('Soft Armor Vest')
         )
-        when 3 then jsonb_build_array(game.authored_item('SVDS'))
+        when 3 then jsonb_build_array(game.authored_item('Marksman Rifle'))
         else jsonb_build_array(
-            game.authored_item('AK47'),
-            game.authored_item('FORT Defender-2')
+            game.authored_item('Battle Rifle'),
+            game.authored_item('Medium Plate Carrier')
         )
     end;
 $$;
@@ -176,12 +176,12 @@ as $$
         when 'Weapons Crate' then
             case floor(random() * 4)::int
                 when 0 then jsonb_build_array(
-                    game.authored_item('Makarov'),
+                    game.authored_item('Light Pistol'),
                     game.authored_item('Ammo Box')
                 )
-                when 1 then jsonb_build_array(game.authored_item('PPSH'))
-                when 2 then jsonb_build_array(game.authored_item('AK74'))
-                else jsonb_build_array(game.authored_item('SVDS'))
+                when 1 then jsonb_build_array(game.authored_item('Drum SMG'))
+                when 2 then jsonb_build_array(game.authored_item('Field Carbine'))
+                else jsonb_build_array(game.authored_item('Marksman Rifle'))
             end
         when 'Medical Container' then
             case floor(random() * 3)::int
@@ -207,7 +207,7 @@ as $$
                     game.authored_item('Rare Scope')
                 )
                 when 2 then jsonb_build_array(game.authored_item('Medkit'))
-                else jsonb_build_array(game.authored_item('Makarov'))
+                else jsonb_build_array(game.authored_item('Light Pistol'))
             end
     end;
 $$;

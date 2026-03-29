@@ -153,7 +153,7 @@ test("game-action returns profile-mutated projections for move-stash-to-on-perso
       return {
         money: 500,
         mainStash: [{ name: "Bandage", type: 4, value: 15, slots: 1, rarity: 0, displayRarity: 0 }],
-        onPersonItems: [{ item: { name: "AK74", type: 0, value: 320, slots: 1, rarity: 2, displayRarity: 3 }, isEquipped: true }],
+        onPersonItems: [{ item: { name: "Field Carbine", type: 0, value: 320, slots: 1, rarity: 2, displayRarity: 3 }, isEquipped: true }],
         randomCharacterAvailableAt: "0001-01-01T00:00:00+00:00",
         randomCharacter: null,
         activeRaid: null,
@@ -176,7 +176,7 @@ test("game-action returns profile-mutated projections for move-stash-to-on-perso
   const body = await response.json();
   assert.equal(body.eventType, "ProfileMutated");
   assert.equal(body.projections.stash.mainStash[0].name, "Bandage");
-  assert.equal(body.projections.loadout.onPersonItems[0].item.name, "AK74");
+  assert.equal(body.projections.loadout.onPersonItems[0].item.name, "Field Carbine");
 });
 
 test("game-action returns profile-mutated projections for sell-luck-run-item", async () => {
@@ -224,7 +224,7 @@ test("game-action returns profile-mutated player projections for accept-stats", 
       return {
         money: 500,
         mainStash: [],
-        onPersonItems: [{ item: { name: "AK74", type: 0, value: 320, slots: 1, rarity: 2, displayRarity: 3 }, isEquipped: true }],
+        onPersonItems: [{ item: { name: "Field Carbine", type: 0, value: 320, slots: 1, rarity: 2, displayRarity: 3 }, isEquipped: true }],
         acceptedStats: { strength: 8, dexterity: 14, constitution: 12, intelligence: 10, wisdom: 9, charisma: 16 },
         draftStats: { strength: 8, dexterity: 14, constitution: 12, intelligence: 10, wisdom: 9, charisma: 16 },
         availableStatPoints: 0,
@@ -306,7 +306,7 @@ test("game-action returns raid-started projections for start-main-raid", async (
         money: 500,
         mainStash: [],
         onPersonItems: [
-          { item: { name: "AK74", type: 0, value: 320, slots: 1, rarity: 2, displayRarity: 3 }, isEquipped: true },
+          { item: { name: "Field Carbine", type: 0, value: 320, slots: 1, rarity: 2, displayRarity: 3 }, isEquipped: true },
         ],
         randomCharacterAvailableAt: "0001-01-01T00:00:00+00:00",
         randomCharacter: null,
@@ -329,7 +329,7 @@ test("game-action returns raid-started projections for start-main-raid", async (
           discoveredLoot: [],
           carriedLoot: [],
           equippedItems: [
-            { name: "AK74", type: 0, value: 320, slots: 1, rarity: 2, displayRarity: 3 },
+            { name: "Field Carbine", type: 0, value: 320, slots: 1, rarity: 2, displayRarity: 3 },
           ],
           logEntries: ["Raid started as Main Character."],
         },
@@ -364,7 +364,7 @@ test("game-action returns raid-started projections for start-main-raid", async (
   assert.equal(body.projections.raid.surprisePersistenceEligible, false);
   assert.equal("extractProgress" in body.projections.raid, false);
   assert.equal("extractRequired" in body.projections.raid, false);
-  assert.equal(body.projections.raid.equippedItems[0].name, "AK74");
+  assert.equal(body.projections.raid.equippedItems[0].name, "Field Carbine");
   assert.equal(body.snapshot, undefined);
 });
 
@@ -401,7 +401,7 @@ test("game-action round-trips enemy constitution and strength in raid projection
           discoveredLoot: [],
           carriedLoot: [],
           equippedItems: [
-            { name: "AK74", type: 0, value: 320, slots: 1, rarity: 2, displayRarity: 3 },
+            { name: "Field Carbine", type: 0, value: 320, slots: 1, rarity: 2, displayRarity: 3 },
           ],
           logEntries: ["Raid started as Main Character."],
         },
@@ -440,7 +440,7 @@ test("game-action returns raid-started projections for start-random-raid", async
         randomCharacter: {
           name: "Ghost-101",
           inventory: [
-            { name: "Makarov", type: 0, value: 60, slots: 1, rarity: 0, displayRarity: 1 },
+            { name: "Light Pistol", type: 0, value: 60, slots: 1, rarity: 0, displayRarity: 1 },
           ],
         },
         activeRaid: {
@@ -462,7 +462,7 @@ test("game-action returns raid-started projections for start-random-raid", async
           discoveredLoot: [],
           carriedLoot: [],
           equippedItems: [
-            { name: "Makarov", type: 0, value: 60, slots: 1, rarity: 0, displayRarity: 1 },
+            { name: "Light Pistol", type: 0, value: 60, slots: 1, rarity: 0, displayRarity: 1 },
           ],
           logEntries: ["Raid started as Ghost-101."],
         },
@@ -536,7 +536,7 @@ test("game-action returns combat-resolved projections with appended log entries"
           discoveredLoot: [],
           carriedLoot: [],
           equippedItems: [
-            { name: "AK74", type: 0, value: 320, slots: 1, rarity: 2, displayRarity: 3 },
+            { name: "Field Carbine", type: 0, value: 320, slots: 1, rarity: 2, displayRarity: 3 },
           ],
           logEntries: [
             "Raid started as Main Character.",
@@ -681,7 +681,7 @@ test("game-action treats full-auto as a combat action", async () => {
           discoveredLoot: [],
           carriedLoot: [],
           equippedItems: [
-            { name: "AK74", type: 0, value: 320, slots: 1, rarity: 2, displayRarity: 3 },
+            { name: "Field Carbine", type: 0, value: 320, slots: 1, rarity: 2, displayRarity: 3 },
           ],
           logEntries: [
             "Raid started as Main Character.",
@@ -1156,7 +1156,7 @@ test("game-action returns raid-finished projections for attempt-extract", async 
         money: 500,
         mainStash: [],
         onPersonItems: [
-          { item: { name: "AK74", type: 0, value: 320, slots: 1, rarity: 2, displayRarity: 3 }, isEquipped: true },
+          { item: { name: "Field Carbine", type: 0, value: 320, slots: 1, rarity: 2, displayRarity: 3 }, isEquipped: true },
           { item: { name: "Bandage", type: 4, value: 15, slots: 1, rarity: 0, displayRarity: 0 }, isEquipped: false },
         ],
         randomCharacterAvailableAt: "0001-01-01T00:00:00+00:00",
@@ -1182,7 +1182,7 @@ test("game-action returns raid-finished projections for attempt-extract", async 
   assert.equal(body.eventType, "RaidFinished");
   assert.deepEqual(body.event, { action: "attempt-extract" });
   assert.equal(body.projections.raid, null);
-  assert.equal(body.projections.loadout.onPersonItems[0].item.name, "AK74");
+  assert.equal(body.projections.loadout.onPersonItems[0].item.name, "Field Carbine");
   assert.equal(body.projections.loadout.onPersonItems[1].item.name, "Bandage");
   assert.equal(body.message, "Extracted successfully.");
   assert.equal(body.snapshot, undefined);

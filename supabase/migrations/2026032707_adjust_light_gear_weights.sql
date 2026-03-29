@@ -1,14 +1,14 @@
 update game.item_defs
 set weight = case name
-    when 'Makarov' then 2
-    when '6B2 body armor' then 9
+    when 'Light Pistol' then 2
+    when 'Soft Armor Vest' then 9
     when 'Small Backpack' then 1
     when 'Medkit' then 1
     else weight
 end
 where name in (
-    'Makarov',
-    '6B2 body armor',
+    'Light Pistol',
+    'Soft Armor Vest',
     'Small Backpack',
     'Medkit'
 );

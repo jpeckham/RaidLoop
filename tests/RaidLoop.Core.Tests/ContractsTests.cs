@@ -14,9 +14,9 @@ public sealed class ContractsTests
             UserEmail: "player@example.com",
             Snapshot: new PlayerSnapshot(
                 Money: 500,
-                MainStash: [ItemCatalog.Create("Makarov")],
+                MainStash: [ItemCatalog.Create("Light Pistol")],
                 OnPersonItems: [new OnPersonSnapshot(ItemCatalog.Create("Small Backpack"), true)],
-                ShopStock: [ItemCatalog.Create("Makarov"), ItemCatalog.Create("PPSH")],
+                ShopStock: [ItemCatalog.Create("Light Pistol"), ItemCatalog.Create("Drum SMG")],
                 AcceptedStats: new PlayerStats(8, 14, 12, 10, 13, 16),
                 DraftStats: new PlayerStats(8, 15, 12, 10, 13, 16),
                 AvailableStatPoints: 5,
@@ -53,7 +53,7 @@ public sealed class ContractsTests
                     SurprisePersistenceEligible: false,
                     DiscoveredLoot: [],
                     CarriedLoot: [],
-                    EquippedItems: [ItemCatalog.Create("Makarov")],
+                    EquippedItems: [ItemCatalog.Create("Light Pistol")],
                     LogEntries: ["Raid started."])));
 
         var json = JsonSerializer.Serialize(response);
@@ -63,8 +63,8 @@ public sealed class ContractsTests
         Assert.True(roundTrip!.IsAuthenticated);
         Assert.Equal("player@example.com", roundTrip.UserEmail);
         Assert.Equal(500, roundTrip.Snapshot.Money);
-        Assert.Equal("Makarov", Assert.Single(roundTrip.Snapshot.MainStash).Name);
-        Assert.Equal(["Makarov", "PPSH"], roundTrip.Snapshot.ShopStock.Select(item => item.Name).ToArray());
+        Assert.Equal("Light Pistol", Assert.Single(roundTrip.Snapshot.MainStash).Name);
+        Assert.Equal(["Light Pistol", "Drum SMG"], roundTrip.Snapshot.ShopStock.Select(item => item.Name).ToArray());
         Assert.Equal(14, roundTrip.Snapshot.AcceptedStats.Dexterity);
         Assert.Equal(15, roundTrip.Snapshot.DraftStats.Dexterity);
         Assert.Equal(5, roundTrip.Snapshot.AvailableStatPoints);

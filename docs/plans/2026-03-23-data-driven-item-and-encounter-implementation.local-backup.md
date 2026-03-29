@@ -74,21 +74,21 @@ Define the expected row count and key columns for the current item set:
 Expected current authored items:
 
 - Rusty Knife
-- Makarov
-- PPSH
-- AK74
-- SVDS
-- AK47
-- PKP
-- 6B2 body armor
-- 6B13 assault armor
-- FORT Defender-2
-- 6B43 Zabralo-Sh body armor
-- NFM THOR
+- Light Pistol
+- Drum SMG
+- Field Carbine
+- Marksman Rifle
+- Battle Rifle
+- Support Machine Gun
+- Soft Armor Vest
+- Light Plate Carrier
+- Medium Plate Carrier
+- Heavy Plate Carrier
+- Assault Plate Carrier
 - Small Backpack
 - Tactical Backpack
-- Tasmanian Tiger Trooper 35
-- 6Sh118
+- Hiking Backpack
+- Raid Backpack
 - Medkit
 - Bandage
 - Ammo Box
@@ -164,14 +164,14 @@ git commit -m "feat: add canonical item definitions table"
 
 Document the expected lookups:
 
-- `game.authored_item('AK74')` returns the same JSON shape as before
-- `game.weapon_magazine_capacity('PKP')` returns `100`
-- `game.backpack_capacity('6Sh118')` returns `10`
-- `game.weapon_armor_penetration('SVDS')` returns `3`
-- `game.armor_damage_reduction('NFM THOR')` returns `6`
-- `game.weapon_supports_single_shot('PKP')` returns `false`
-- `game.weapon_supports_full_auto('AK47')` returns `true`
-- `game.weapon_burst_attack_penalty('Makarov')` returns `3`
+- `game.authored_item('Field Carbine')` returns the same JSON shape as before
+- `game.weapon_magazine_capacity('Support Machine Gun')` returns `100`
+- `game.backpack_capacity('Raid Backpack')` returns `10`
+- `game.weapon_armor_penetration('Marksman Rifle')` returns `3`
+- `game.armor_damage_reduction('Assault Plate Carrier')` returns `6`
+- `game.weapon_supports_single_shot('Support Machine Gun')` returns `false`
+- `game.weapon_supports_full_auto('Battle Rifle')` returns `true`
+- `game.weapon_burst_attack_penalty('Light Pistol')` returns `3`
 
 **Step 2: Replace hard-coded `case` logic with table lookups**
 

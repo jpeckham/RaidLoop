@@ -29,18 +29,18 @@ where table_key in (
 
 insert into game.enemy_loadout_variants (variant_key, table_key, weight, sort_order, enabled)
 values
-    ('challenge0_makarov', 'challenge_0_enemy_loadout', 140, 10, true),
-    ('challenge0_makarov_bandage', 'challenge_0_enemy_loadout', 60, 20, true),
-    ('challenge1_makarov_6b2', 'challenge_1_enemy_loadout', 120, 10, true),
-    ('challenge1_makarov_bandage_6b2', 'challenge_1_enemy_loadout', 80, 20, true),
-    ('challenge2_ppsh', 'challenge_2_enemy_loadout', 120, 10, true),
-    ('challenge2_ppsh_kirasa', 'challenge_2_enemy_loadout', 80, 20, true),
-    ('challenge3_ak74', 'challenge_3_enemy_loadout', 110, 10, true),
-    ('challenge3_ak47_6b13', 'challenge_3_enemy_loadout', 90, 20, true),
-    ('challenge4_svds', 'challenge_4_enemy_loadout', 100, 10, true),
-    ('challenge4_svds_fort', 'challenge_4_enemy_loadout', 100, 20, true),
-    ('challenge5_pkp', 'challenge_5_enemy_loadout', 100, 10, true),
-    ('challenge5_pkp_thor', 'challenge_5_enemy_loadout', 100, 20, true)
+    ('challenge0_light_pistol', 'challenge_0_enemy_loadout', 140, 10, true),
+    ('challenge0_light_pistol_bandage', 'challenge_0_enemy_loadout', 60, 20, true),
+    ('challenge1_light_pistol_6b2', 'challenge_1_enemy_loadout', 120, 10, true),
+    ('challenge1_light_pistol_bandage_6b2', 'challenge_1_enemy_loadout', 80, 20, true),
+    ('challenge2_drum_smg', 'challenge_2_enemy_loadout', 120, 10, true),
+    ('challenge2_drum_smg_kirasa', 'challenge_2_enemy_loadout', 80, 20, true),
+    ('challenge3_field_carbine', 'challenge_3_enemy_loadout', 110, 10, true),
+    ('challenge3_battle_rifle_6b13', 'challenge_3_enemy_loadout', 90, 20, true),
+    ('challenge4_marksman_rifle', 'challenge_4_enemy_loadout', 100, 10, true),
+    ('challenge4_marksman_rifle_fort', 'challenge_4_enemy_loadout', 100, 20, true),
+    ('challenge5_support_machine_gun', 'challenge_5_enemy_loadout', 100, 10, true),
+    ('challenge5_support_machine_gun_thor', 'challenge_5_enemy_loadout', 100, 20, true)
 on conflict (variant_key) do update
 set table_key = excluded.table_key,
     weight = excluded.weight,
@@ -49,26 +49,26 @@ set table_key = excluded.table_key,
 
 insert into game.enemy_loadout_variant_items (variant_key, item_key, item_order)
 values
-    ('challenge0_makarov', 'makarov', 10),
-    ('challenge0_makarov_bandage', 'makarov', 10),
-    ('challenge0_makarov_bandage', 'bandage', 20),
-    ('challenge1_makarov_6b2', 'makarov', 10),
-    ('challenge1_makarov_6b2', '6b2_body_armor', 20),
-    ('challenge1_makarov_bandage_6b2', 'makarov', 10),
-    ('challenge1_makarov_bandage_6b2', 'bandage', 20),
-    ('challenge1_makarov_bandage_6b2', '6b2_body_armor', 30),
-    ('challenge2_ppsh', 'ppsh', 10),
-    ('challenge2_ppsh_kirasa', 'ppsh', 10),
-    ('challenge2_ppsh_kirasa', 'bnti_kirasa_n', 20),
-    ('challenge3_ak74', 'ak74', 10),
-    ('challenge3_ak47_6b13', 'ak47', 10),
-    ('challenge3_ak47_6b13', '6b13_assault_armor', 20),
-    ('challenge4_svds', 'svds', 10),
-    ('challenge4_svds_fort', 'svds', 10),
-    ('challenge4_svds_fort', 'fort_defender_2', 20),
-    ('challenge5_pkp', 'pkp', 10),
-    ('challenge5_pkp_thor', 'pkp', 10),
-    ('challenge5_pkp_thor', 'nfm_thor', 20);
+    ('challenge0_light_pistol', 'light_pistol', 10),
+    ('challenge0_light_pistol_bandage', 'light_pistol', 10),
+    ('challenge0_light_pistol_bandage', 'bandage', 20),
+    ('challenge1_light_pistol_6b2', 'light_pistol', 10),
+    ('challenge1_light_pistol_6b2', 'soft_armor_vest', 20),
+    ('challenge1_light_pistol_bandage_6b2', 'light_pistol', 10),
+    ('challenge1_light_pistol_bandage_6b2', 'bandage', 20),
+    ('challenge1_light_pistol_bandage_6b2', 'soft_armor_vest', 30),
+    ('challenge2_drum_smg', 'drum_smg', 10),
+    ('challenge2_drum_smg_kirasa', 'drum_smg', 10),
+    ('challenge2_drum_smg_kirasa', 'reinforced_vest', 20),
+    ('challenge3_field_carbine', 'field_carbine', 10),
+    ('challenge3_battle_rifle_6b13', 'battle_rifle', 10),
+    ('challenge3_battle_rifle_6b13', 'light_plate_carrier', 20),
+    ('challenge4_marksman_rifle', 'marksman_rifle', 10),
+    ('challenge4_marksman_rifle_fort', 'marksman_rifle', 10),
+    ('challenge4_marksman_rifle_fort', 'medium_plate_carrier', 20),
+    ('challenge5_support_machine_gun', 'support_machine_gun', 10),
+    ('challenge5_support_machine_gun_thor', 'support_machine_gun', 10),
+    ('challenge5_support_machine_gun_thor', 'assault_plate_carrier', 20);
 
 insert into game.loot_tables (table_key, source_name, derived_from_enemy_loadout, enabled)
 values
@@ -86,13 +86,13 @@ where variant_key in (
     'challenge0_travel_scrap',
     'challenge0_travel_small_backpack',
     'challenge0_travel_large_backpack',
-    'challenge0_travel_makarov',
+    'challenge0_travel_light_pistol',
     'challenge0_extract_bandage_ammo',
     'challenge0_extract_medkit',
     'challenge0_extract_scrap',
     'challenge0_extract_small_backpack',
     'challenge0_extract_large_backpack',
-    'challenge0_extract_makarov'
+    'challenge0_extract_light_pistol'
 );
 
 insert into game.loot_table_variants (variant_key, table_key, weight, sort_order, enabled)
@@ -102,13 +102,13 @@ values
     ('challenge0_travel_scrap', 'challenge_0_travel_cache', 45, 30, true),
     ('challenge0_travel_small_backpack', 'challenge_0_travel_cache', 18, 40, true),
     ('challenge0_travel_large_backpack', 'challenge_0_travel_cache', 12, 50, true),
-    ('challenge0_travel_makarov', 'challenge_0_travel_cache', 25, 60, true),
+    ('challenge0_travel_light_pistol', 'challenge_0_travel_cache', 25, 60, true),
     ('challenge0_extract_bandage_ammo', 'challenge_0_extract_cache', 55, 10, true),
     ('challenge0_extract_medkit', 'challenge_0_extract_cache', 45, 20, true),
     ('challenge0_extract_scrap', 'challenge_0_extract_cache', 35, 30, true),
     ('challenge0_extract_small_backpack', 'challenge_0_extract_cache', 20, 40, true),
     ('challenge0_extract_large_backpack', 'challenge_0_extract_cache', 15, 50, true),
-    ('challenge0_extract_makarov', 'challenge_0_extract_cache', 20, 60, true)
+    ('challenge0_extract_light_pistol', 'challenge_0_extract_cache', 20, 60, true)
 on conflict (variant_key) do update
 set table_key = excluded.table_key,
     weight = excluded.weight,
@@ -122,13 +122,13 @@ where variant_key in (
     'challenge0_travel_scrap',
     'challenge0_travel_small_backpack',
     'challenge0_travel_large_backpack',
-    'challenge0_travel_makarov',
+    'challenge0_travel_light_pistol',
     'challenge0_extract_bandage_ammo',
     'challenge0_extract_medkit',
     'challenge0_extract_scrap',
     'challenge0_extract_small_backpack',
     'challenge0_extract_large_backpack',
-    'challenge0_extract_makarov'
+    'challenge0_extract_light_pistol'
 );
 
 insert into game.loot_table_variant_items (variant_key, item_key, item_order)
@@ -139,14 +139,14 @@ values
     ('challenge0_travel_scrap', 'scrap_metal', 10),
     ('challenge0_travel_small_backpack', 'small_backpack', 10),
     ('challenge0_travel_large_backpack', 'large_backpack', 10),
-    ('challenge0_travel_makarov', 'makarov', 10),
+    ('challenge0_travel_light_pistol', 'light_pistol', 10),
     ('challenge0_extract_bandage_ammo', 'bandage', 10),
     ('challenge0_extract_bandage_ammo', 'ammo_box', 20),
     ('challenge0_extract_medkit', 'medkit', 10),
     ('challenge0_extract_scrap', 'scrap_metal', 10),
     ('challenge0_extract_small_backpack', 'small_backpack', 10),
     ('challenge0_extract_large_backpack', 'large_backpack', 10),
-    ('challenge0_extract_makarov', 'makarov', 10);
+    ('challenge0_extract_light_pistol', 'light_pistol', 10);
 
 create or replace function game.challenge_enemy_loadout_table(challenge int)
 returns text

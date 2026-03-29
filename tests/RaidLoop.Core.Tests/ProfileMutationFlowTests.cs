@@ -32,7 +32,7 @@ public sealed class ProfileMutationFlowTests
         };
         var home = CreateHome(actionClient);
 
-        SetField(home, "_mainGame", new GameState([ItemCatalog.Create("AK74")]));
+        SetField(home, "_mainGame", new GameState([ItemCatalog.Create("Field Carbine")]));
         SetField(home, "_money", 0);
 
         await InvokePrivateAsync(home, "SellStashItemAsync", 0);
@@ -69,7 +69,7 @@ public sealed class ProfileMutationFlowTests
             actionClient: new ThrowingGameActionApiClient(() => new InvalidOperationException("action failed")),
             telemetry: telemetry);
 
-        SetField(home, "_mainGame", new GameState([ItemCatalog.Create("AK74")]));
+        SetField(home, "_mainGame", new GameState([ItemCatalog.Create("Field Carbine")]));
 
         var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => InvokePrivateAsync(home, "SellStashItemAsync", 0));
 
@@ -90,12 +90,12 @@ public sealed class ProfileMutationFlowTests
                 return Response(
                     money: 500,
                     mainStash: [],
-                    onPersonItems: [new OnPersonSnapshot(ItemCatalog.Create("AK74"), true)]);
+                    onPersonItems: [new OnPersonSnapshot(ItemCatalog.Create("Field Carbine"), true)]);
             }
         };
         var home = CreateHome(actionClient);
 
-        SetField(home, "_mainGame", new GameState([ItemCatalog.Create("AK74")]));
+        SetField(home, "_mainGame", new GameState([ItemCatalog.Create("Field Carbine")]));
         SetField(home, "_onPersonItems", new List<OnPersonEntry>());
 
         await InvokePrivateAsync(home, "MoveStashToOnPersonAsync", 0);
@@ -105,7 +105,7 @@ public sealed class ProfileMutationFlowTests
         Assert.Empty(mainGame.Stash);
         var onPerson = Assert.IsType<List<OnPersonEntry>>(GetField(home, "_onPersonItems"));
         var moved = Assert.Single(onPerson);
-        Assert.Equal("AK74", moved.Item.Name);
+        Assert.Equal("Field Carbine", moved.Item.Name);
         Assert.True(moved.IsEquipped);
     }
 
@@ -144,20 +144,20 @@ public sealed class ProfileMutationFlowTests
         {
             ResponseFactory = _ => Response(
                 money: 500,
-                mainStash: [ItemCatalog.Create("6B43 Zabralo-Sh body armor")],
-                onPersonItems: [new OnPersonSnapshot(ItemCatalog.Create("AK74"), true)])
+                mainStash: [ItemCatalog.Create("Heavy Plate Carrier")],
+                onPersonItems: [new OnPersonSnapshot(ItemCatalog.Create("Field Carbine"), true)])
         };
         var home = CreateHome(actionClient);
 
         SetField(home, "_statsAccepted", true);
         SetField(home, "_acceptedStats", new PlayerStats(8, 8, 8, 8, 8, 8));
-        SetField(home, "_mainGame", new GameState([ItemCatalog.Create("6B43 Zabralo-Sh body armor")]));
+        SetField(home, "_mainGame", new GameState([ItemCatalog.Create("Heavy Plate Carrier")]));
         SetField(home, "_onPersonItems", new List<OnPersonEntry>
         {
-            new(ItemCatalog.Create("6B43 Zabralo-Sh body armor"), true),
-            new(ItemCatalog.Create("6B13 assault armor"), true),
-            new(ItemCatalog.Create("FORT Defender-2"), true),
-            new(ItemCatalog.Create("NFM THOR"), true),
+            new(ItemCatalog.Create("Heavy Plate Carrier"), true),
+            new(ItemCatalog.Create("Light Plate Carrier"), true),
+            new(ItemCatalog.Create("Medium Plate Carrier"), true),
+            new(ItemCatalog.Create("Assault Plate Carrier"), true),
             new(ItemCatalog.Create("Small Backpack"), true),
             new(ItemCatalog.Create("Medkit"), false),
             new(ItemCatalog.Create("Medkit"), false),
@@ -176,7 +176,7 @@ public sealed class ProfileMutationFlowTests
         Assert.Empty(actionClient.Requests);
         var mainGame = Assert.IsType<GameState>(GetField(home, "_mainGame"));
         Assert.Single(mainGame.Stash);
-        Assert.Equal("6B43 Zabralo-Sh body armor", mainGame.Stash[0].Name);
+        Assert.Equal("Heavy Plate Carrier", mainGame.Stash[0].Name);
     }
 
     [Fact]
@@ -187,7 +187,7 @@ public sealed class ProfileMutationFlowTests
             ResponseFactory = _ => Response(
                 money: 500,
                 mainStash: [],
-                onPersonItems: [new OnPersonSnapshot(ItemCatalog.Create("AK74"), true)])
+                onPersonItems: [new OnPersonSnapshot(ItemCatalog.Create("Field Carbine"), true)])
         };
         var home = CreateHome(actionClient);
 
@@ -196,10 +196,10 @@ public sealed class ProfileMutationFlowTests
         SetField(home, "_acceptedStats", new PlayerStats(8, 8, 8, 8, 8, 8));
         SetField(home, "_onPersonItems", new List<OnPersonEntry>
         {
-            new(ItemCatalog.Create("6B43 Zabralo-Sh body armor"), true),
-            new(ItemCatalog.Create("6B13 assault armor"), true),
-            new(ItemCatalog.Create("FORT Defender-2"), true),
-            new(ItemCatalog.Create("NFM THOR"), true),
+            new(ItemCatalog.Create("Heavy Plate Carrier"), true),
+            new(ItemCatalog.Create("Light Plate Carrier"), true),
+            new(ItemCatalog.Create("Medium Plate Carrier"), true),
+            new(ItemCatalog.Create("Assault Plate Carrier"), true),
             new(ItemCatalog.Create("Small Backpack"), true),
             new(ItemCatalog.Create("Medkit"), false),
             new(ItemCatalog.Create("Medkit"), false),
@@ -213,7 +213,7 @@ public sealed class ProfileMutationFlowTests
             new(ItemCatalog.Create("Medkit"), false)
         });
 
-        await InvokePrivateAsync(home, "BuyFromShopAsync", new ShopStock(ItemCatalog.Create("6B2 body armor")));
+        await InvokePrivateAsync(home, "BuyFromShopAsync", new ShopStock(ItemCatalog.Create("Soft Armor Vest")));
 
         Assert.Empty(actionClient.Requests);
         Assert.Equal(500, Assert.IsType<int>(GetField(home, "_money")));
@@ -230,18 +230,18 @@ public sealed class ProfileMutationFlowTests
             new PlayerSnapshot(
                 Money: 500,
                 MainStash: [],
-                OnPersonItems: [new OnPersonSnapshot(ItemCatalog.Create("AK74"), true)],
+                OnPersonItems: [new OnPersonSnapshot(ItemCatalog.Create("Field Carbine"), true)],
                 ShopStock:
                 [
                     ItemCatalog.Create("Medkit"),
-                    ItemCatalog.Create("Makarov"),
-                    ItemCatalog.Create("6B2 body armor"),
-                    ItemCatalog.Create("BNTI Kirasa-N"),
-                    ItemCatalog.Create("PPSH"),
+                    ItemCatalog.Create("Light Pistol"),
+                    ItemCatalog.Create("Soft Armor Vest"),
+                    ItemCatalog.Create("Reinforced Vest"),
+                    ItemCatalog.Create("Drum SMG"),
                     ItemCatalog.Create("Small Backpack"),
                     ItemCatalog.Create("Large Backpack"),
-                    ItemCatalog.Create("AK74"),
-                    ItemCatalog.Create("6B13 assault armor")
+                    ItemCatalog.Create("Field Carbine"),
+                    ItemCatalog.Create("Light Plate Carrier")
                 ],
                 PlayerConstitution: 12,
                 PlayerMaxHealth: 34,
@@ -252,11 +252,11 @@ public sealed class ProfileMutationFlowTests
         var shopStock = Assert.IsType<List<ShopStock>>(GetField(home, "_shopStock"));
         var itemNames = shopStock.Select(stock => stock.Item.Name).ToArray();
 
-        Assert.Contains("PPSH", itemNames);
-        Assert.Contains("6B2 body armor", itemNames);
-        Assert.Contains("BNTI Kirasa-N", itemNames);
+        Assert.Contains("Drum SMG", itemNames);
+        Assert.Contains("Soft Armor Vest", itemNames);
+        Assert.Contains("Reinforced Vest", itemNames);
         Assert.Contains("Large Backpack", itemNames);
-        Assert.Contains("6B13 assault armor", itemNames);
+        Assert.Contains("Light Plate Carrier", itemNames);
     }
 
     [Fact]
@@ -270,8 +270,8 @@ public sealed class ProfileMutationFlowTests
             new PlayerSnapshot(
                 Money: 500,
                 MainStash: [],
-                OnPersonItems: [new OnPersonSnapshot(ItemCatalog.Create("AK74"), true)],
-                ShopStock: [ItemCatalog.Create("Makarov"), ItemCatalog.Create("PPSH"), ItemCatalog.Create("6B2 body armor")],
+                OnPersonItems: [new OnPersonSnapshot(ItemCatalog.Create("Field Carbine"), true)],
+                ShopStock: [ItemCatalog.Create("Light Pistol"), ItemCatalog.Create("Drum SMG"), ItemCatalog.Create("Soft Armor Vest")],
                 PlayerConstitution: 12,
                 PlayerMaxHealth: 34,
                 RandomCharacterAvailableAt: DateTimeOffset.MinValue,
@@ -279,7 +279,7 @@ public sealed class ProfileMutationFlowTests
                 ActiveRaid: null));
 
         var shopStock = Assert.IsType<List<ShopStock>>(GetField(home, "_shopStock"));
-        Assert.Equal(["Makarov", "PPSH", "6B2 body armor"], shopStock.Select(stock => stock.Item.Name).ToArray());
+        Assert.Equal(["Light Pistol", "Drum SMG", "Soft Armor Vest"], shopStock.Select(stock => stock.Item.Name).ToArray());
     }
 
     [Fact]
@@ -293,17 +293,17 @@ public sealed class ProfileMutationFlowTests
             new PlayerSnapshot(
                 Money: 500,
                 MainStash: [],
-                OnPersonItems: [new OnPersonSnapshot(ItemCatalog.Create("AK74"), true)],
+                OnPersonItems: [new OnPersonSnapshot(ItemCatalog.Create("Field Carbine"), true)],
                 ShopStock:
                 [
-                    ItemCatalog.Create("Makarov"),
-                    ItemCatalog.Create("6B2 body armor"),
-                    ItemCatalog.Create("BNTI Kirasa-N"),
-                    ItemCatalog.Create("PPSH"),
+                    ItemCatalog.Create("Light Pistol"),
+                    ItemCatalog.Create("Soft Armor Vest"),
+                    ItemCatalog.Create("Reinforced Vest"),
+                    ItemCatalog.Create("Drum SMG"),
                     ItemCatalog.Create("Small Backpack"),
                     ItemCatalog.Create("Large Backpack"),
-                    ItemCatalog.Create("AK74"),
-                    ItemCatalog.Create("6B13 assault armor")
+                    ItemCatalog.Create("Field Carbine"),
+                    ItemCatalog.Create("Light Plate Carrier")
                 ],
                 AcceptedStats: new PlayerStats(8, 8, 8, 8, 8, 12),
                 DraftStats: new PlayerStats(8, 8, 8, 8, 8, 12),
@@ -316,7 +316,7 @@ public sealed class ProfileMutationFlowTests
                 ActiveRaid: null));
 
         var visibleShopStock = Assert.IsAssignableFrom<IReadOnlyList<ShopStock>>(GetPrivatePropertyValue(home, "VisibleShopStock"));
-        Assert.Equal(["Makarov", "6B2 body armor", "BNTI Kirasa-N", "PPSH", "Small Backpack", "Large Backpack"], visibleShopStock.Select(stock => stock.Item.Name).ToArray());
+        Assert.Equal(["Light Pistol", "Soft Armor Vest", "Reinforced Vest", "Drum SMG", "Small Backpack", "Large Backpack"], visibleShopStock.Select(stock => stock.Item.Name).ToArray());
     }
 
     [Fact]
@@ -330,7 +330,7 @@ public sealed class ProfileMutationFlowTests
             new PlayerSnapshot(
                 Money: 500,
                 MainStash: [],
-                OnPersonItems: [new OnPersonSnapshot(ItemCatalog.Create("AK74"), true)],
+                OnPersonItems: [new OnPersonSnapshot(ItemCatalog.Create("Field Carbine"), true)],
                 PlayerConstitution: 12,
                 PlayerMaxHealth: 34,
                 RandomCharacterAvailableAt: DateTimeOffset.MinValue,
@@ -358,7 +358,7 @@ public sealed class ProfileMutationFlowTests
             new PlayerSnapshot(
                 Money: 500,
                 MainStash: [],
-                OnPersonItems: [new OnPersonSnapshot(ItemCatalog.Create("AK74"), true)],
+                OnPersonItems: [new OnPersonSnapshot(ItemCatalog.Create("Field Carbine"), true)],
                 PlayerConstitution: 8,
                 PlayerMaxHealth: 26,
                 RandomCharacterAvailableAt: DateTimeOffset.MinValue,
@@ -376,7 +376,7 @@ public sealed class ProfileMutationFlowTests
     {
         var home = CreateHome(new FakeGameActionApiClient());
 
-        SetField(home, "_onPersonItems", new List<OnPersonEntry> { new(ItemCatalog.Create("AK74"), true) });
+        SetField(home, "_onPersonItems", new List<OnPersonEntry> { new(ItemCatalog.Create("Field Carbine"), true) });
         SetField(home, "_statsAccepted", false);
 
         Assert.False(GetPrivateProperty<bool>(home, "CanStartMainRaid"));
@@ -395,10 +395,10 @@ public sealed class ProfileMutationFlowTests
         SetField(home, "_acceptedStats", new PlayerStats(8, 8, 8, 8, 8, 8));
         SetField(home, "_onPersonItems", new List<OnPersonEntry>
         {
-            new(ItemCatalog.Create("6B43 Zabralo-Sh body armor"), true),
-            new(ItemCatalog.Create("6B13 assault armor"), true),
-            new(ItemCatalog.Create("FORT Defender-2"), true),
-            new(ItemCatalog.Create("NFM THOR"), true),
+            new(ItemCatalog.Create("Heavy Plate Carrier"), true),
+            new(ItemCatalog.Create("Light Plate Carrier"), true),
+            new(ItemCatalog.Create("Medium Plate Carrier"), true),
+            new(ItemCatalog.Create("Assault Plate Carrier"), true),
             new(ItemCatalog.Create("Small Backpack"), true),
             new(ItemCatalog.Create("Medkit"), false),
             new(ItemCatalog.Create("Medkit"), false),
@@ -430,7 +430,7 @@ public sealed class ProfileMutationFlowTests
                 return Response(
                     money: 500,
                     mainStash: [],
-                    onPersonItems: [new OnPersonSnapshot(ItemCatalog.Create("AK74"), true)],
+                    onPersonItems: [new OnPersonSnapshot(ItemCatalog.Create("Field Carbine"), true)],
                     acceptedStats: new PlayerStats(8, 14, 12, 10, 9, 16),
                     draftStats: new PlayerStats(8, 14, 12, 10, 9, 16),
                     availableStatPoints: 0,
@@ -487,7 +487,7 @@ public sealed class ProfileMutationFlowTests
                 return Response(
                     money: 5000,
                     mainStash: [],
-                    onPersonItems: [new OnPersonSnapshot(ItemCatalog.Create("AK74"), true)],
+                    onPersonItems: [new OnPersonSnapshot(ItemCatalog.Create("Field Carbine"), true)],
                     acceptedStats: PlayerStats.Default,
                     draftStats: PlayerStats.Default,
                     availableStatPoints: 27,
@@ -558,7 +558,7 @@ public sealed class ProfileMutationFlowTests
             }
         };
         var home = CreateHome(actionClient);
-        var inventory = RaidInventory.FromItems([ItemCatalog.Create("AK74")], [], backpackCapacity: 3);
+        var inventory = RaidInventory.FromItems([ItemCatalog.Create("Field Carbine")], [], backpackCapacity: 3);
 
         SetField(home, "_raid", new RaidState(24, inventory));
         SetField(home, "_encounterType", EncounterType.Neutral);
@@ -573,7 +573,7 @@ public sealed class ProfileMutationFlowTests
     public void CombatAvailability_IgnoresWeaponMalfunctionState()
     {
         var home = CreateHome(new FakeGameActionApiClient());
-        var inventory = RaidInventory.FromItems([ItemCatalog.Create("AK74")], [], backpackCapacity: 3);
+        var inventory = RaidInventory.FromItems([ItemCatalog.Create("Field Carbine")], [], backpackCapacity: 3);
 
         SetField(home, "_raid", new RaidState(24, inventory));
         SetField(home, "_ammo", 30);
@@ -587,7 +587,7 @@ public sealed class ProfileMutationFlowTests
     public void CombatActionVisibility_StaysTrueWhileEnabledStateTracksAmmoThresholds()
     {
         var home = CreateHome(new FakeGameActionApiClient());
-        var inventory = RaidInventory.FromItems([ItemCatalog.Create("AK74")], [], backpackCapacity: 3);
+        var inventory = RaidInventory.FromItems([ItemCatalog.Create("Field Carbine")], [], backpackCapacity: 3);
 
         SetField(home, "_raid", new RaidState(24, inventory));
         SetField(home, "_ammo", 0);
@@ -634,13 +634,13 @@ public sealed class ProfileMutationFlowTests
               },
               "stash": {
                 "mainStash": [
-                  { "Name": "Makarov", "Type": 0, "Value": 60, "Slots": 1, "Rarity": 0, "DisplayRarity": 1 }
+                  { "Name": "Light Pistol", "Type": 0, "Value": 60, "Slots": 1, "Rarity": 0, "DisplayRarity": 1 }
                 ]
               },
               "loadout": {
                 "onPersonItems": [
                   {
-                    "Item": { "Name": "AK74", "Type": 0, "Value": 320, "Slots": 1, "Rarity": 2, "DisplayRarity": 3 },
+                    "Item": { "Name": "Field Carbine", "Type": 0, "Value": 320, "Slots": 1, "Rarity": 2, "DisplayRarity": 3 },
                     "IsEquipped": true
                   }
                 ]
@@ -683,7 +683,7 @@ public sealed class ProfileMutationFlowTests
                 "discoveredLoot": [],
                 "carriedLoot": [],
                 "equippedItems": [
-                  { "Name": "AK74", "Type": 0, "Value": 320, "Slots": 1, "Rarity": 2, "DisplayRarity": 3 }
+                  { "Name": "Field Carbine", "Type": 0, "Value": 320, "Slots": 1, "Rarity": 2, "DisplayRarity": 3 }
                 ],
                 "logEntries": [
                   "You hit Scavenger for 2."
@@ -703,10 +703,10 @@ public sealed class ProfileMutationFlowTests
 
         Assert.Equal(640, Assert.IsType<int>(GetField(home, "_money")));
         var mainGame = Assert.IsType<GameState>(GetField(home, "_mainGame"));
-        Assert.Equal(["Makarov"], mainGame.Stash.Select(item => item.Name).ToArray());
+        Assert.Equal(["Light Pistol"], mainGame.Stash.Select(item => item.Name).ToArray());
         var onPersonItems = Assert.IsType<List<OnPersonEntry>>(GetField(home, "_onPersonItems"));
         Assert.Single(onPersonItems);
-        Assert.Equal("AK74", onPersonItems[0].Item.Name);
+        Assert.Equal("Field Carbine", onPersonItems[0].Item.Name);
         Assert.True(onPersonItems[0].IsEquipped);
         Assert.Equal(DateTimeOffset.Parse("2026-03-20T06:00:00Z"), Assert.IsType<DateTimeOffset>(GetField(home, "_randomCharacterAvailableAt")));
         var randomCharacter = Assert.IsType<RandomCharacterState>(GetField(home, "_randomCharacter"));
@@ -777,7 +777,7 @@ public sealed class ProfileMutationFlowTests
                       },
                       "stash": {
                         "mainStash": [
-                          { "Name": "Makarov", "Type": 0, "Value": 60, "Slots": 1, "Rarity": 0, "DisplayRarity": 1 }
+                          { "Name": "Light Pistol", "Type": 0, "Value": 60, "Slots": 1, "Rarity": 0, "DisplayRarity": 1 }
                         ]
                       },
                       "loadout": {
@@ -811,7 +811,7 @@ public sealed class ProfileMutationFlowTests
 
         Assert.Equal(910, Assert.IsType<int>(GetField(home, "_money")));
         var mainGame = Assert.IsType<GameState>(GetField(home, "_mainGame"));
-        Assert.Equal(["Makarov"], mainGame.Stash.Select(item => item.Name).ToArray());
+        Assert.Equal(["Light Pistol"], mainGame.Stash.Select(item => item.Name).ToArray());
         var onPersonItems = Assert.IsType<List<OnPersonEntry>>(GetField(home, "_onPersonItems"));
         Assert.Single(onPersonItems);
         Assert.Equal("Medkit", onPersonItems[0].Item.Name);
@@ -826,8 +826,8 @@ public sealed class ProfileMutationFlowTests
     {
         var home = CreateHome(new FakeGameActionApiClient());
         SetField(home, "_money", 123);
-        SetField(home, "_mainGame", new GameState([ItemCatalog.Create("AK74")]));
-        SetField(home, "_onPersonItems", new List<OnPersonEntry> { new(ItemCatalog.Create("Makarov"), true) });
+        SetField(home, "_mainGame", new GameState([ItemCatalog.Create("Field Carbine")]));
+        SetField(home, "_onPersonItems", new List<OnPersonEntry> { new(ItemCatalog.Create("Light Pistol"), true) });
 
         InvokePrivateVoid(
             home,
@@ -840,10 +840,10 @@ public sealed class ProfileMutationFlowTests
 
         Assert.Equal(123, Assert.IsType<int>(GetField(home, "_money")));
         var mainGame = Assert.IsType<GameState>(GetField(home, "_mainGame"));
-        Assert.Equal(["AK74"], mainGame.Stash.Select(item => item.Name).ToArray());
+        Assert.Equal(["Field Carbine"], mainGame.Stash.Select(item => item.Name).ToArray());
         var onPersonItems = Assert.IsType<List<OnPersonEntry>>(GetField(home, "_onPersonItems"));
         Assert.Single(onPersonItems);
-        Assert.Equal("Makarov", onPersonItems[0].Item.Name);
+        Assert.Equal("Light Pistol", onPersonItems[0].Item.Name);
         Assert.Equal(DateTimeOffset.MinValue, Assert.IsType<DateTimeOffset>(GetField(home, "_randomCharacterAvailableAt")));
         Assert.Null(GetField(home, "_randomCharacter"));
     }
@@ -853,7 +853,7 @@ public sealed class ProfileMutationFlowTests
     {
         var home = CreateHome(new FakeGameActionApiClient());
         var existingInventory = RaidInventory.FromItems(
-            [ItemCatalog.Create("AK74"), ItemCatalog.Create("6B13 assault armor"), ItemCatalog.Create("Tactical Backpack")],
+            [ItemCatalog.Create("Field Carbine"), ItemCatalog.Create("Light Plate Carrier"), ItemCatalog.Create("Tactical Backpack")],
             [ItemCatalog.Create("Ammo Box")],
             backpackCapacity: 9);
         existingInventory.MedkitCount = 2;
@@ -900,8 +900,8 @@ public sealed class ProfileMutationFlowTests
         var raid = Assert.IsType<RaidState>(GetField(home, "_raid"));
         Assert.Equal(18, raid.Health);
         Assert.Equal(9, raid.BackpackCapacity);
-        Assert.Equal("AK74", raid.Inventory.EquippedWeapon!.Name);
-        Assert.Equal("6B13 assault armor", raid.Inventory.EquippedArmor!.Name);
+        Assert.Equal("Field Carbine", raid.Inventory.EquippedWeapon!.Name);
+        Assert.Equal("Light Plate Carrier", raid.Inventory.EquippedArmor!.Name);
         Assert.Equal("Tactical Backpack", raid.Inventory.EquippedBackpack!.Name);
         Assert.Equal("Ammo Box", Assert.Single(raid.Inventory.CarriedItems).Name);
         Assert.Equal(2, raid.Inventory.MedkitCount);
@@ -984,7 +984,7 @@ public sealed class ProfileMutationFlowTests
     {
         var home = CreateHome(new FakeGameActionApiClient());
         var existingInventory = RaidInventory.FromItems(
-            [ItemCatalog.Create("AK74")],
+            [ItemCatalog.Create("Field Carbine")],
             [],
             backpackCapacity: 3);
 
@@ -1026,7 +1026,7 @@ public sealed class ProfileMutationFlowTests
     {
         var home = CreateHome(new FakeGameActionApiClient());
         var existingInventory = RaidInventory.FromItems(
-            [ItemCatalog.Create("AK74")],
+            [ItemCatalog.Create("Field Carbine")],
             [ItemCatalog.Create("Bandage")],
             backpackCapacity: 3);
 
@@ -1055,7 +1055,7 @@ public sealed class ProfileMutationFlowTests
                       "loadout": {
                         "onPersonItems": [
                           {
-                            "Item": { "Name": "AK74", "Type": 0, "Value": 320, "Slots": 1, "Rarity": 2, "DisplayRarity": 3 },
+                            "Item": { "Name": "Field Carbine", "Type": 0, "Value": 320, "Slots": 1, "Rarity": 2, "DisplayRarity": 3 },
                             "IsEquipped": true
                           },
                           {
@@ -1088,18 +1088,18 @@ public sealed class ProfileMutationFlowTests
         Assert.Equal("Killed in raid. Loadout lost.", Assert.IsType<string>(GetField(home, "_resultMessage")));
 
         var onPersonItems = Assert.IsType<List<OnPersonEntry>>(GetField(home, "_onPersonItems"));
-        Assert.Equal(["AK74", "Bandage"], onPersonItems.Select(entry => entry.Item.Name).ToArray());
+        Assert.Equal(["Field Carbine", "Bandage"], onPersonItems.Select(entry => entry.Item.Name).ToArray());
     }
 
     [Fact]
     public void ApplyActionResult_SkipsMalformedInventoryEntries_WithoutCorruptingState()
     {
         var home = CreateHome(new FakeGameActionApiClient());
-        SetField(home, "_mainGame", new GameState([ItemCatalog.Create("AK74")]));
-        SetField(home, "_onPersonItems", new List<OnPersonEntry> { new(ItemCatalog.Create("Makarov"), true) });
+        SetField(home, "_mainGame", new GameState([ItemCatalog.Create("Field Carbine")]));
+        SetField(home, "_onPersonItems", new List<OnPersonEntry> { new(ItemCatalog.Create("Light Pistol"), true) });
 
         var existingInventory = RaidInventory.FromItems(
-            [ItemCatalog.Create("AK74"), ItemCatalog.Create("6B13 assault armor"), ItemCatalog.Create("Tactical Backpack")],
+            [ItemCatalog.Create("Field Carbine"), ItemCatalog.Create("Light Plate Carrier"), ItemCatalog.Create("Tactical Backpack")],
             [ItemCatalog.Create("Ammo Box")],
             backpackCapacity: 9);
         existingInventory.MedkitCount = 2;
@@ -1142,17 +1142,17 @@ public sealed class ProfileMutationFlowTests
                 null));
 
         var mainGame = Assert.IsType<GameState>(GetField(home, "_mainGame"));
-        Assert.Equal(["AK74"], mainGame.Stash.Select(item => item.Name).ToArray());
+        Assert.Equal(["Field Carbine"], mainGame.Stash.Select(item => item.Name).ToArray());
 
         var onPersonItems = Assert.IsType<List<OnPersonEntry>>(GetField(home, "_onPersonItems"));
         Assert.Single(onPersonItems);
-        Assert.Equal("Makarov", onPersonItems[0].Item.Name);
+        Assert.Equal("Light Pistol", onPersonItems[0].Item.Name);
         Assert.True(onPersonItems[0].IsEquipped);
 
         var raid = Assert.IsType<RaidState>(GetField(home, "_raid"));
         Assert.Equal(22, raid.Health);
-        Assert.Equal("AK74", raid.Inventory.EquippedWeapon!.Name);
-        Assert.Equal("6B13 assault armor", raid.Inventory.EquippedArmor!.Name);
+        Assert.Equal("Field Carbine", raid.Inventory.EquippedWeapon!.Name);
+        Assert.Equal("Light Plate Carrier", raid.Inventory.EquippedArmor!.Name);
         Assert.Equal("Tactical Backpack", raid.Inventory.EquippedBackpack!.Name);
         Assert.Equal("Ammo Box", Assert.Single(raid.Inventory.CarriedItems).Name);
         Assert.Equal("Bandage", Assert.Single(raid.Inventory.DiscoveredLoot).Name);
@@ -1360,7 +1360,7 @@ public sealed class ProfileMutationFlowTests
     {
         using var document = JsonDocument.Parse("""
         {
-            "name": "Makarov",
+            "name": "Light Pistol",
             "type": 123,
             "value": 456,
             "slots": 789
@@ -1374,7 +1374,7 @@ public sealed class ProfileMutationFlowTests
         var parsed = Assert.IsType<bool>(method!.Invoke(null, args));
 
         Assert.True(parsed);
-        Assert.Equal(ItemCatalog.Get("Makarov"), Assert.IsType<Item>(args[1]));
+        Assert.Equal(ItemCatalog.Get("Light Pistol"), Assert.IsType<Item>(args[1]));
     }
 
     private static Home CreateHome(

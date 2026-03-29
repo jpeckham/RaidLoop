@@ -22,7 +22,7 @@ insert into game.item_defs (
     shop_order
 )
 values
-    ('bnti_kirasa_n', 'BNTI Kirasa-N', 1, 160, 1, 1, 2, 0, 0, 2, 0, true, false, false, 3, 6, true, 85, 'Uncommon armor tier between 6B2 and 6B13', true, 35),
+    ('reinforced_vest', 'Reinforced Vest', 1, 160, 1, 1, 2, 0, 0, 2, 0, true, false, false, 3, 6, true, 85, 'Uncommon armor tier between 6B2 and 6B13', true, 35),
     ('large_backpack', 'Large Backpack', 2, 50, 1, 1, 2, 0, 4, 0, 0, true, false, false, 3, 6, true, 135, 'Uncommon backpack tier between Small and Tactical', true, 55)
 on conflict (item_key) do update
 set name = excluded.name,
@@ -56,11 +56,11 @@ where item_key = 'small_backpack';
 
 update game.item_defs
 set shop_order = case item_key
-    when 'bnti_kirasa_n' then 35
-    when 'ppsh' then 40
+    when 'reinforced_vest' then 35
+    when 'drum_smg' then 40
     when 'small_backpack' then 50
     when 'large_backpack' then 55
-    when '6b13_assault_armor' then 70
+    when 'light_plate_carrier' then 70
     when 'tactical_backpack' then 80
     else shop_order
 end

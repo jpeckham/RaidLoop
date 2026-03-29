@@ -16,7 +16,7 @@
 - Modify: `tests/RaidLoop.Core.Tests/RaidEngineTests.cs`
 
 **Step 1: Write failing tests**
-- Assert magazine capacities for Makarov/PPSH/AK74/AK47/Rusty Knife and ammo-usage behavior for knife vs firearms.
+- Assert magazine capacities for Light Pistol/Drum SMG/Field Carbine/Battle Rifle/Rusty Knife and ammo-usage behavior for knife vs firearms.
 
 **Step 2: Run test to verify it fails**
 Run: `dotnet test tests/RaidLoop.Core.Tests/RaidLoop.Core.Tests.csproj --filter "FullyQualifiedName~Ammo"`

@@ -4,36 +4,36 @@ alter table game.item_defs
 update game.item_defs
 set shop_price = case name
     when 'Medkit' then 120
-    when 'Makarov' then 240
-    when '6B2 body armor' then 380
-    when 'PPSH' then 650
+    when 'Light Pistol' then 240
+    when 'Soft Armor Vest' then 380
+    when 'Drum SMG' then 650
     when 'Small Backpack' then 100
-    when 'AK74' then 1250
-    when '6B13 assault armor' then 900
+    when 'Field Carbine' then 1250
+    when 'Light Plate Carrier' then 900
     when 'Tactical Backpack' then 300
-    when 'SVDS' then 2200
-    when 'FORT Defender-2' then 1500
-    when 'Tasmanian Tiger Trooper 35' then 1600
-    when 'PKP' then 3200
-    when 'NFM THOR' then 2600
-    when '6Sh118' then 2400
+    when 'Marksman Rifle' then 2200
+    when 'Medium Plate Carrier' then 1500
+    when 'Hiking Backpack' then 1600
+    when 'Support Machine Gun' then 3200
+    when 'Assault Plate Carrier' then 2600
+    when 'Raid Backpack' then 2400
     else shop_price
 end
 where name in (
     'Medkit',
-    'Makarov',
-    '6B2 body armor',
-    'PPSH',
+    'Light Pistol',
+    'Soft Armor Vest',
+    'Drum SMG',
     'Small Backpack',
-    'AK74',
-    '6B13 assault armor',
+    'Field Carbine',
+    'Light Plate Carrier',
     'Tactical Backpack',
-    'SVDS',
-    'FORT Defender-2',
-    'Tasmanian Tiger Trooper 35',
-    'PKP',
-    'NFM THOR',
-    '6Sh118'
+    'Marksman Rifle',
+    'Medium Plate Carrier',
+    'Hiking Backpack',
+    'Support Machine Gun',
+    'Assault Plate Carrier',
+    'Raid Backpack'
 );
 
 create or replace function game.shop_max_rarity(charisma int)

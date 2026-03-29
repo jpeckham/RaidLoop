@@ -34,7 +34,7 @@
 - `Bandage`
 - `Medkit`
 - `Ammo Box`
-- `Makarov` (light weapon)
+- `Light Pistol` (light weapon)
 
 ## Raid Integration
 - Successful extract places returned items in Character Inventory.

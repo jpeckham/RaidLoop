@@ -23,7 +23,7 @@ test("profile-save is disabled in favor of action endpoints", async () => {
     body: JSON.stringify({
       snapshot: {
         money: 725,
-        mainStash: [{ name: "AK74", type: 0, value: 34, slots: 1, rarity: 2, displayRarity: 3 }],
+        mainStash: [{ name: "Field Carbine", type: 0, value: 34, slots: 1, rarity: 2, displayRarity: 3 }],
         onPersonItems: [],
         randomCharacterAvailableAt: "2026-03-18T05:00:00+00:00",
         randomCharacter: null,

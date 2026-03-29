@@ -5,11 +5,11 @@ immutable
 as $$
 begin
     return case
-        when weapon_name = 'Makarov' then 1
-        when weapon_name = 'PPSH' then 1
-        when weapon_name = 'AK74' then 2
-        when weapon_name = 'AK47' then 2
-        when weapon_name = 'SVDS' then 3
+        when weapon_name = 'Light Pistol' then 1
+        when weapon_name = 'Drum SMG' then 1
+        when weapon_name = 'Field Carbine' then 2
+        when weapon_name = 'Battle Rifle' then 2
+        when weapon_name = 'Marksman Rifle' then 3
         else 0
     end;
 end;
@@ -22,11 +22,11 @@ immutable
 as $$
 begin
     return case
-        when armor_name = 'NFM THOR' then 6
-        when armor_name = '6B43 Zabralo-Sh body armor' then 5
-        when armor_name = 'FORT Defender-2' then 4
-        when armor_name = '6B13 assault armor' then 3
-        when armor_name = '6B2 body armor' then 1
+        when armor_name = 'Assault Plate Carrier' then 6
+        when armor_name = 'Heavy Plate Carrier' then 5
+        when armor_name = 'Medium Plate Carrier' then 4
+        when armor_name = 'Light Plate Carrier' then 3
+        when armor_name = 'Soft Armor Vest' then 1
         else 0
     end;
 end;
@@ -51,7 +51,7 @@ language sql
 immutable
 as $$
     select case coalesce(weapon_name, '')
-        when 'PKP' then false
+        when 'Support Machine Gun' then false
         else true
     end;
 $$;
@@ -62,12 +62,12 @@ language sql
 immutable
 as $$
     select case coalesce(weapon_name, '')
-        when 'Makarov' then true
-        when 'PPSH' then true
-        when 'AK74' then true
-        when 'AK47' then true
-        when 'SVDS' then true
-        when 'PKP' then true
+        when 'Light Pistol' then true
+        when 'Drum SMG' then true
+        when 'Field Carbine' then true
+        when 'Battle Rifle' then true
+        when 'Marksman Rifle' then true
+        when 'Support Machine Gun' then true
         else false
     end;
 $$;
@@ -78,10 +78,10 @@ language sql
 immutable
 as $$
     select case coalesce(weapon_name, '')
-        when 'PPSH' then true
-        when 'AK74' then true
-        when 'AK47' then true
-        when 'PKP' then true
+        when 'Drum SMG' then true
+        when 'Field Carbine' then true
+        when 'Battle Rifle' then true
+        when 'Support Machine Gun' then true
         else false
     end;
 $$;
@@ -92,12 +92,12 @@ language sql
 immutable
 as $$
     select case coalesce(weapon_name, '')
-        when 'Makarov' then 3
-        when 'PPSH' then 2
-        when 'AK74' then 2
-        when 'AK47' then 2
-        when 'SVDS' then 2
-        when 'PKP' then 2
+        when 'Light Pistol' then 3
+        when 'Drum SMG' then 2
+        when 'Field Carbine' then 2
+        when 'Battle Rifle' then 2
+        when 'Marksman Rifle' then 2
+        when 'Support Machine Gun' then 2
         else 3
     end;
 $$;
@@ -114,12 +114,12 @@ declare
     current_die int;
 begin
     die_size := case coalesce(weapon_name, '')
-        when 'PPSH' then 4
-        when 'AK74' then 8
-        when 'AK47' then 10
-        when 'SVDS' then 12
-        when 'PKP' then 12
-        when 'Makarov' then 6
+        when 'Drum SMG' then 4
+        when 'Field Carbine' then 8
+        when 'Battle Rifle' then 10
+        when 'Marksman Rifle' then 12
+        when 'Support Machine Gun' then 12
+        when 'Light Pistol' then 6
         else 6
     end;
 

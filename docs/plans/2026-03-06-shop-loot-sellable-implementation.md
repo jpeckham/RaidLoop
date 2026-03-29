@@ -36,7 +36,7 @@ Expected: PASS.
 - Modify: `src/RaidLoop.Client/Services/StashStorage.cs`
 
 **Step 1: Implement minimal behavior**
-- Shop sells only Makarov and Medkit.
+- Shop sells only Light Pistol and Medkit.
 - Advanced guns/armor removed from shop/random starter loadouts.
 - Add weighted rare loot entries for advanced guns/armor.
 - Convert Bandage/Ammo Box to `Sellable`.

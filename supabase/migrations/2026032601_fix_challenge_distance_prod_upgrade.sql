@@ -14,18 +14,18 @@ set name = excluded.name,
 
 delete from game.enemy_loadout_variants
 where variant_key in (
-    'challenge0_makarov',
-    'challenge0_makarov_6b2',
+    'challenge0_light_pistol',
+    'challenge0_light_pistol_6b2',
     'challenge0_6b2_medkit',
-    'challenge0_makarov_6b2_medkit'
+    'challenge0_light_pistol_6b2_medkit'
 );
 
 insert into game.enemy_loadout_variants (variant_key, table_key, weight, sort_order, enabled)
 values
-    ('challenge0_makarov', 'challenge_0_enemy_loadout', 120, 10, true),
-    ('challenge0_makarov_6b2', 'challenge_0_enemy_loadout', 90, 20, true),
+    ('challenge0_light_pistol', 'challenge_0_enemy_loadout', 120, 10, true),
+    ('challenge0_light_pistol_6b2', 'challenge_0_enemy_loadout', 90, 20, true),
     ('challenge0_6b2_medkit', 'challenge_0_enemy_loadout', 60, 30, true),
-    ('challenge0_makarov_6b2_medkit', 'challenge_0_enemy_loadout', 30, 40, true)
+    ('challenge0_light_pistol_6b2_medkit', 'challenge_0_enemy_loadout', 30, 40, true)
 on conflict (variant_key) do update
 set table_key = excluded.table_key,
     weight = excluded.weight,
@@ -34,22 +34,22 @@ set table_key = excluded.table_key,
 
 delete from game.enemy_loadout_variant_items
 where variant_key in (
-    'challenge0_makarov',
-    'challenge0_makarov_6b2',
+    'challenge0_light_pistol',
+    'challenge0_light_pistol_6b2',
     'challenge0_6b2_medkit',
-    'challenge0_makarov_6b2_medkit'
+    'challenge0_light_pistol_6b2_medkit'
 );
 
 insert into game.enemy_loadout_variant_items (variant_key, item_key, item_order)
 values
-    ('challenge0_makarov', 'makarov', 10),
-    ('challenge0_makarov_6b2', 'makarov', 10),
-    ('challenge0_makarov_6b2', '6b2_body_armor', 20),
-    ('challenge0_6b2_medkit', '6b2_body_armor', 10),
+    ('challenge0_light_pistol', 'light_pistol', 10),
+    ('challenge0_light_pistol_6b2', 'light_pistol', 10),
+    ('challenge0_light_pistol_6b2', 'soft_armor_vest', 20),
+    ('challenge0_6b2_medkit', 'soft_armor_vest', 10),
     ('challenge0_6b2_medkit', 'medkit', 20),
-    ('challenge0_makarov_6b2_medkit', 'makarov', 10),
-    ('challenge0_makarov_6b2_medkit', '6b2_body_armor', 20),
-    ('challenge0_makarov_6b2_medkit', 'medkit', 30);
+    ('challenge0_light_pistol_6b2_medkit', 'light_pistol', 10),
+    ('challenge0_light_pistol_6b2_medkit', 'soft_armor_vest', 20),
+    ('challenge0_light_pistol_6b2_medkit', 'medkit', 30);
 
 update game.encounter_table_entries
 set challenge_min = case entry_key

@@ -9,20 +9,20 @@ begin
     if roll < 55 then
         case floor(random() * 3)::int
             when 0 then
-                return jsonb_build_array(game.authored_item('Makarov'));
+                return jsonb_build_array(game.authored_item('Light Pistol'));
             when 1 then
                 return jsonb_build_array(
                     game.authored_item('Bandage'),
-                    game.authored_item('6B2 body armor')
+                    game.authored_item('Soft Armor Vest')
                 );
             else
-                return jsonb_build_array(game.authored_item('6B2 body armor'));
+                return jsonb_build_array(game.authored_item('Soft Armor Vest'));
         end case;
     end if;
 
     if roll < 65 then
         return jsonb_build_array(
-            game.authored_item('PPSH'),
+            game.authored_item('Drum SMG'),
             game.authored_item('Bandage')
         );
     end if;
@@ -31,33 +31,33 @@ begin
         case floor(random() * 3)::int
             when 0 then
                 return jsonb_build_array(
-                    game.authored_item('AK74'),
-                    game.authored_item('6B2 body armor')
+                    game.authored_item('Field Carbine'),
+                    game.authored_item('Soft Armor Vest')
                 );
             when 1 then
                 return jsonb_build_array(
-                    game.authored_item('AK47'),
+                    game.authored_item('Battle Rifle'),
                     game.authored_item('Bandage')
                 );
             else
-                return jsonb_build_array(game.authored_item('6B13 assault armor'));
+                return jsonb_build_array(game.authored_item('Light Plate Carrier'));
         end case;
     end if;
 
     if roll < 69 then
         case floor(random() * 2)::int
             when 0 then
-                return jsonb_build_array(game.authored_item('SVDS'));
+                return jsonb_build_array(game.authored_item('Marksman Rifle'));
             else
-                return jsonb_build_array(game.authored_item('FORT Defender-2'));
+                return jsonb_build_array(game.authored_item('Medium Plate Carrier'));
         end case;
     end if;
 
     case floor(random() * 2)::int
         when 0 then
-            return jsonb_build_array(game.authored_item('PKP'));
+            return jsonb_build_array(game.authored_item('Support Machine Gun'));
         else
-            return jsonb_build_array(game.authored_item('NFM THOR'));
+            return jsonb_build_array(game.authored_item('Assault Plate Carrier'));
     end case;
 end;
 $$;
@@ -76,29 +76,29 @@ begin
 
             if roll < 40 then
                 return jsonb_build_array(
-                    game.authored_item('Makarov'),
+                    game.authored_item('Light Pistol'),
                     game.authored_item('Ammo Box')
                 );
             end if;
 
             if roll < 52 then
-                return jsonb_build_array(game.authored_item('PPSH'));
+                return jsonb_build_array(game.authored_item('Drum SMG'));
             end if;
 
             if roll < 58 then
                 case floor(random() * 2)::int
                     when 0 then
-                        return jsonb_build_array(game.authored_item('AK74'));
+                        return jsonb_build_array(game.authored_item('Field Carbine'));
                     else
-                        return jsonb_build_array(game.authored_item('AK47'));
+                        return jsonb_build_array(game.authored_item('Battle Rifle'));
                 end case;
             end if;
 
             if roll < 61 then
-                return jsonb_build_array(game.authored_item('SVDS'));
+                return jsonb_build_array(game.authored_item('Marksman Rifle'));
             end if;
 
-            return jsonb_build_array(game.authored_item('PKP'));
+            return jsonb_build_array(game.authored_item('Support Machine Gun'));
 
         when 'Medical Container' then
             case floor(random() * 10)::int
@@ -142,7 +142,7 @@ begin
             end if;
 
             if roll < 52 then
-                return jsonb_build_array(game.authored_item('PPSH'));
+                return jsonb_build_array(game.authored_item('Drum SMG'));
             end if;
 
             if roll < 58 then
@@ -150,12 +150,12 @@ begin
                     when 0 then
                         return jsonb_build_array(game.authored_item('Rare Scope'));
                     else
-                        return jsonb_build_array(game.authored_item('AK74'));
+                        return jsonb_build_array(game.authored_item('Field Carbine'));
                 end case;
             end if;
 
             if roll < 61 then
-                return jsonb_build_array(game.authored_item('SVDS'));
+                return jsonb_build_array(game.authored_item('Marksman Rifle'));
             end if;
 
             return jsonb_build_array(game.authored_item('Legendary Trigger Group'));

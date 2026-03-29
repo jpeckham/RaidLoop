@@ -25,7 +25,7 @@ public class LootTableTests
         [
             (new Item("Bandage", ItemType.Sellable, Weight: 1, Value: 1, Slots: 1, Rarity: Rarity.Common), 10),
             (new Item("Medkit", ItemType.Consumable, Weight: 3, Value: 1, Slots: 1, Rarity: Rarity.Uncommon), 10),
-            (new Item("AK74", ItemType.Weapon, Weight: 9, Value: 1, Slots: 1, Rarity: Rarity.Rare), 10)
+            (new Item("Field Carbine", ItemType.Weapon, Weight: 9, Value: 1, Slots: 1, Rarity: Rarity.Rare), 10)
         ]);
 
         var drawn = table.Draw(new TestSequenceRng([0, 0, 0]), 3);
@@ -132,15 +132,15 @@ public class LootTableTests
         var table = new LootTable(
             new LootTierProfile(commonWeight: 1, uncommonWeight: 1, rareWeight: 1, epicWeight: 1, legendaryWeight: 10),
             [
-                ItemCatalog.Create("Makarov"),
+                ItemCatalog.Create("Light Pistol"),
                 ItemCatalog.Create("Bandage"),
                 ItemCatalog.Create("Scrap Metal"),
-                ItemCatalog.Create("PKP")
+                ItemCatalog.Create("Support Machine Gun")
             ]);
 
         var drawn = table.Draw(new TestSequenceRng([12, 0]), 1);
 
-        Assert.Equal("PKP", Assert.Single(drawn).Name);
+        Assert.Equal("Support Machine Gun", Assert.Single(drawn).Name);
     }
 
     [Fact]
@@ -149,8 +149,8 @@ public class LootTableTests
         var table = new LootTable(
             new LootTierProfile(commonWeight: 0, uncommonWeight: 0, rareWeight: 1, epicWeight: 0, legendaryWeight: 0),
             [
-                ItemCatalog.Create("Makarov"),
-                ItemCatalog.Create("AK74")
+                ItemCatalog.Create("Light Pistol"),
+                ItemCatalog.Create("Field Carbine")
             ]);
 
         var drawn = table.Draw(new TestSequenceRng([0, 0]), 1);
@@ -164,8 +164,8 @@ public class LootTableTests
         var table = new LootTable(
             new LootTierProfile(commonWeight: 1, uncommonWeight: 0, rareWeight: 0, epicWeight: 0, legendaryWeight: 0),
             [
-                ItemCatalog.Create("Makarov"),
-                ItemCatalog.Create("PPSH")
+                ItemCatalog.Create("Light Pistol"),
+                ItemCatalog.Create("Drum SMG")
             ]);
 
         var drawn = table.Draw(new TestSequenceRng([0, 0]), 1, new LootBooster(TierShift: 1));
@@ -179,8 +179,8 @@ public class LootTableTests
         var table = new LootTable(
             new LootTierProfile(commonWeight: 1, uncommonWeight: 0, rareWeight: 0, epicWeight: 0, legendaryWeight: 0),
             [
-                ItemCatalog.Create("Makarov"),
-                ItemCatalog.Create("PPSH")
+                ItemCatalog.Create("Light Pistol"),
+                ItemCatalog.Create("Drum SMG")
             ]);
 
         var drawn = table.Draw(new TestSequenceRng([0, 0]), 1);
@@ -203,7 +203,7 @@ public class LootTableTests
     {
         var drawn = LootTables.ArmourCrate().Draw(new TestSequenceRng([58, 1]), 1);
 
-        Assert.Equal("Tasmanian Tiger Trooper 35", Assert.Single(drawn).Name);
+        Assert.Equal("Hiking Backpack", Assert.Single(drawn).Name);
         Assert.Equal(Rarity.Epic, drawn[0].Rarity);
     }
 }

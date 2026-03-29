@@ -225,7 +225,7 @@ public static class EconomyPricing
         ["Bandage"] = 60,
         ["Medkit"] = 120,
         ["Ammo Box"] = 80,
-        ["Makarov"] = 240
+        ["Light Pistol"] = 240
     };
 
     public static int GetBuyPrice(string name) => Buy.TryGetValue(name, out var p) ? p : 100;
@@ -279,7 +279,7 @@ public static bool CanBuyItem(int money, int buyPrice) => money >= buyPrice;
 ```
 
 In `Home.razor`:
-- Add shop stock list: `Bandage`, `Medkit`, `Ammo Box`, `Makarov`.
+- Add shop stock list: `Bandage`, `Medkit`, `Ammo Box`, `Light Pistol`.
 - Render buy buttons with price and disabled state when `_money` too low.
 - `BuyFromShop(string itemName, ItemType type)` deducts money and adds item to `_characterInventory`.
 

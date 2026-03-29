@@ -1,15 +1,15 @@
 -- Verification queries:
--- select (game.item_def_by_name('AK74')).name = 'AK74' as name_lookup_matches,
---        (game.item_def_by_name('AK74')).enabled as name_lookup_enabled;
--- select (game.item_def_by_key('ak74')).name = 'AK74' as key_lookup_matches,
---        (game.item_def_by_key('ak74')).enabled as key_lookup_enabled;
--- select game.item_key_for_name('AK74') = 'ak74' as item_key_matches_name_lookup;
+-- select (game.item_def_by_name('Field Carbine')).name = 'Field Carbine' as name_lookup_matches,
+--        (game.item_def_by_name('Field Carbine')).enabled as name_lookup_enabled;
+-- select (game.item_def_by_key('field_carbine')).name = 'Field Carbine' as key_lookup_matches,
+--        (game.item_def_by_key('field_carbine')).enabled as key_lookup_enabled;
+-- select game.item_key_for_name('Field Carbine') = 'field_carbine' as item_key_matches_name_lookup;
 --
 -- Parity checks:
--- select game.weapon_magazine_capacity('PKP') = 100 as pkp_magazine_capacity_ok;
--- select game.backpack_capacity('6Sh118') = 10 as backpack_capacity_ok;
--- select game.weapon_supports_single_shot('PKP') = false as pkp_single_shot_ok;
--- select game.weapon_burst_attack_penalty('Makarov') = 3 as makarov_burst_penalty_ok;
+-- select game.weapon_magazine_capacity('Support Machine Gun') = 100 as support_machine_gun_magazine_capacity_ok;
+-- select game.backpack_capacity('Raid Backpack') = 10 as backpack_capacity_ok;
+-- select game.weapon_supports_single_shot('Support Machine Gun') = false as support_machine_gun_single_shot_ok;
+-- select game.weapon_burst_attack_penalty('Light Pistol') = 3 as light_pistol_burst_penalty_ok;
 
 create or replace function game.item_def_by_name(item_name text)
 returns game.item_defs

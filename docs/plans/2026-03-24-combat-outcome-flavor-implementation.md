@@ -67,7 +67,7 @@ In the migration-content test, add assertions for authored armor bonus support:
 ```csharp
 Assert.Contains("armor_hit_bonus int not null default 0", migration);
 Assert.Contains("create or replace function game.armor_hit_bonus(armor_name text)", migration);
-Assert.Contains("6B43 Zabralo-Sh body armor", migration);
+Assert.Contains("Heavy Plate Carrier", migration);
 ```
 
 **Step 2: Run test to verify it fails**

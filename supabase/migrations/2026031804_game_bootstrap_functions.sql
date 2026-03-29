@@ -7,11 +7,11 @@ stable
 as $$
     select jsonb_build_object(
         'MainStash', jsonb_build_array(
-            jsonb_build_object('Name', 'Makarov', 'Type', 0, 'Value', 12, 'Slots', 1, 'Rarity', 0, 'DisplayRarity', 1),
-            jsonb_build_object('Name', 'PPSH', 'Type', 0, 'Value', 20, 'Slots', 1, 'Rarity', 1, 'DisplayRarity', 2),
-            jsonb_build_object('Name', 'AK74', 'Type', 0, 'Value', 34, 'Slots', 1, 'Rarity', 2, 'DisplayRarity', 3),
-            jsonb_build_object('Name', '6B2 body armor', 'Type', 1, 'Value', 14, 'Slots', 1, 'Rarity', 0, 'DisplayRarity', 1),
-            jsonb_build_object('Name', '6B13 assault armor', 'Type', 1, 'Value', 30, 'Slots', 1, 'Rarity', 2, 'DisplayRarity', 3),
+            jsonb_build_object('Name', 'Light Pistol', 'Type', 0, 'Value', 12, 'Slots', 1, 'Rarity', 0, 'DisplayRarity', 1),
+            jsonb_build_object('Name', 'Drum SMG', 'Type', 0, 'Value', 20, 'Slots', 1, 'Rarity', 1, 'DisplayRarity', 2),
+            jsonb_build_object('Name', 'Field Carbine', 'Type', 0, 'Value', 34, 'Slots', 1, 'Rarity', 2, 'DisplayRarity', 3),
+            jsonb_build_object('Name', 'Soft Armor Vest', 'Type', 1, 'Value', 14, 'Slots', 1, 'Rarity', 0, 'DisplayRarity', 1),
+            jsonb_build_object('Name', 'Light Plate Carrier', 'Type', 1, 'Value', 30, 'Slots', 1, 'Rarity', 2, 'DisplayRarity', 3),
             jsonb_build_object('Name', 'Small Backpack', 'Type', 2, 'Value', 18, 'Slots', 1, 'Rarity', 1, 'DisplayRarity', 2),
             jsonb_build_object('Name', 'Tactical Backpack', 'Type', 2, 'Value', 28, 'Slots', 2, 'Rarity', 2, 'DisplayRarity', 3),
             jsonb_build_object('Name', 'Medkit', 'Type', 3, 'Value', 10, 'Slots', 1, 'Rarity', 0, 'DisplayRarity', 1),

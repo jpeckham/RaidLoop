@@ -228,7 +228,7 @@ begin
 
     roll := floor(random() * 100)::int;
     if roll < 50 then
-        enemy_name := case when random() < 0.65 then 'Scav' else 'Patrol Guard' end;
+        enemy_name := case when random() < 0.65 then 'Scavenger' else 'Patrol Guard' end;
         enemy_health := 12 + floor(random() * 9)::int;
         enemy_loadout := game.random_enemy_loadout();
         log_entries := game.raid_append_log(log_entries, format('Combat started vs %s.', enemy_name));

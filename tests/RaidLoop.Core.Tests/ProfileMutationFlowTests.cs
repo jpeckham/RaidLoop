@@ -676,7 +676,7 @@ public sealed class ProfileMutationFlowTests
                   "encounterType": "Combat",
                 "encounterTitle": "Combat Encounter",
                 "encounterDescription": "Enemy contact on your position.",
-                "enemyName": "Scav",
+                "enemyName": "Scavenger",
                 "enemyHealth": 6,
                 "lootContainer": "",
                 "awaitingDecision": false,
@@ -686,7 +686,7 @@ public sealed class ProfileMutationFlowTests
                   { "Name": "AK74", "Type": 0, "Value": 320, "Slots": 1, "Rarity": 2, "DisplayRarity": 3 }
                 ],
                 "logEntries": [
-                  "You hit Scav for 2."
+                  "You hit Scavenger for 2."
                 ]
               }
             }
@@ -720,7 +720,7 @@ public sealed class ProfileMutationFlowTests
         Assert.Equal(4, Assert.IsType<int>(GetField(home, "_ammo")));
         Assert.Equal(2, Assert.IsType<int>(GetField(home, "_challenge")));
         Assert.Equal(3, Assert.IsType<int>(GetField(home, "_distanceFromExtract")));
-        Assert.Equal("Scav", Assert.IsType<string>(GetField(home, "_enemyName")));
+        Assert.Equal("Scavenger", Assert.IsType<string>(GetField(home, "_enemyName")));
         Assert.Equal(6, Assert.IsType<int>(GetField(home, "_enemyHealth")));
         Assert.Equal("Combat", Assert.IsType<EncounterType>(GetField(home, "_encounterType")).ToString());
         Assert.Equal("Action resolved.", Assert.IsType<string>(GetField(home, "_resultMessage")));
@@ -1006,8 +1006,8 @@ public sealed class ProfileMutationFlowTests
                         "ammo": 7,
                         "enemyHealth": 8,
                         "logEntriesAdded": [
-                          "You hit Scav for 4.",
-                          "Scav hits you for 3."
+                          "You hit Scavenger for 4.",
+                          "Scavenger hits you for 3."
                         ]
                       }
                     }
@@ -1017,7 +1017,7 @@ public sealed class ProfileMutationFlowTests
         Assert.Equal(7, Assert.IsType<int>(GetField(home, "_ammo")));
         Assert.Equal(8, Assert.IsType<int>(GetField(home, "_enemyHealth")));
         Assert.Equal(
-            ["Raid started as Main Character.", "You hit Scav for 4.", "Scav hits you for 3."],
+            ["Raid started as Main Character.", "You hit Scavenger for 4.", "Scavenger hits you for 3."],
             Assert.IsType<List<string>>(GetField(home, "_log")));
     }
 
@@ -1279,7 +1279,7 @@ public sealed class ProfileMutationFlowTests
                     EncounterType: "Combat",
                     EncounterTitle: "Ambush",
                     EncounterDescription: "They spotted you first.",
-                    EnemyName: "Scav",
+                    EnemyName: "Scavenger",
                     EnemyHealth: 12,
                     EnemyDexterity: 9,
                     EnemyConstitution: 11,
@@ -1331,7 +1331,7 @@ public sealed class ProfileMutationFlowTests
                     EncounterType: "Combat",
                     EncounterTitle: "Ambush",
                     EncounterDescription: "They spotted you first.",
-                    EnemyName: "Scav",
+                    EnemyName: "Scavenger",
                     EnemyHealth: 12,
                     EnemyDexterity: 9,
                     EnemyConstitution: 11,

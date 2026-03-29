@@ -30,7 +30,7 @@ public sealed class RaidActionApiTests
                     "initiativeWinner": "None",
                     "openingActionsRemaining": 1,
                     "surprisePersistenceEligible": true,
-                    "enemyName": "Scav",
+                    "enemyName": "Scavenger",
                     "enemyHealth": 11,
                     "lootContainer": "Dead Body",
                     "awaitingDecision": false,
@@ -53,7 +53,7 @@ public sealed class RaidActionApiTests
         Assert.Single(actionClient.Requests);
         Assert.Equal(7, Assert.IsType<int>(GetField(home, "_ammo")));
         Assert.Equal(11, Assert.IsType<int>(GetField(home, "_enemyHealth")));
-        Assert.Equal("Scav", Assert.IsType<string>(GetField(home, "_enemyName")));
+        Assert.Equal("Scavenger", Assert.IsType<string>(GetField(home, "_enemyName")));
         Assert.Equal(34, Assert.IsType<int>(GetField(home, "_maxHealth")));
         AssertOpeningPhaseFields(home, "PlayerAmbush", "Player", "None", 1, true);
     }
@@ -703,7 +703,7 @@ public sealed class RaidActionApiTests
         SetField(home, "_initiativeWinner", "None");
         SetField(home, "_openingActionsRemaining", 1);
         SetField(home, "_surprisePersistenceEligible", true);
-        SetField(home, "_enemyName", "Old Scav");
+        SetField(home, "_enemyName", "Old Scavenger");
         SetField(home, "_enemyHealth", 15);
         SetField(home, "_ammo", 8);
     }

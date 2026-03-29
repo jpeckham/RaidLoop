@@ -46,14 +46,14 @@ insert into game.encounter_table_entries (
     enabled
 )
 values
-    ('raid_combat_travel_player_spots_camp', 'default_raid_travel', 'Combat', 'PlayerAmbush', 33, 10, 'Scav', 12, 21, null, 'default_enemy_loadout', 'Combat Encounter', 'You spot an enemy camp before they see you.', true),
-    ('raid_combat_travel_enemy_ambush', 'default_raid_travel', 'Combat', 'EnemyAmbush', 33, 20, 'Scav', 12, 21, null, 'default_enemy_loadout', 'Combat Encounter', 'You are ambushed while moving through the raid.', true),
+    ('raid_combat_travel_player_spots_camp', 'default_raid_travel', 'Combat', 'PlayerAmbush', 33, 10, 'Scavenger', 12, 21, null, 'default_enemy_loadout', 'Combat Encounter', 'You spot an enemy camp before they see you.', true),
+    ('raid_combat_travel_enemy_ambush', 'default_raid_travel', 'Combat', 'EnemyAmbush', 33, 20, 'Scavenger', 12, 21, null, 'default_enemy_loadout', 'Combat Encounter', 'You are ambushed while moving through the raid.', true),
     ('raid_combat_travel_mutual_contact', 'default_raid_travel', 'Combat', 'MutualContact', 34, 30, 'Patrol Guard', 12, 21, null, 'default_enemy_loadout', 'Combat Encounter', 'You and a patrol notice each other at nearly the same moment.', true),
     ('raid_neutral_travel_area_clear', 'default_raid_travel', 'Neutral', 'MutualContact', 180, 40, null, null, null, null, null, 'Area Clear', 'The route is quiet for the moment.', true),
     ('raid_loot_travel_filing_cache', 'default_raid_travel', 'Loot', 'MutualContact', 120, 50, null, null, null, 'filing_cabinet', null, 'Loot Encounter', 'You find a small cache while moving through the area.', true),
-    ('raid_combat_loot_player_hears_movement', 'loot_interruption', 'Combat', 'PlayerAmbush', 33, 10, 'Scav', 12, 21, null, 'default_enemy_loadout', 'Combat Encounter', 'You hear movement while looting and catch them before they spot you.', true),
+    ('raid_combat_loot_player_hears_movement', 'loot_interruption', 'Combat', 'PlayerAmbush', 33, 10, 'Scavenger', 12, 21, null, 'default_enemy_loadout', 'Combat Encounter', 'You hear movement while looting and catch them before they spot you.', true),
     ('raid_combat_loot_enemy_pushes_camp', 'loot_interruption', 'Combat', 'EnemyAmbush', 33, 20, 'Patrol Guard', 12, 21, null, 'default_enemy_loadout', 'Combat Encounter', 'You are ambushed while looting.', true),
-    ('raid_combat_loot_mutual_contact', 'loot_interruption', 'Combat', 'MutualContact', 34, 30, 'Scav', 12, 21, null, 'default_enemy_loadout', 'Combat Encounter', 'You and a scav team spot each other at the container at the same time.', true),
+    ('raid_combat_loot_mutual_contact', 'loot_interruption', 'Combat', 'MutualContact', 34, 30, 'Scavenger', 12, 21, null, 'default_enemy_loadout', 'Combat Encounter', 'You and a scavenger team spot each other at the container at the same time.', true),
     ('raid_combat_extract_player_spots_guard', 'extract_approach', 'Combat', 'PlayerAmbush', 33, 10, 'Final Guard', 12, 21, null, 'default_enemy_loadout', 'Combat Encounter', 'You spot an enemy camp near extract before they notice you.', true),
     ('raid_combat_extract_enemy_ambush', 'extract_approach', 'Combat', 'EnemyAmbush', 33, 20, 'Final Guard', 12, 21, null, 'default_enemy_loadout', 'Combat Encounter', 'You are ambushed while pushing toward extract.', true),
     ('raid_combat_extract_mutual_contact', 'extract_approach', 'Combat', 'MutualContact', 34, 30, 'Final Guard', 12, 21, null, 'default_enemy_loadout', 'Combat Encounter', 'You and a guard on the extraction route notice each other at the same time.', true),

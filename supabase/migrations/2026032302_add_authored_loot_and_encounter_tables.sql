@@ -241,7 +241,7 @@ insert into game.encounter_table_entries (
     enabled
 )
 values
-    ('raid_combat_scav', 'default_raid', 'Combat', 650, 10, 'Scav', 12, 21, null, 'default_enemy_loadout', 'Combat Encounter', 'Enemy contact on your position.', true),
+    ('raid_combat_scav', 'default_raid', 'Combat', 650, 10, 'Scavenger', 12, 21, null, 'default_enemy_loadout', 'Combat Encounter', 'Enemy contact on your position.', true),
     ('raid_combat_patrol_guard', 'default_raid', 'Combat', 350, 20, 'Patrol Guard', 12, 21, null, 'default_enemy_loadout', 'Combat Encounter', 'Enemy contact on your position.', true),
     ('raid_loot_filing_cabinet', 'default_raid', 'Loot', 150, 30, null, null, null, 'filing_cabinet', null, 'Loot Encounter', 'A searchable container appears.', true),
     ('raid_loot_weapons_crate', 'default_raid', 'Loot', 150, 40, null, null, null, 'weapons_crate', null, 'Loot Encounter', 'A searchable container appears.', true),

@@ -27,7 +27,7 @@ test("local game_action routes full-auto through the authoritative raid action p
     assert.equal(snapshot.activeRaid.ammo, 8);
     assert.match(snapshot.activeRaid.logEntries[0], /^Raid started as .+\.$/);
     assert.equal(snapshot.activeRaid.logEntries[1], "Weapon does not support full auto.");
-    assert.match(snapshot.activeRaid.logEntries[2], /^(Scav|Patrol Guard) (hits|misses) you/);
+    assert.match(snapshot.activeRaid.logEntries[2], /^(Scavenger|Patrol Guard) (hits|misses) you/);
     assert.equal(snapshot.activeRaid.logEntries.length, 3);
     return;
   }

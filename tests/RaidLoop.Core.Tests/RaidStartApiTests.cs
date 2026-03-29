@@ -42,7 +42,7 @@ public sealed class RaidStartApiTests
                             "initiativeWinner": "None",
                             "openingActionsRemaining": 1,
                             "surprisePersistenceEligible": false,
-                            "enemyName": "Server Scav",
+                            "enemyName": "Server Scavenger",
                             "enemyHealth": 17,
                             "lootContainer": "Dead Body",
                             "awaitingDecision": false,
@@ -78,7 +78,7 @@ public sealed class RaidStartApiTests
         Assert.Equal(9, Assert.IsType<int>(GetField(home, "_ammo")));
         Assert.Equal(0, Assert.IsType<int>(GetField(home, "_challenge")));
         Assert.Equal(3, Assert.IsType<int>(GetField(home, "_distanceFromExtract")));
-        Assert.Equal("Server Scav", Assert.IsType<string>(GetField(home, "_enemyName")));
+        Assert.Equal("Server Scavenger", Assert.IsType<string>(GetField(home, "_enemyName")));
         Assert.Equal(17, Assert.IsType<int>(GetField(home, "_enemyHealth")));
         Assert.Equal(34, Assert.IsType<int>(GetField(home, "_maxHealth")));
         Assert.Equal(EncounterType.Combat, Assert.IsType<EncounterType>(GetField(home, "_encounterType")));
@@ -136,13 +136,13 @@ public sealed class RaidStartApiTests
                             "distanceFromExtract": 3,
                             "encounterType": "Combat",
                             "encounterTitle": "Roadside Contact",
-                            "encounterDescription": "You and a scav patrol spot each other at the same moment.",
+                            "encounterDescription": "You and a scavenger patrol spot each other at the same moment.",
                             "contactState": "MutualContact",
                             "surpriseSide": "None",
                             "initiativeWinner": "Player",
                             "openingActionsRemaining": 0,
                             "surprisePersistenceEligible": false,
-                            "enemyName": "Road Scav",
+                            "enemyName": "Road Scavenger",
                             "enemyHealth": 14,
                             "lootContainer": "Dead Body",
                             "awaitingDecision": false,
@@ -179,7 +179,7 @@ public sealed class RaidStartApiTests
         Assert.Equal("Player", Assert.IsType<string>(GetField(home, "_initiativeWinner")));
         Assert.Equal(0, Assert.IsType<int>(GetField(home, "_openingActionsRemaining")));
         Assert.False(Assert.IsType<bool>(GetField(home, "_surprisePersistenceEligible")));
-        Assert.Equal("Road Scav", Assert.IsType<string>(GetField(home, "_enemyName")));
+        Assert.Equal("Road Scavenger", Assert.IsType<string>(GetField(home, "_enemyName")));
         Assert.Equal(14, Assert.IsType<int>(GetField(home, "_enemyHealth")));
         AssertRandomCharacterStats(GetField(home, "_randomCharacter"), new PlayerStats(12, 11, 10, 9, 8, 13));
         Assert.Equal("38/90 lbs", InvokePrivate<string>(home, "GetRaidEncumbranceText"));

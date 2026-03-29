@@ -322,7 +322,7 @@ test("game-action returns raid-started projections for start-main-raid", async (
           encounterType: "Combat",
           encounterTitle: "Combat Encounter",
           encounterDescription: "Enemy contact on your position.",
-          enemyName: "Scav",
+          enemyName: "Scavenger",
           enemyHealth: 17,
           lootContainer: "",
           awaitingDecision: false,
@@ -392,7 +392,7 @@ test("game-action round-trips enemy constitution and strength in raid projection
           encounterType: "Combat",
           encounterTitle: "Combat Encounter",
           encounterDescription: "Enemy contact on your position.",
-          enemyName: "Scav",
+          enemyName: "Scavenger",
           enemyHealth: 17,
           enemyConstitution: 12,
           enemyStrength: 7,
@@ -529,7 +529,7 @@ test("game-action returns combat-resolved projections with appended log entries"
           initiativeWinner: "None",
           openingActionsRemaining: 1,
           surprisePersistenceEligible: false,
-          enemyName: "Scav",
+          enemyName: "Scavenger",
           enemyHealth: 8,
           lootContainer: "",
           awaitingDecision: false,
@@ -540,8 +540,8 @@ test("game-action returns combat-resolved projections with appended log entries"
           ],
           logEntries: [
             "Raid started as Main Character.",
-            "You hit Scav for 4.",
-            "Scav hits you for 3.",
+            "You hit Scavenger for 4.",
+            "Scavenger hits you for 3.",
           ],
         },
       };
@@ -574,8 +574,8 @@ test("game-action returns combat-resolved projections with appended log entries"
   assert.equal("extractProgress" in body.projections.raid, false);
   assert.equal("extractRequired" in body.projections.raid, false);
   assert.deepEqual(body.projections.raid.logEntriesAdded, [
-    "You hit Scav for 4.",
-    "Scav hits you for 3.",
+    "You hit Scavenger for 4.",
+    "Scavenger hits you for 3.",
   ]);
   assert.equal(body.projections.raid.logEntries, undefined);
 });
@@ -674,7 +674,7 @@ test("game-action treats full-auto as a combat action", async () => {
           encounterType: "Combat",
           encounterTitle: "Combat Encounter",
           encounterDescription: "Enemy contact on your position.",
-          enemyName: "Scav",
+          enemyName: "Scavenger",
           enemyHealth: 8,
           lootContainer: "",
           awaitingDecision: false,

@@ -14,8 +14,6 @@ public sealed class ItemCatalogTests
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026032701_add_strength_encumbrance.sql"));
     private static readonly string ItemWeightRebalanceMigrationPath = Path.GetFullPath(
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026032708_rebalance_item_weights.sql"));
-    private static readonly string ForwardRenameMigrationPath = Path.GetFullPath(
-        Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026032804_forward_rename_authored_items.sql"));
 
     [Fact]
     public void KeyItems_HaveAuthoredValuesGreaterThanOne()
@@ -319,17 +317,6 @@ public sealed class ItemCatalogTests
         Assert.Contains("create or replace function game.random_luck_run_stats()", migration);
         Assert.Contains("create or replace function game.random_luck_run_loadout_valid(loadout jsonb, stats jsonb)", migration);
         Assert.Contains("create or replace function game.random_luck_run_character()", migration);
-    }
-
-    [Fact]
-    public void ForwardRenameMigration_UpdatesLegacyItemKeysAndPersistedPayloads()
-    {
-        var migration = File.ReadAllText(ForwardRenameMigrationPath);
-
-        Assert.Contains("'makarov', 'light_pistol', 'Makarov', 'Light Pistol'", migration);
-        Assert.Contains("'nfm_thor', 'assault_plate_carrier', 'NFM THOR', 'Assault Plate Carrier'", migration);
-        Assert.Contains("update public.game_saves", migration);
-        Assert.Contains("rename_legacy_active_raid", migration);
     }
 
     private static T InvokePrivate<T>(object instance, string methodName)

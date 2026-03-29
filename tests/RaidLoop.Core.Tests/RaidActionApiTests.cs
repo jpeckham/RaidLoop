@@ -37,8 +37,8 @@ public sealed class RaidActionApiTests
                     "discoveredLoot": [],
                     "carriedLoot": [],
                     "equippedItems": [
-                      { "name": "AK74", "type": 0, "value": 320, "slots": 1, "rarity": 2, "displayRarity": 3 },
-                      { "name": "Small Backpack", "type": 2, "value": 75, "slots": 2, "rarity": 2, "displayRarity": 3 }
+                      { "name": "AK74", "itemKey": "field_carbine", "type": 0, "value": 320, "slots": 1, "rarity": 2, "displayRarity": 3 },
+                      { "name": "Small Backpack", "itemKey": "small_backpack", "type": 2, "value": 75, "slots": 2, "rarity": 2, "displayRarity": 3 }
                     ],
                     "logEntries": ["Raid updated on server."]
                   }
@@ -55,6 +55,9 @@ public sealed class RaidActionApiTests
         Assert.Equal(11, Assert.IsType<int>(GetField(home, "_enemyHealth")));
         Assert.Equal("Scav", Assert.IsType<string>(GetField(home, "_enemyName")));
         Assert.Equal(34, Assert.IsType<int>(GetField(home, "_maxHealth")));
+        var raid = Assert.IsType<RaidState>(GetField(home, "_raid"));
+        Assert.Equal("field_carbine", raid.Inventory.EquippedWeapon?.Key);
+        Assert.Equal("small_backpack", raid.Inventory.EquippedBackpack?.Key);
         AssertOpeningPhaseFields(home, "PlayerAmbush", "Player", "None", 1, true);
     }
 
@@ -83,11 +86,11 @@ public sealed class RaidActionApiTests
                     "awaitingDecision": false,
                     "discoveredLoot": [],
                     "carriedLoot": [
-                      { "name": "Bandage", "type": 4, "value": 15, "slots": 1, "rarity": 0, "displayRarity": 0 }
+                      { "name": "Bandage", "itemKey": "bandage", "type": 4, "value": 15, "slots": 1, "rarity": 0, "displayRarity": 0 }
                     ],
                     "equippedItems": [
-                      { "name": "AK74", "type": 0, "value": 320, "slots": 1, "rarity": 2, "displayRarity": 3 },
-                      { "name": "Small Backpack", "type": 2, "value": 75, "slots": 2, "rarity": 2, "displayRarity": 3 }
+                      { "name": "AK74", "itemKey": "field_carbine", "type": 0, "value": 320, "slots": 1, "rarity": 2, "displayRarity": 3 },
+                      { "name": "Small Backpack", "itemKey": "small_backpack", "type": 2, "value": 75, "slots": 2, "rarity": 2, "displayRarity": 3 }
                     ],
                     "logEntries": ["Raid updated on server."]
                   }
@@ -102,6 +105,7 @@ public sealed class RaidActionApiTests
         Assert.Single(actionClient.Requests);
         var raid = Assert.IsType<RaidState>(GetField(home, "_raid"));
         Assert.Equal("Bandage", Assert.Single(raid.Inventory.CarriedItems).Name);
+        Assert.Equal("bandage", Assert.Single(raid.Inventory.CarriedItems).Key);
         Assert.Empty(raid.Inventory.DiscoveredLoot);
         AssertOpeningPhaseFields(home, "None", "None", "None", 0, false);
     }
@@ -457,8 +461,8 @@ public sealed class RaidActionApiTests
                     "discoveredLoot": [],
                     "carriedLoot": [],
                     "equippedItems": [
-                      { "name": "AK74", "type": 0, "value": 320, "slots": 1, "rarity": 2, "displayRarity": 3 },
-                      { "name": "Small Backpack", "type": 2, "value": 75, "slots": 2, "rarity": 2, "displayRarity": 3 }
+                      { "name": "AK74", "itemKey": "field_carbine", "type": 0, "value": 320, "slots": 1, "rarity": 2, "displayRarity": 3 },
+                      { "name": "Small Backpack", "itemKey": "small_backpack", "type": 2, "value": 75, "slots": 2, "rarity": 2, "displayRarity": 3 }
                     ],
                     "logEntries": ["Raid updated on server."]
                   }
@@ -474,6 +478,9 @@ public sealed class RaidActionApiTests
         Assert.Equal("Server extraction", Assert.IsType<string>(GetField(home, "_encounterDescription")));
         Assert.Equal(5, Assert.IsType<int>(GetField(home, "_challenge")));
         Assert.Equal(0, Assert.IsType<int>(GetField(home, "_distanceFromExtract")));
+        var raid = Assert.IsType<RaidState>(GetField(home, "_raid"));
+        Assert.Equal("field_carbine", raid.Inventory.EquippedWeapon?.Key);
+        Assert.Equal("small_backpack", raid.Inventory.EquippedBackpack?.Key);
         AssertOpeningPhaseFields(home, "None", "None", "None", 0, false);
     }
 

@@ -61,6 +61,47 @@ const IN_RAID_ACTIONS = new Set([
   ...ENCOUNTER_ACTIONS,
 ]);
 
+const ITEM_KEY_BY_LEGACY_NAME = new Map([
+  ["Rusty Knife", "rusty_knife"],
+  ["Light Pistol", "light_pistol"],
+  ["Makarov", "light_pistol"],
+  ["Drum SMG", "drum_smg"],
+  ["PPSH", "drum_smg"],
+  ["Field Carbine", "field_carbine"],
+  ["AK74", "field_carbine"],
+  ["Battle Rifle", "battle_rifle"],
+  ["AK47", "battle_rifle"],
+  ["Marksman Rifle", "marksman_rifle"],
+  ["SVDS", "marksman_rifle"],
+  ["Support Machine Gun", "support_machine_gun"],
+  ["PKP", "support_machine_gun"],
+  ["Soft Armor Vest", "soft_armor_vest"],
+  ["6B2 body armor", "soft_armor_vest"],
+  ["Reinforced Vest", "reinforced_vest"],
+  ["BNTI Kirasa-N", "reinforced_vest"],
+  ["Light Plate Carrier", "light_plate_carrier"],
+  ["6B13 assault armor", "light_plate_carrier"],
+  ["Medium Plate Carrier", "medium_plate_carrier"],
+  ["FORT Defender-2", "medium_plate_carrier"],
+  ["Heavy Plate Carrier", "heavy_plate_carrier"],
+  ["6B43 Zabralo-Sh body armor", "heavy_plate_carrier"],
+  ["Assault Plate Carrier", "assault_plate_carrier"],
+  ["NFM THOR", "assault_plate_carrier"],
+  ["Small Backpack", "small_backpack"],
+  ["Large Backpack", "large_backpack"],
+  ["Tactical Backpack", "tactical_backpack"],
+  ["Hiking Backpack", "hiking_backpack"],
+  ["Tasmanian Tiger Trooper 35", "hiking_backpack"],
+  ["Raid Backpack", "raid_backpack"],
+  ["6Sh118", "raid_backpack"],
+  ["Medkit", "medkit"],
+  ["Bandage", "bandage"],
+  ["Ammo Box", "ammo_box"],
+  ["Scrap Metal", "scrap_metal"],
+  ["Rare Scope", "rare_scope"],
+  ["Legendary Trigger Group", "legendary_trigger_group"],
+]);
+
 export function createGameActionHandler({
   dispatchAction,
 } = {}) {
@@ -103,13 +144,15 @@ export function createGameActionHandler({
 }
 
 function buildActionResponse(action, payload, snapshot) {
+  const normalizedSnapshot = normalizeItemKeys(snapshot);
+
   if (PROFILE_MUTATION_ACTIONS.has(action)) {
     return {
       eventType: "ProfileMutated",
       event: {
         action,
       },
-      projections: buildProfileMutationProjections(action, snapshot),
+      projections: buildProfileMutationProjections(action, normalizedSnapshot),
       message: null,
     };
   }
@@ -120,7 +163,7 @@ function buildActionResponse(action, payload, snapshot) {
       event: {
         action,
       },
-      projections: buildRaidStartProjections(action, snapshot),
+      projections: buildRaidStartProjections(action, normalizedSnapshot),
       message: null,
     };
   }
@@ -132,7 +175,7 @@ function buildActionResponse(action, payload, snapshot) {
         event: {
           action,
         },
-        projections: buildRaidFinishedProjections(snapshot),
+        projections: buildRaidFinishedProjections(normalizedSnapshot),
         message: buildRaidFinishedMessage(action),
       };
     }
@@ -142,13 +185,13 @@ function buildActionResponse(action, payload, snapshot) {
       event: {
         action,
       },
-      projections: buildInRaidProjections(snapshot, getKnownLogCount(payload)),
+      projections: buildInRaidProjections(normalizedSnapshot, getKnownLogCount(payload)),
       message: null,
     };
   }
 
   return {
-    snapshot,
+    snapshot: normalizedSnapshot,
     message: null,
   };
 }
@@ -346,4 +389,36 @@ function normalizeOpeningStateText(value) {
 
 function normalizeOpeningActionsRemaining(value) {
   return Number.isInteger(value) && value >= 0 ? value : 0;
+}
+
+function normalizeItemKeys(value) {
+  if (Array.isArray(value)) {
+    return value.map(normalizeItemKeys);
+  }
+
+  if (value && typeof value === "object") {
+    const normalized = Object.fromEntries(
+      Object.entries(value).map(([key, entryValue]) => [key, normalizeItemKeys(entryValue)]),
+    );
+
+    if (isItemLike(normalized) && typeof normalized.itemKey !== "string") {
+      const itemKey = ITEM_KEY_BY_LEGACY_NAME.get(normalized.name);
+      if (itemKey) {
+        normalized.itemKey = itemKey;
+      }
+    }
+
+    return normalized;
+  }
+
+  return value;
+}
+
+function isItemLike(value) {
+  return Boolean(value)
+    && typeof value === "object"
+    && typeof value.name === "string"
+    && typeof value.type === "number"
+    && typeof value.value === "number"
+    && typeof value.slots === "number";
 }

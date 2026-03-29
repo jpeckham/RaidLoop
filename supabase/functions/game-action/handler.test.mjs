@@ -106,6 +106,7 @@ test("game-action returns profile-mutated projections for sell-stash-item", asyn
   assert.equal(body.eventType, "ProfileMutated");
   assert.equal(body.projections.economy.money, 999);
   assert.equal(body.projections.stash.mainStash[0].name, "Rusty Knife");
+  assert.equal(body.projections.stash.mainStash[0].itemKey, "rusty_knife");
   assert.equal(body.snapshot, undefined);
 });
 
@@ -142,6 +143,7 @@ test("game-action returns profile-mutated projections for buy-from-shop", async 
   assert.equal(body.eventType, "ProfileMutated");
   assert.equal(body.projections.economy.money, 380);
   assert.equal(body.projections.loadout.onPersonItems[0].item.name, "Medkit");
+  assert.equal(body.projections.loadout.onPersonItems[0].item.itemKey, "medkit");
 });
 
 test("game-action returns profile-mutated projections for move-stash-to-on-person", async () => {
@@ -177,6 +179,8 @@ test("game-action returns profile-mutated projections for move-stash-to-on-perso
   assert.equal(body.eventType, "ProfileMutated");
   assert.equal(body.projections.stash.mainStash[0].name, "Bandage");
   assert.equal(body.projections.loadout.onPersonItems[0].item.name, "AK74");
+  assert.equal(body.projections.stash.mainStash[0].itemKey, "bandage");
+  assert.equal(body.projections.loadout.onPersonItems[0].item.itemKey, "field_carbine");
 });
 
 test("game-action returns profile-mutated projections for sell-luck-run-item", async () => {
@@ -379,6 +383,7 @@ test("game-action returns raid-started projections for start-main-raid", async (
   assert.equal(body.projections.raid.enemyDexterity, 11);
   assert.equal(body.projections.raid.enemyConstitution, 12);
   assert.equal(body.projections.raid.enemyStrength, 10);
+  assert.equal(body.projections.raid.equippedItems[0].itemKey, "field_carbine");
   assert.equal("extractProgress" in body.projections.raid, false);
   assert.equal("extractRequired" in body.projections.raid, false);
   assert.equal(body.projections.raid.equippedItems[0].name, "AK74");
@@ -1200,7 +1205,9 @@ test("game-action returns raid-finished projections for attempt-extract", async 
   assert.deepEqual(body.event, { action: "attempt-extract" });
   assert.equal(body.projections.raid, null);
   assert.equal(body.projections.loadout.onPersonItems[0].item.name, "AK74");
+  assert.equal(body.projections.loadout.onPersonItems[0].item.itemKey, "field_carbine");
   assert.equal(body.projections.loadout.onPersonItems[1].item.name, "Bandage");
+  assert.equal(body.projections.loadout.onPersonItems[1].item.itemKey, "bandage");
   assert.equal(body.message, "Extracted successfully.");
   assert.equal(body.snapshot, undefined);
 });

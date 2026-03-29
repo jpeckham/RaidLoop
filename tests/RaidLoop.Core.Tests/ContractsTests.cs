@@ -186,6 +186,157 @@ public sealed class ContractsTests
     }
 
     [Fact]
+    public void AuthBootstrapResponse_RoundTripsItemKeyInMainStash()
+    {
+        const string json = """
+            {
+              "isAuthenticated": true,
+              "userEmail": "player@example.com",
+              "snapshot": {
+                "money": 500,
+                "mainStash": [
+                  { "itemKey": "light_pistol", "name": "Light Pistol", "type": 0, "value": 60, "slots": 1, "rarity": 0, "displayRarity": 1 }
+                ],
+                "onPersonItems": [],
+                "shopStock": [],
+                "playerConstitution": 10,
+                "playerMaxHealth": 30,
+                "randomCharacterAvailableAt": "2026-03-18T00:00:00Z",
+                "randomCharacter": null,
+                "activeRaid": null
+              }
+            }
+            """;
+
+        var serialized = RoundTripBootstrapJson(json);
+
+        Assert.Contains("\"itemKey\":\"light_pistol\"", serialized);
+    }
+
+    [Fact]
+    public void AuthBootstrapResponse_RoundTripsItemKeyInOnPersonItems()
+    {
+        const string json = """
+            {
+              "isAuthenticated": true,
+              "userEmail": "player@example.com",
+              "snapshot": {
+                "money": 500,
+                "mainStash": [],
+                "onPersonItems": [
+                  {
+                    "item": { "itemKey": "raid_backpack", "name": "Raid Backpack", "type": 2, "value": 600, "slots": 4, "rarity": 4, "displayRarity": 4 },
+                    "isEquipped": true
+                  }
+                ],
+                "shopStock": [],
+                "playerConstitution": 10,
+                "playerMaxHealth": 30,
+                "randomCharacterAvailableAt": "2026-03-18T00:00:00Z",
+                "randomCharacter": null,
+                "activeRaid": null
+              }
+            }
+            """;
+
+        var serialized = RoundTripBootstrapJson(json);
+
+        Assert.Contains("\"itemKey\":\"raid_backpack\"", serialized);
+    }
+
+    [Fact]
+    public void AuthBootstrapResponse_RoundTripsItemKeyInActiveRaid()
+    {
+        const string json = """
+            {
+              "isAuthenticated": true,
+              "userEmail": "player@example.com",
+              "snapshot": {
+                "money": 500,
+                "mainStash": [],
+                "onPersonItems": [],
+                "shopStock": [],
+                "playerConstitution": 10,
+                "playerMaxHealth": 30,
+                "randomCharacterAvailableAt": "2026-03-18T00:00:00Z",
+                "randomCharacter": null,
+                "activeRaid": {
+                  "health": 30,
+                  "backpackCapacity": 3,
+                  "ammo": 8,
+                  "weaponMalfunction": false,
+                  "medkits": 1,
+                  "lootSlots": 0,
+                  "challenge": 0,
+                  "distanceFromExtract": 0,
+                  "encounterType": "Neutral",
+                  "encounterTitle": "Area Clear",
+                  "encounterDescription": "Nothing found.",
+                  "enemyName": "",
+                  "enemyHealth": 0,
+                  "enemyDexterity": 0,
+                  "enemyConstitution": 0,
+                  "enemyStrength": 0,
+                  "lootContainer": "",
+                  "awaitingDecision": false,
+                  "contactState": "PlayerAmbush",
+                  "surpriseSide": "Player",
+                  "initiativeWinner": "None",
+                  "openingActionsRemaining": 1,
+                  "surprisePersistenceEligible": false,
+                  "discoveredLoot": [
+                    { "itemKey": "soft_armor_vest", "name": "Soft Armor Vest", "type": 1, "value": 95, "slots": 1, "rarity": 0, "displayRarity": 1 }
+                  ],
+                  "carriedLoot": [],
+                  "equippedItems": [
+                    { "itemKey": "field_carbine", "name": "Field Carbine", "type": 0, "value": 320, "slots": 1, "rarity": 2, "displayRarity": 3 }
+                  ],
+                  "logEntries": ["Raid started."],
+                  "encumbrance": 19,
+                  "maxEncumbrance": 40,
+                  "extractHoldActive": false,
+                  "holdAtExtractUntil": null
+                }
+              }
+            }
+            """;
+
+        var serialized = RoundTripBootstrapJson(json);
+
+        Assert.Contains("\"itemKey\":\"soft_armor_vest\"", serialized);
+        Assert.Contains("\"itemKey\":\"field_carbine\"", serialized);
+    }
+
+    [Fact]
+    public void AuthBootstrapResponse_DeserializesLegacyItemPayloadsWithoutItemKeys()
+    {
+        const string json = """
+            {
+              "isAuthenticated": true,
+              "userEmail": "player@example.com",
+              "snapshot": {
+                "money": 500,
+                "mainStash": [
+                  { "name": "Makarov", "type": 0, "value": 60, "slots": 1, "rarity": 0, "displayRarity": 1 }
+                ],
+                "onPersonItems": [],
+                "shopStock": [],
+                "playerConstitution": 10,
+                "playerMaxHealth": 30,
+                "randomCharacterAvailableAt": "2026-03-18T00:00:00Z",
+                "randomCharacter": null,
+                "activeRaid": null
+              }
+            }
+            """;
+
+        var roundTrip = JsonSerializer.Deserialize<AuthBootstrapResponse>(json, new JsonSerializerOptions(JsonSerializerDefaults.Web));
+
+        Assert.NotNull(roundTrip);
+        Assert.Equal("Makarov", Assert.Single(roundTrip!.Snapshot.MainStash).Name);
+    }
+
+    [Fact]
     public void GameActionRequest_HasExplicitActionEnvelope()
     {
         var request = new GameActionRequest(
@@ -247,5 +398,13 @@ public sealed class ContractsTests
         Assert.True(response.Projections.HasValue);
         Assert.Equal(17, response.Projections.Value.GetProperty("raid").GetProperty("health").GetInt32());
         Assert.Equal("Action resolved.", response.Message);
+    }
+
+    private static string RoundTripBootstrapJson(string json)
+    {
+        var roundTrip = JsonSerializer.Deserialize<AuthBootstrapResponse>(json, new JsonSerializerOptions(JsonSerializerDefaults.Web));
+
+        Assert.NotNull(roundTrip);
+        return JsonSerializer.Serialize(roundTrip, new JsonSerializerOptions(JsonSerializerDefaults.Web));
     }
 }

@@ -23,6 +23,19 @@ public sealed class ItemCatalogTests
         Assert.True(ItemCatalog.Get("Small Backpack").Value > 1);
     }
 
+    [Theory]
+    [InlineData("light_pistol", "Light Pistol", ItemType.Weapon)]
+    [InlineData("drum_smg", "Drum SMG", ItemType.Weapon)]
+    [InlineData("raid_backpack", "Raid Backpack", ItemType.Backpack)]
+    [InlineData("soft_armor_vest", "Soft Armor Vest", ItemType.Armor)]
+    public void AuthoredItems_CanBeResolvedByStableItemKey(string itemKey, string expectedName, ItemType expectedType)
+    {
+        var item = ItemCatalog.Get(itemKey);
+
+        Assert.Equal(expectedName, item.Name);
+        Assert.Equal(expectedType, item.Type);
+    }
+
     [Fact]
     public void AuthoredItems_HaveRequestedWeights()
     {

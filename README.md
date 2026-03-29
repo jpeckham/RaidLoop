@@ -142,6 +142,38 @@ npx supabase db reset
 Use `npx supabase db reset` whenever you need a clean local database rebuilt from migrations. Use `npx supabase db push --include-all` only for quick iteration when you do not need a full reset.
 `env.local.ps1` only loads local-safe values from `.env` and refuses hosted Supabase refs, hosted URLs, and remote deploy credentials.
 
+### Edge Functions In Local Supabase
+
+Local Edge Functions are served from the checked-out files in `supabase/functions/`. They are not deployed with `supabase functions deploy` during normal local development.
+
+Typical local function workflow:
+
+```bash
+. .\env.local.ps1
+npx supabase start
+npx supabase functions serve
+```
+
+Call local functions through the gateway at:
+
+```text
+http://127.0.0.1:54321/functions/v1/<function-name>
+```
+
+Use the lightest restart that matches the change:
+
+- SQL migrations changed:
+  ```bash
+  npx supabase db reset
+  ```
+- Edge Function code changed:
+  restart `npx supabase functions serve`
+- Both SQL and Edge Functions changed:
+  1. `npx supabase db reset`
+  2. restart `npx supabase functions serve`
+
+Do not use full `npx supabase stop` / `npx supabase start` for every function edit. Only restart the full stack when the local Supabase services themselves are unhealthy.
+
 ### TDD Workflow
 
 1. Start from the smallest relevant failing test.
@@ -165,6 +197,116 @@ npx supabase db reset
 dotnet test tests/RaidLoop.Core.Tests/RaidLoop.Core.Tests.csproj --filter "HomeMarkupBindingTests|RaidActionApiTests|ProfileMutationFlowTests"
 ```
 
+### SQL Testing
+
+For SQL changes, do not stop at static migration inspection. Use a three-layer test process:
+
+1. Migration shape checks
+2. Fresh local database rebuild
+3. Runtime SQL integration tests against local Supabase
+
+#### 1. Migration Shape Checks
+
+Add or update narrow tests that read the migration file and assert the critical SQL is present.
+
+Use this layer to verify things like:
+- a new function or `jsonb_set` path exists
+- the canonical stat source expression is correct
+- an `update public.game_saves` or `update public.raid_sessions` statement exists
+- a known bad expression is no longer present
+
+Run:
+
+```bash
+dotnet test tests/RaidLoop.Core.Tests/RaidLoop.Core.Tests.csproj --filter "ItemCatalogTests|HomeMarkupBindingTests"
+```
+
+This layer is fast, but it does not prove the SQL behaves correctly at runtime.
+
+#### 2. Fresh Local Database Rebuild
+
+Apply the entire migration chain to a clean local database:
+
+```bash
+. .\env.local.ps1
+npx supabase start
+npx supabase db reset
+```
+
+Use `npx supabase db reset` for SQL verification, not `db push --include-all`.
+
+This layer proves:
+- the migrations still apply in order
+- patch migrations still match the current function text
+- there are no hidden dependency or ordering problems
+
+#### 3. Runtime SQL Integration Tests
+
+For any bug involving persisted state, stats, raid snapshots, or migration repair behavior, add a runtime test that exercises the real database path.
+
+The preferred pattern is:
+
+1. Create a real local auth user
+2. Seed or mutate `public.game_saves` and/or `public.raid_sessions` into a known stale or bad state
+3. Call the real RPC path such as `profile_bootstrap` or `game_action`
+4. Assert on the returned snapshot
+
+Examples of what to test this way:
+- stale `playerMaxHealth` repaired from accepted constitution
+- stale raid `maxEncumbrance` repaired from accepted strength
+- stale raid payload stats ignored in favor of canonical save stats
+- migration rewrites persisted raid payload fields correctly
+
+Run:
+
+```bash
+deno test --allow-env --allow-net supabase/functions/game-action/local-integration.test.mjs
+```
+
+Use these runtime tests as the source of truth for SQL behavior. Static file checks are support checks only.
+
+#### Recommended SQL TDD Loop
+
+When changing SQL:
+
+1. Write the smallest runtime failing case first if the bug involves persisted or derived database state.
+2. Add or update static migration-shape assertions for the critical SQL text.
+3. Run the narrow tests and confirm the runtime case fails for the right reason.
+4. Add a new forward-only migration. Do not edit already-applied migrations.
+5. Run `npx supabase db reset`.
+6. Re-run the runtime SQL test until it passes.
+7. Re-run the narrow C# and handler tests.
+
+Typical command sequence:
+
+```bash
+. .\env.local.ps1
+npx supabase start
+dotnet test tests/RaidLoop.Core.Tests/RaidLoop.Core.Tests.csproj --filter "ItemCatalogTests|HomeMarkupBindingTests"
+npx supabase db reset
+deno test --allow-env --allow-net supabase/functions/game-action/local-integration.test.mjs
+node --test supabase/functions/game-action/handler.test.mjs
+```
+
+If the SQL change affects profile bootstrap or other Edge Functions, also run:
+
+```bash
+deno test supabase/functions/profile-bootstrap/handler.test.mjs supabase/functions/profile-save/handler.test.mjs
+```
+
+If the change affects the `game-action` Edge Function response shape or projection behavior, also run:
+
+```bash
+node --test supabase/functions/game-action/handler.test.mjs
+deno test --allow-env --allow-net supabase/functions/game-action/local-integration.test.mjs
+```
+
+Do not call SQL work complete until:
+- the migration applies cleanly on `db reset`
+- the runtime SQL integration case passes
+- the relevant narrow tests pass
+- any changed Edge Function handler tests pass
+
 ### Pre-Push Verification
 
 Before pushing commits, run:
@@ -179,7 +321,72 @@ If you changed Edge Functions, also run:
 
 ```bash
 deno test supabase/functions/profile-bootstrap/handler.test.mjs supabase/functions/profile-save/handler.test.mjs
-deno test supabase/functions/game-action/handler.test.mjs
+node --test supabase/functions/game-action/handler.test.mjs
+deno test --allow-env --allow-net supabase/functions/game-action/local-integration.test.mjs
 ```
 
 Push only after local verification is green. Use the hosted Supabase environment after that for smoke testing of integration details such as auth-provider behavior.
+
+### Supabase CI/CD Notes
+
+GitHub Actions production deploy expects:
+
+- Repository variables:
+  - `SUPABASE_PROJECT_ID`
+  - `SUPABASE_URL`
+  - `SUPABASE_PUBLISHABLE_KEY`
+- Repository secrets:
+  - `SUPABASE_ACCESS_TOKEN`
+  - `SUPABASE_DB_PASSWORD`
+
+The project id is the Supabase project ref, for example `dblgbpzlrglcdwqyagnx`, not the project display name.
+
+These values belong in GitHub repository variables and secrets only. Do not put remote project refs, remote database passwords, or access tokens in the repo-root `.env`.
+
+Remote Supabase changes are CI-only:
+
+- database migrations run from GitHub Actions using repository variables and secrets
+- Edge Functions deploy from GitHub Actions using repository variables and secrets
+- local developer shells must not run `supabase link` against hosted projects
+
+### Supabase Manual Verification
+
+After applying migrations, useful local checks are:
+
+1. Verify tables exist:
+
+```sql
+select to_regclass('public.game_saves');
+select to_regclass('public.raid_sessions');
+```
+
+2. Verify RLS is enabled:
+
+```sql
+select relname, relrowsecurity
+from pg_class
+where relname in ('game_saves', 'raid_sessions');
+```
+
+3. Verify bootstrap function exists:
+
+```sql
+select routine_name
+from information_schema.routines
+where routine_schema = 'game'
+  and routine_name = 'bootstrap_player';
+```
+
+4. Verify bootstrap creates a starter save for an authenticated user:
+
+```sql
+select game.bootstrap_player(auth.uid());
+```
+
+5. Verify the created save row:
+
+```sql
+select user_id, save_version, payload, created_at, updated_at
+from public.game_saves
+where user_id = auth.uid();
+```

@@ -625,6 +625,16 @@ public partial class Home : IDisposable
             _playerConstitution = parsedAcceptedStats.Constitution;
         }
 
+        if (TryGetInt32(playerProjection, "playerConstitution", out var playerConstitution))
+        {
+            _playerConstitution = playerConstitution;
+        }
+
+        if (TryGetInt32(playerProjection, "playerMaxHealth", out var playerMaxHealth))
+        {
+            _maxHealth = playerMaxHealth;
+        }
+
         if (TryGetProjection(playerProjection, "draftStats", out var draftStats)
             && TryReadPlayerStats(draftStats, out var parsedDraftStats))
         {

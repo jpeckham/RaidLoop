@@ -227,6 +227,8 @@ test("game-action returns profile-mutated player projections for accept-stats", 
         onPersonItems: [{ item: { name: "AK74", type: 0, value: 320, slots: 1, rarity: 2, displayRarity: 3 }, isEquipped: true }],
         acceptedStats: { strength: 8, dexterity: 14, constitution: 12, intelligence: 10, wisdom: 9, charisma: 16 },
         draftStats: { strength: 8, dexterity: 14, constitution: 12, intelligence: 10, wisdom: 9, charisma: 16 },
+        playerConstitution: 12,
+        playerMaxHealth: 34,
         availableStatPoints: 0,
         statsAccepted: true,
         randomCharacterAvailableAt: "0001-01-01T00:00:00+00:00",
@@ -251,6 +253,8 @@ test("game-action returns profile-mutated player projections for accept-stats", 
   const body = await response.json();
   assert.equal(body.eventType, "ProfileMutated");
   assert.equal(body.projections.player.acceptedStats.dexterity, 14);
+  assert.equal(body.projections.player.playerConstitution, 12);
+  assert.equal(body.projections.player.playerMaxHealth, 34);
   assert.equal(body.projections.player.availableStatPoints, 0);
   assert.equal(body.projections.player.statsAccepted, true);
   assert.equal(body.snapshot, undefined);
@@ -310,9 +314,13 @@ test("game-action returns raid-started projections for start-main-raid", async (
         ],
         randomCharacterAvailableAt: "0001-01-01T00:00:00+00:00",
         randomCharacter: null,
+        playerConstitution: 12,
+        playerMaxHealth: 34,
         activeRaid: {
           health: 27,
           backpackCapacity: 3,
+          encumbrance: 40,
+          maxEncumbrance: 175,
           ammo: 9,
           weaponMalfunction: false,
           medkits: 1,
@@ -324,6 +332,9 @@ test("game-action returns raid-started projections for start-main-raid", async (
           encounterDescription: "Enemy contact on your position.",
           enemyName: "Scav",
           enemyHealth: 17,
+          enemyDexterity: 11,
+          enemyConstitution: 12,
+          enemyStrength: 10,
           lootContainer: "",
           awaitingDecision: false,
           discoveredLoot: [],
@@ -354,14 +365,20 @@ test("game-action returns raid-started projections for start-main-raid", async (
   assert.equal(body.eventType, "RaidStarted");
   assert.deepEqual(body.event, { action: "start-main-raid" });
   assert.equal(body.projections.raid.health, 27);
+  assert.equal(body.projections.raid.encumbrance, 40);
+  assert.equal(body.projections.raid.maxEncumbrance, 175);
   assert.equal(body.projections.raid.challenge, 0);
   assert.equal(body.projections.raid.distanceFromExtract, 3);
   assert.equal(body.projections.raid.ammo, 9);
+  assert.equal(body.projections.raid.weaponMalfunction, false);
   assert.equal(body.projections.raid.contactState, "None");
   assert.equal(body.projections.raid.surpriseSide, "None");
   assert.equal(body.projections.raid.initiativeWinner, "None");
   assert.equal(body.projections.raid.openingActionsRemaining, 0);
   assert.equal(body.projections.raid.surprisePersistenceEligible, false);
+  assert.equal(body.projections.raid.enemyDexterity, 11);
+  assert.equal(body.projections.raid.enemyConstitution, 12);
+  assert.equal(body.projections.raid.enemyStrength, 10);
   assert.equal("extractProgress" in body.projections.raid, false);
   assert.equal("extractRequired" in body.projections.raid, false);
   assert.equal(body.projections.raid.equippedItems[0].name, "AK74");

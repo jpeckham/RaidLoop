@@ -451,6 +451,33 @@ public sealed class ProfileMutationFlowTests
     }
 
     [Fact]
+    public void ApplyActionResult_PlayerProjection_UpdatesDerivedHealthFields()
+    {
+        var home = CreateHome(new FakeGameActionApiClient());
+        SetField(home, "_acceptedStats", PlayerStats.Default);
+        SetField(home, "_playerConstitution", 8);
+        SetField(home, "_maxHealth", 26);
+
+        InvokePrivateVoid(
+            home,
+            "ApplyActionResult",
+            Response(
+                money: 500,
+                mainStash: [],
+                onPersonItems: [new OnPersonSnapshot(ItemCatalog.Create("AK74"), true)],
+                acceptedStats: new PlayerStats(14, 12, 12, 10, 9, 16),
+                draftStats: new PlayerStats(14, 12, 12, 10, 9, 16),
+                availableStatPoints: 0,
+                statsAccepted: true,
+                playerConstitution: 12,
+                playerMaxHealth: 34));
+
+        Assert.Equal(new PlayerStats(14, 12, 12, 10, 9, 16), Assert.IsType<PlayerStats>(GetField(home, "_acceptedStats")));
+        Assert.Equal(12, Assert.IsType<int>(GetField(home, "_playerConstitution")));
+        Assert.Equal(34, Assert.IsType<int>(GetField(home, "_maxHealth")));
+    }
+
+    [Fact]
     public void DraftStatEditing_IsDisabledAfterStatsAccepted()
     {
         var home = CreateHome(new FakeGameActionApiClient());
@@ -1417,7 +1444,9 @@ public sealed class ProfileMutationFlowTests
         int? availableStatPoints = null,
         bool? statsAccepted = null,
         DateTimeOffset? randomCharacterAvailableAt = null,
-        RandomCharacterSnapshot? randomCharacter = null)
+        RandomCharacterSnapshot? randomCharacter = null,
+        int? playerConstitution = null,
+        int? playerMaxHealth = null)
     {
         var projections = new Dictionary<string, object?>
         {
@@ -1437,6 +1466,8 @@ public sealed class ProfileMutationFlowTests
             {
                 ["acceptedStats"] = acceptedStats,
                 ["draftStats"] = draftStats,
+                ["playerConstitution"] = playerConstitution,
+                ["playerMaxHealth"] = playerMaxHealth,
                 ["availableStatPoints"] = availableStatPoints,
                 ["statsAccepted"] = statsAccepted
             }

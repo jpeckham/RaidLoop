@@ -1285,7 +1285,9 @@ public partial class Home : IDisposable
             left = TimeSpan.Zero;
         }
 
-        return $"{left.Minutes:D2}:{left.Seconds:D2}";
+        return left.TotalHours >= 1
+            ? $"{(int)left.TotalHours}:{left.Minutes:D2}:{left.Seconds:D2}"
+            : $"{left.Minutes:D2}:{left.Seconds:D2}";
     }
 
     private string GetEquippedWeaponName()

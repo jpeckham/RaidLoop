@@ -94,6 +94,85 @@ public sealed class RaidStartApiTests
     }
 
     [Fact]
+    public async Task StartMainRaidAsync_UsesAuthoritativePlayerProjection_ForMaxHealth()
+    {
+        var actionClient = new FakeGameActionApiClient
+        {
+            ResponseFactory = request =>
+            {
+                Assert.Equal("start-main-raid", request.Action);
+                return new GameActionResult(
+                    "RaidStarted",
+                    null,
+                    JsonDocument.Parse("""
+                        {
+                          "player": {
+                            "acceptedStats": {
+                              "strength": 14,
+                              "dexterity": 8,
+                              "constitution": 12,
+                              "intelligence": 10,
+                              "wisdom": 9,
+                              "charisma": 16
+                            },
+                            "playerConstitution": 12,
+                            "playerMaxHealth": 34,
+                            "availableStatPoints": 0,
+                            "statsAccepted": true
+                          },
+                          "raid": {
+                            "health": 34,
+                            "backpackCapacity": 3,
+                            "ammo": 9,
+                            "weaponMalfunction": false,
+                            "medkits": 1,
+                            "lootSlots": 0,
+                            "challenge": 0,
+                            "distanceFromExtract": 3,
+                            "encounterType": "Combat",
+                            "encounterTitle": "Extract Route Ambush",
+                            "encounterDescription": "You are ambushed while moving between positions.",
+                            "contactState": "EnemyAmbush",
+                            "surpriseSide": "Enemy",
+                            "initiativeWinner": "None",
+                            "openingActionsRemaining": 1,
+                            "surprisePersistenceEligible": false,
+                            "enemyName": "Server Scav",
+                            "enemyHealth": 17,
+                            "lootContainer": "Dead Body",
+                            "awaitingDecision": false,
+                            "discoveredLoot": [],
+                            "carriedLoot": [],
+                            "equippedItems": [
+                              { "name": "AK74", "type": 0, "value": 320, "slots": 1, "rarity": 2, "displayRarity": 3 },
+                              { "name": "Small Backpack", "type": 2, "value": 75, "slots": 2, "rarity": 2, "displayRarity": 3 }
+                            ],
+                            "logEntries": ["Raid started on server."]
+                          }
+                        }
+                        """).RootElement.Clone(),
+                    null);
+            }
+        };
+        var home = CreateHome(actionClient);
+        InvokePrivateVoid(
+            home,
+            "ApplySnapshot",
+            new PlayerSnapshot(500, [], [], 8, 26, DateTimeOffset.MinValue, null, null, StatsAccepted: true));
+
+        SetField(home, "_onPersonItems", new List<OnPersonEntry>
+        {
+            new(ItemCatalog.Create("AK74"), true),
+            new(ItemCatalog.Create("Small Backpack"), true)
+        });
+
+        await InvokePrivateAsync(home, "StartMainRaidAsync");
+
+        Assert.Equal(34, Assert.IsType<int>(GetField(home, "_maxHealth")));
+        Assert.Equal(12, Assert.IsType<int>(GetField(home, "_playerConstitution")));
+    }
+
+    [Fact]
     public async Task StartRandomRaidAsync_CallsBackend_And_HydratesMutualContactCombatSnapshot()
     {
         var actionClient = new FakeGameActionApiClient

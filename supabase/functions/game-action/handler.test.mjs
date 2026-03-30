@@ -364,6 +364,8 @@ test("game-action returns raid-started projections for start-main-raid", async (
   const body = await response.json();
   assert.equal(body.eventType, "RaidStarted");
   assert.deepEqual(body.event, { action: "start-main-raid" });
+  assert.equal(body.projections.player.playerConstitution, 12);
+  assert.equal(body.projections.player.playerMaxHealth, 34);
   assert.equal(body.projections.raid.health, 27);
   assert.equal(body.projections.raid.encumbrance, 40);
   assert.equal(body.projections.raid.maxEncumbrance, 175);
@@ -502,6 +504,8 @@ test("game-action returns raid-started projections for start-random-raid", async
   const body = await response.json();
   assert.equal(body.eventType, "RaidStarted");
   assert.deepEqual(body.event, { action: "start-random-raid" });
+  assert.equal(body.projections.player.playerConstitution, 0);
+  assert.equal(body.projections.player.playerMaxHealth, 0);
   assert.equal(body.projections.luckRun.randomCharacter.name, "Ghost-101");
   assert.equal(body.projections.raid.encounterType, "Loot");
   assert.equal(body.projections.raid.challenge, 0);

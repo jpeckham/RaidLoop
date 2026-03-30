@@ -236,6 +236,7 @@ function buildPlayerProjection(snapshot) {
 
 function buildRaidStartProjections(action, snapshot) {
   const projections = {
+    player: buildPlayerProjection(snapshot),
     raid: buildRaidProjection(snapshot?.activeRaid),
   };
 

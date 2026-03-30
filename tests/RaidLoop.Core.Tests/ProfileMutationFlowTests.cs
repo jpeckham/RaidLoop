@@ -62,6 +62,17 @@ public sealed class ProfileMutationFlowTests
     }
 
     [Fact]
+    public void GetRandomCooldownText_IncludesHours_WhenCooldownExceedsOneHour()
+    {
+        var home = CreateHome(new FakeGameActionApiClient());
+        SetField(home, "_randomCharacterAvailableAt", DateTimeOffset.UtcNow.Add(new TimeSpan(1, 52, 38)));
+
+        var text = InvokePrivate<string>(home, "GetRandomCooldownText");
+
+        Assert.StartsWith("1:52:", text, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task SellStashItemAsync_ReportsActionFailuresThroughTelemetryAndRethrows()
     {
         var telemetry = new RecordingTelemetryService();

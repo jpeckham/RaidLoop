@@ -2,6 +2,7 @@ namespace RaidLoop.Core;
 
 public static class ItemCatalog
 {
+    private static readonly Dictionary<int, Item> ItemsById = [];
     private static readonly Dictionary<string, Item> ItemsByKey = new(StringComparer.OrdinalIgnoreCase);
     // Legacy label aliases stay as a compatibility bridge while the app moves to key-first lookups.
     private static readonly Dictionary<string, Item> LegacyNames = new(StringComparer.OrdinalIgnoreCase);
@@ -10,10 +11,12 @@ public static class ItemCatalog
     {
         RegisterCanonical(new Item("Rusty Knife", ItemType.Weapon, Value: 1, Slots: 1, Rarity: Rarity.Common, DisplayRarity: DisplayRarity.Common, Weight: 1)
         {
+            ItemDefId = 1,
             Key = "rusty_knife"
         });
 
         RegisterAuthored(
+            itemDefId: 2,
             key: "makarov",
             displayName: "Makarov",
             itemType: ItemType.Weapon,
@@ -24,6 +27,7 @@ public static class ItemCatalog
             aliases: ["Light Pistol"]);
 
         RegisterAuthored(
+            itemDefId: 3,
             key: "ppsh",
             displayName: "PPSH",
             itemType: ItemType.Weapon,
@@ -34,6 +38,7 @@ public static class ItemCatalog
             aliases: ["Drum SMG"]);
 
         RegisterAuthored(
+            itemDefId: 4,
             key: "ak74",
             displayName: "AK74",
             itemType: ItemType.Weapon,
@@ -44,16 +49,7 @@ public static class ItemCatalog
             aliases: ["Field Carbine"]);
 
         RegisterAuthored(
-            key: "svds",
-            displayName: "SVDS",
-            itemType: ItemType.Weapon,
-            weight: 10,
-            value: 550,
-            rarity: Rarity.Epic,
-            displayRarity: DisplayRarity.Epic,
-            aliases: ["Marksman Rifle"]);
-
-        RegisterAuthored(
+            itemDefId: 5,
             key: "ak47",
             displayName: "AK47",
             itemType: ItemType.Weapon,
@@ -64,6 +60,18 @@ public static class ItemCatalog
             aliases: ["Battle Rifle"]);
 
         RegisterAuthored(
+            itemDefId: 6,
+            key: "svds",
+            displayName: "SVDS",
+            itemType: ItemType.Weapon,
+            weight: 10,
+            value: 550,
+            rarity: Rarity.Epic,
+            displayRarity: DisplayRarity.Epic,
+            aliases: ["Marksman Rifle"]);
+
+        RegisterAuthored(
+            itemDefId: 7,
             key: "pkp",
             displayName: "PKP",
             itemType: ItemType.Weapon,
@@ -74,6 +82,7 @@ public static class ItemCatalog
             aliases: ["Support Machine Gun"]);
 
         RegisterAuthored(
+            itemDefId: 8,
             key: "6b2_body_armor",
             displayName: "6B2 body armor",
             itemType: ItemType.Armor,
@@ -84,6 +93,7 @@ public static class ItemCatalog
             aliases: ["Soft Armor Vest"]);
 
         RegisterAuthored(
+            itemDefId: 9,
             key: "bnti_kirasa_n",
             displayName: "BNTI Kirasa-N",
             itemType: ItemType.Armor,
@@ -94,6 +104,7 @@ public static class ItemCatalog
             aliases: ["Reinforced Vest"]);
 
         RegisterAuthored(
+            itemDefId: 10,
             key: "6b13_assault_armor",
             displayName: "6B13 assault armor",
             itemType: ItemType.Armor,
@@ -104,6 +115,7 @@ public static class ItemCatalog
             aliases: ["Light Plate Carrier"]);
 
         RegisterAuthored(
+            itemDefId: 11,
             key: "fort_defender_2",
             displayName: "FORT Defender-2",
             itemType: ItemType.Armor,
@@ -114,6 +126,7 @@ public static class ItemCatalog
             aliases: ["Medium Plate Carrier"]);
 
         RegisterAuthored(
+            itemDefId: 12,
             key: "6b43_zabralo_sh_body_armor",
             displayName: "6B43 Zabralo-Sh body armor",
             itemType: ItemType.Armor,
@@ -124,6 +137,7 @@ public static class ItemCatalog
             aliases: ["Heavy Plate Carrier"]);
 
         RegisterAuthored(
+            itemDefId: 13,
             key: "nfm_thor",
             displayName: "NFM THOR",
             itemType: ItemType.Armor,
@@ -135,17 +149,25 @@ public static class ItemCatalog
 
         RegisterCanonical(new Item("Small Backpack", ItemType.Backpack, Value: 25, Slots: 1, Rarity: Rarity.Common, DisplayRarity: DisplayRarity.Common, Weight: 1)
         {
+            ItemDefId = 14,
             Key = "small_backpack"
         });
-        RegisterCanonical(new Item("Large Backpack", ItemType.Backpack, Value: 50, Slots: 1, Rarity: Rarity.Uncommon, DisplayRarity: DisplayRarity.Uncommon, Weight: 1)
-        {
-            Key = "large_backpack"
-        });
+        RegisterAuthored(
+            itemDefId: 15,
+            key: "large_backpack",
+            displayName: "Large Backpack",
+            itemType: ItemType.Backpack,
+            weight: 1,
+            value: 50,
+            rarity: Rarity.Uncommon,
+            displayRarity: DisplayRarity.Uncommon);
         RegisterCanonical(new Item("Tactical Backpack", ItemType.Backpack, Value: 75, Slots: 2, Rarity: Rarity.Rare, DisplayRarity: DisplayRarity.Rare, Weight: 2)
         {
+            ItemDefId = 16,
             Key = "tactical_backpack"
         });
         RegisterAuthored(
+            itemDefId: 17,
             key: "tasmanian_tiger_trooper_35",
             displayName: "Tasmanian Tiger Trooper 35",
             itemType: ItemType.Backpack,
@@ -155,6 +177,7 @@ public static class ItemCatalog
             displayRarity: DisplayRarity.Epic,
             aliases: ["Hiking Backpack"]);
         RegisterAuthored(
+            itemDefId: 18,
             key: "6sh118",
             displayName: "6Sh118",
             itemType: ItemType.Backpack,
@@ -166,26 +189,32 @@ public static class ItemCatalog
 
         RegisterCanonical(new Item("Medkit", ItemType.Consumable, Value: 30, Slots: 1, Rarity: Rarity.Common, DisplayRarity: DisplayRarity.Common, Weight: 1)
         {
+            ItemDefId = 19,
             Key = "medkit"
         });
         RegisterCanonical(new Item("Bandage", ItemType.Sellable, Value: 15, Slots: 1, Rarity: Rarity.Common, DisplayRarity: DisplayRarity.SellOnly, Weight: 1)
         {
+            ItemDefId = 20,
             Key = "bandage"
         });
         RegisterCanonical(new Item("Ammo Box", ItemType.Sellable, Value: 20, Slots: 1, Rarity: Rarity.Common, DisplayRarity: DisplayRarity.SellOnly, Weight: 4)
         {
+            ItemDefId = 21,
             Key = "ammo_box"
         });
         RegisterCanonical(new Item("Scrap Metal", ItemType.Material, Value: 18, Slots: 1, Rarity: Rarity.Common, DisplayRarity: DisplayRarity.SellOnly, Weight: 10)
         {
+            ItemDefId = 22,
             Key = "scrap_metal"
         });
         RegisterCanonical(new Item("Rare Scope", ItemType.Material, Value: 80, Slots: 1, Rarity: Rarity.Rare, DisplayRarity: DisplayRarity.SellOnly, Weight: 1)
         {
+            ItemDefId = 23,
             Key = "rare_scope"
         });
         RegisterCanonical(new Item("Legendary Trigger Group", ItemType.Material, Value: 150, Slots: 1, Rarity: Rarity.Legendary, DisplayRarity: DisplayRarity.SellOnly, Weight: 1)
         {
+            ItemDefId = 24,
             Key = "legendary_trigger_group"
         });
     }
@@ -200,6 +229,16 @@ public static class ItemCatalog
         if (!TryGetByKey(key, out var item))
         {
             throw new KeyNotFoundException($"No authored item definition exists for key '{key}'.");
+        }
+
+        return item!;
+    }
+
+    public static Item GetByItemDefId(int itemDefId)
+    {
+        if (!TryGetByItemDefId(itemDefId, out var item))
+        {
+            throw new KeyNotFoundException($"No authored item definition exists for itemDefId '{itemDefId}'.");
         }
 
         return item!;
@@ -223,6 +262,12 @@ public static class ItemCatalog
 
     public static bool TryGetByLegacyName(string name, out Item? item)
     {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            item = null;
+            return false;
+        }
+
         if (TryGetByKey(name, out item))
         {
             return true;
@@ -233,6 +278,12 @@ public static class ItemCatalog
 
     public static bool TryGetKeyByLegacyName(string name, out string key)
     {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            key = string.Empty;
+            return false;
+        }
+
         if (TryGetByKey(name, out var item) && item is not null)
         {
             key = item.Key;
@@ -249,9 +300,50 @@ public static class ItemCatalog
         return false;
     }
 
+    public static bool TryGetItemDefIdByLegacyName(string name, out int itemDefId)
+    {
+        if (TryGetByLegacyName(name, out var item) && item is not null)
+        {
+            itemDefId = item.ItemDefId;
+            return true;
+        }
+
+        itemDefId = 0;
+        return false;
+    }
+
+    public static bool TryGetItemDefIdByKey(string key, out int itemDefId)
+    {
+        if (TryGetByKey(key, out var item) && item is not null)
+        {
+            itemDefId = item.ItemDefId;
+            return true;
+        }
+
+        itemDefId = 0;
+        return false;
+    }
+
     public static bool TryGetByKey(string key, out Item? item)
     {
+        if (string.IsNullOrWhiteSpace(key))
+        {
+            item = null;
+            return false;
+        }
+
         return ItemsByKey.TryGetValue(key, out item);
+    }
+
+    public static bool TryGetByItemDefId(int itemDefId, out Item? item)
+    {
+        if (itemDefId <= 0)
+        {
+            item = null;
+            return false;
+        }
+
+        return ItemsById.TryGetValue(itemDefId, out item);
     }
 
     public static Item Create(string name)
@@ -270,6 +362,7 @@ public static class ItemCatalog
     }
 
     private static void RegisterAuthored(
+        int itemDefId,
         string key,
         string displayName,
         ItemType itemType,
@@ -281,6 +374,7 @@ public static class ItemCatalog
     {
         var item = new Item(displayName, itemType, Weight: weight, Value: value, Slots: 1, Rarity: rarity, DisplayRarity: displayRarity)
         {
+            ItemDefId = itemDefId,
             Key = key
         };
 
@@ -294,6 +388,7 @@ public static class ItemCatalog
 
     private static void RegisterCanonical(Item item)
     {
+        ItemsById[item.ItemDefId] = item;
         ItemsByKey[item.Key] = item;
         LegacyNames[item.Name] = item;
     }

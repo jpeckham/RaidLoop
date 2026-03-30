@@ -49,8 +49,8 @@ public sealed class RaidStartApiTests
                             "discoveredLoot": [],
                             "carriedLoot": [],
                             "equippedItems": [
-                              { "itemKey": "ak74", "name": "AK74", "type": 0, "value": 320, "slots": 1, "rarity": 2, "displayRarity": 3 },
-                              { "itemKey": "small_backpack", "name": "Small Backpack", "type": 2, "value": 75, "slots": 2, "rarity": 2, "displayRarity": 3 }
+                              { "itemDefId": 4 },
+                              { "itemDefId": 14 }
                             ],
                             "logEntries": ["Raid started on server."]
                           }
@@ -78,7 +78,7 @@ public sealed class RaidStartApiTests
         Assert.Equal(9, Assert.IsType<int>(GetField(home, "_ammo")));
         Assert.Equal(0, Assert.IsType<int>(GetField(home, "_challenge")));
         Assert.Equal(3, Assert.IsType<int>(GetField(home, "_distanceFromExtract")));
-        Assert.Equal("Server Scav", Assert.IsType<string>(GetField(home, "_enemyName")));
+        Assert.Equal("Server Scavenger", Assert.IsType<string>(GetField(home, "_enemyName")));
         Assert.Equal(17, Assert.IsType<int>(GetField(home, "_enemyHealth")));
         Assert.Equal(34, Assert.IsType<int>(GetField(home, "_maxHealth")));
         Assert.Equal(EncounterType.Combat, Assert.IsType<EncounterType>(GetField(home, "_encounterType")));
@@ -93,6 +93,91 @@ public sealed class RaidStartApiTests
         Assert.Equal("Small Backpack", raid.Inventory.EquippedBackpack?.Name);
         Assert.Equal("small_backpack", raid.Inventory.EquippedBackpack?.Key);
         Assert.Equal("40/100 lbs", InvokePrivate<string>(home, "GetRaidEncumbranceText"));
+    }
+
+    [Fact]
+    public async Task StartMainRaidAsync_HydratesLeanItemDefIdPayloadUsingDownloadedRulesCatalog()
+    {
+        var actionClient = new FakeGameActionApiClient
+        {
+            ResponseFactory = request =>
+            {
+                Assert.Equal("start-main-raid", request.Action);
+                return new GameActionResult(
+                    "RaidStarted",
+                    null,
+                    JsonDocument.Parse("""
+                        {
+                          "raid": {
+                            "health": 27,
+                            "backpackCapacity": 3,
+                            "encumbrance": 40,
+                            "maxEncumbrance": 100,
+                            "ammo": 9,
+                            "weaponMalfunction": false,
+                            "medkits": 1,
+                            "lootSlots": 0,
+                            "challenge": 0,
+                            "distanceFromExtract": 3,
+                            "encounterType": "Combat",
+                            "encounterTitle": "Extract Route Ambush",
+                            "encounterDescription": "You are ambushed while moving between positions.",
+                            "contactState": "EnemyAmbush",
+                            "surpriseSide": "Enemy",
+                            "initiativeWinner": "None",
+                            "openingActionsRemaining": 1,
+                            "surprisePersistenceEligible": false,
+                            "enemyName": "Server Scav",
+                            "enemyHealth": 17,
+                            "lootContainer": "Dead Body",
+                            "awaitingDecision": false,
+                            "discoveredLoot": [],
+                            "carriedLoot": [],
+                            "equippedItems": [
+                              { "itemDefId": 4 },
+                              { "itemDefId": 14 }
+                            ],
+                            "logEntries": ["Raid started on server."]
+                          }
+                        }
+                        """).RootElement.Clone(),
+                    null);
+            }
+        };
+        var home = CreateHome(actionClient);
+        InvokePrivateVoid(
+            home,
+            "ApplySnapshot",
+            new PlayerSnapshot(
+                500,
+                [],
+                [],
+                12,
+                34,
+                DateTimeOffset.MinValue,
+                null,
+                null,
+                StatsAccepted: true,
+                ItemRules:
+                [
+                    new ItemRuleSnapshot(1, ItemType.Weapon, 1, 1, Rarity.Common),
+                    new ItemRuleSnapshot(4, ItemType.Weapon, 7, 1, Rarity.Rare),
+                    new ItemRuleSnapshot(14, ItemType.Backpack, 1, 1, Rarity.Common)
+                ]));
+
+        SetField(home, "_onPersonItems", new List<OnPersonEntry>
+        {
+            new(ItemCatalog.Create("AK74"), true),
+            new(ItemCatalog.Create("Small Backpack"), true)
+        });
+
+        await InvokePrivateAsync(home, "StartMainRaidAsync");
+
+        var raid = Assert.IsType<RaidState>(GetField(home, "_raid"));
+        Assert.Equal("ak74", raid.Inventory.EquippedWeapon?.Key);
+        Assert.Equal("small_backpack", raid.Inventory.EquippedBackpack?.Key);
+        Assert.Equal(7, raid.Inventory.EquippedWeapon?.Weight);
+        Assert.Equal(1, raid.Inventory.EquippedBackpack?.Weight);
     }
 
     [Fact]
@@ -113,7 +198,7 @@ public sealed class RaidStartApiTests
                             "randomCharacter": {
                               "name": "Ghost-101",
                               "inventory": [
-                                { "itemKey": "makarov", "name": "Makarov", "type": 0, "value": 60, "slots": 1, "rarity": 0, "displayRarity": 1, "weight": 4 }
+                                { "itemDefId": 2 }
                               ],
                               "stats": {
                                 "strength": 12,
@@ -151,7 +236,7 @@ public sealed class RaidStartApiTests
                             "discoveredLoot": [],
                             "carriedLoot": [],
                             "equippedItems": [
-                              { "itemKey": "makarov", "name": "Makarov", "type": 0, "value": 60, "slots": 1, "rarity": 0, "displayRarity": 1 }
+                              { "itemDefId": 2 }
                             ],
                             "logEntries": ["Raid started on server."]
                           }
@@ -181,7 +266,7 @@ public sealed class RaidStartApiTests
         Assert.Equal("Player", Assert.IsType<string>(GetField(home, "_initiativeWinner")));
         Assert.Equal(0, Assert.IsType<int>(GetField(home, "_openingActionsRemaining")));
         Assert.False(Assert.IsType<bool>(GetField(home, "_surprisePersistenceEligible")));
-        Assert.Equal("Road Scav", Assert.IsType<string>(GetField(home, "_enemyName")));
+        Assert.Equal("Road Scavenger", Assert.IsType<string>(GetField(home, "_enemyName")));
         Assert.Equal(14, Assert.IsType<int>(GetField(home, "_enemyHealth")));
         AssertRandomCharacterStats(GetField(home, "_randomCharacter"), new PlayerStats(12, 11, 10, 9, 8, 13));
         Assert.Equal("38/90 lbs", InvokePrivate<string>(home, "GetRaidEncumbranceText"));
@@ -207,7 +292,7 @@ public sealed class RaidStartApiTests
                             "randomCharacter": {
                               "name": "Ghost-101",
                               "inventory": [
-                                { "name": "Makarov", "type": 0, "value": 60, "slots": 1, "rarity": 0, "displayRarity": 1, "weight": 4 }
+                                { "itemDefId": 2 }
                               ],
                               "stats": {
                                 "strength": 12,
@@ -243,7 +328,7 @@ public sealed class RaidStartApiTests
                             "discoveredLoot": [],
                             "carriedLoot": [],
                             "equippedItems": [
-                              { "name": "Makarov", "type": 0, "value": 60, "slots": 1, "rarity": 0, "displayRarity": 1 }
+                              { "itemDefId": 2 }
                             ],
                             "logEntries": ["Raid started on server."]
                           }
@@ -287,6 +372,7 @@ public sealed class RaidStartApiTests
         var home = new Home();
         SetProperty(home, "Profiles", new FakeProfileApiClient());
         SetProperty(home, "Actions", actionClient);
+        SetProperty(home, "Telemetry", new NoOpTelemetryService());
         return home;
     }
 
@@ -365,6 +451,14 @@ public sealed class RaidStartApiTests
             var request = new GameActionRequest(action, JsonSerializer.SerializeToElement(payload));
             Requests.Add(request);
             return Task.FromResult(ResponseFactory(request));
+        }
+    }
+
+    private sealed class NoOpTelemetryService : IClientTelemetryService
+    {
+        public ValueTask ReportErrorAsync(string message, object? details = null, CancellationToken cancellationToken = default)
+        {
+            return ValueTask.CompletedTask;
         }
     }
 }

@@ -36,15 +36,17 @@ public sealed class StashStorageTests
     [Fact]
     public async Task LoadAsync_NormalizesLegacyAliasesToCatalogDefinitions()
     {
-        var raw = JsonSerializer.Serialize(new GameSave(
-            MainStash:
-            [
-                new Item("Hunting Rifle", ItemType.Weapon, Weight: 1, Value: 1, Slots: 1)
-            ],
-            RandomCharacterAvailableAt: DateTimeOffset.MinValue,
-            RandomCharacter: null,
-            Money: 500,
-            OnPersonItems: []));
+        const string raw = """
+            {
+              "MainStash": [
+                { "Name": "Hunting Rifle", "Type": 0, "Value": 1, "Slots": 1, "Weight": 1 }
+              ],
+              "RandomCharacterAvailableAt": "0001-01-01T00:00:00+00:00",
+              "RandomCharacter": null,
+              "Money": 500,
+              "OnPersonItems": []
+            }
+            """;
 
         var storage = new StashStorage(new FakeJsRuntime(raw));
 

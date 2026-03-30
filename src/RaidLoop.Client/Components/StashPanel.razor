@@ -7,7 +7,7 @@
             var item = Items[stashIndex];
             <div class="row-item">
                 <ItemTypeIcon Type="item.Type" />
-                <span class="item-name rarity-@item.DisplayRarity.ToString().ToLower()">@item.Name</span>
+                <span class="item-name rarity-@item.DisplayRarity.ToString().ToLower()">@ItemPresentationCatalog.GetLabel(item)</span>
                 <div class="row-actions">
                     <button class="action" disabled="@(!CanMoveToLoadoutItem(item))" @onclick="() => OnMoveToLoadout.InvokeAsync(stashIndex)">@GetPrimaryActionLabel(item)</button>
                     <button class="action" disabled="@(!CanSellItem(item))" @onclick="() => OnSell.InvokeAsync(stashIndex)">Sell ($@GetSellPrice(item))</button>

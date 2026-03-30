@@ -286,6 +286,16 @@ public static class CombatBalance
         };
     }
 
+    public static int GetBuyPrice(Item item)
+    {
+        if (item.ItemDefId > 0 && ItemCatalog.TryGetByItemDefId(item.ItemDefId, out var authoredItem) && authoredItem is not null)
+        {
+            return GetBuyPrice(authoredItem.Key);
+        }
+
+        return GetBuyPrice(item.Name);
+    }
+
     public static int GetMagazineCapacity(string weaponName)
     {
         return NormalizeItemName(weaponName) switch
@@ -317,6 +327,36 @@ public static class CombatBalance
             "small_backpack" => 3,
             _ => 2
         };
+    }
+
+    public static int GetBackpackCapacity(Item? backpack)
+    {
+        if (backpack is null)
+        {
+            return GetBackpackCapacity((string?)null);
+        }
+
+        if (backpack.ItemDefId > 0 && ItemCatalog.TryGetByItemDefId(backpack.ItemDefId, out var authoredItem) && authoredItem is not null)
+        {
+            return GetBackpackCapacity(authoredItem.Key);
+        }
+
+        return GetBackpackCapacity(backpack.Name);
+    }
+
+    public static bool IsMedkit(Item? item)
+    {
+        if (item is null)
+        {
+            return false;
+        }
+
+        if (item.ItemDefId > 0)
+        {
+            return item.ItemDefId == 19;
+        }
+
+        return NormalizeItemName(item.Name) == "medkit";
     }
 
     public static int GetTotalEncumbrance(IEnumerable<Item> items)

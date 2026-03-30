@@ -8,7 +8,8 @@ namespace RaidLoop.Client.Pages;
 
 public partial class Home : IDisposable
 {
-    private const string FallbackKnifeName = "Rusty Knife";
+    private const int FallbackKnifeItemDefId = 1;
+    private const int MedkitItemDefId = 19;
     private const int MainStashCap = 30;
     private static readonly string[] StatOrder = ["STR", "DEX", "CON", "INT", "WIS", "CHA"];
     private int _playerConstitution = 10;
@@ -21,6 +22,7 @@ public partial class Home : IDisposable
 
     private GameState _mainGame = new([]);
     private List<ShopStock> _shopStock = [];
+    private Dictionary<int, ItemRuleSnapshot> _itemRulesById = [];
     private List<OnPersonEntry> _onPersonItems = [];
     private int _money;
     private PlayerStats _acceptedStats = PlayerStats.Default;
@@ -298,13 +300,13 @@ public partial class Home : IDisposable
 
     private async Task BuyFromShopAsync(ShopStock stock)
     {
-        var price = GetBuyPrice(stock.Item.Name);
+        var price = stock.Price;
         if (_money < price || !CanAddOnPersonItem(stock.Item))
         {
             return;
         }
 
-        await ExecuteProfileActionAsync("buy-from-shop", new { itemName = stock.Item.Name });
+        await ExecuteProfileActionAsync("buy-from-shop", new { itemDefId = stock.ItemDefId });
     }
 
     private async Task AcceptStatsAsync()
@@ -812,9 +814,16 @@ public partial class Home : IDisposable
             hasRaidPatch = true;
         }
 
-        if (TryGetString(raid, "encounterDescription", out var encounterDescription))
+        string? encounterDescription = null;
+        string? encounterDescriptionKey = null;
+        if (TryGetString(raid, "encounterDescription", out var encounterDescriptionText))
         {
-            _encounterDescription = encounterDescription;
+            encounterDescription = encounterDescriptionText;
+            hasRaidPatch = true;
+        }
+        if (TryGetString(raid, "encounterDescriptionKey", out var encounterDescriptionKeyText))
+        {
+            encounterDescriptionKey = encounterDescriptionKeyText;
             hasRaidPatch = true;
         }
 
@@ -848,9 +857,16 @@ public partial class Home : IDisposable
             hasRaidPatch = true;
         }
 
-        if (TryGetString(raid, "enemyName", out var enemyName))
+        string? enemyName = null;
+        string? enemyKey = null;
+        if (TryGetString(raid, "enemyName", out var enemyNameText))
         {
-            _enemyName = enemyName;
+            enemyName = enemyNameText;
+            hasRaidPatch = true;
+        }
+        if (TryGetString(raid, "enemyKey", out var enemyKeyText))
+        {
+            enemyKey = enemyKeyText;
             hasRaidPatch = true;
         }
 
@@ -891,11 +907,21 @@ public partial class Home : IDisposable
             hasRaidPatch = true;
         }
 
+        if (encounterDescription is not null)
+        {
+            _encounterDescription = RaidPresentationCatalog.GetEncounterDescription(encounterDescriptionKey, _encounterType, encounterDescription, _extractHoldActive);
+        }
+
+        if (enemyName is not null || enemyKey is not null)
+        {
+            _enemyName = RaidPresentationCatalog.GetEnemyLabel(enemyKey, enemyName);
+        }
+
         if (TryGetProjection(raid, "logEntriesAdded", out var logEntriesAdded))
         {
             if (logEntriesAdded.ValueKind == JsonValueKind.Array)
             {
-                _log.AddRange(ReadStringListFromProperty(raid, "logEntriesAdded"));
+                _log.AddRange(ReadStringListFromProperty(raid, "logEntriesAdded").Select(RaidPresentationCatalog.LocalizeLogEntry));
                 hasRaidPatch = true;
             }
         }
@@ -904,7 +930,7 @@ public partial class Home : IDisposable
             if (logEntries.ValueKind == JsonValueKind.Array)
             {
                 _log.Clear();
-                _log.AddRange(ReadStringListFromProperty(raid, "logEntries"));
+                _log.AddRange(ReadStringListFromProperty(raid, "logEntries").Select(RaidPresentationCatalog.LocalizeLogEntry));
                 hasRaidPatch = true;
             }
         }
@@ -1071,6 +1097,14 @@ public partial class Home : IDisposable
 
     private static bool TryReadItem(JsonElement item, out Item parsedItem)
     {
+        if (TryGetInt32(item, "itemDefId", out var itemDefId)
+            && ItemCatalog.TryGetByItemDefId(itemDefId, out var catalogItemById)
+            && catalogItemById is not null)
+        {
+            parsedItem = catalogItemById;
+            return true;
+        }
+
         var name = TryGetString(item, "name", out var itemName)
             ? itemName
             : TryGetString(item, "Name", out var itemNameUpperCase)
@@ -1124,6 +1158,39 @@ public partial class Home : IDisposable
 
         parsedItem = new Item(name, type, parsedWeight, value, slots, rarity, displayRarity);
         return true;
+    }
+
+    private void ApplyItemRulesProjection(JsonElement itemRules)
+    {
+        if (itemRules.ValueKind != JsonValueKind.Array)
+        {
+            return;
+        }
+
+        var updatedRules = new Dictionary<int, ItemRuleSnapshot>();
+        foreach (var rule in itemRules.EnumerateArray())
+        {
+            if (!TryGetInt32(rule, "itemDefId", out var itemDefId) || itemDefId <= 0)
+            {
+                continue;
+            }
+
+            var type = TryGetInt32(rule, "type", out var parsedType) && Enum.IsDefined(typeof(ItemType), parsedType)
+                ? (ItemType)parsedType
+                : ItemType.Sellable;
+            var weight = TryGetInt32(rule, "weight", out var parsedWeight) ? parsedWeight : 0;
+            var slots = TryGetInt32(rule, "slots", out var parsedSlots) ? parsedSlots : 1;
+            var rarity = TryGetInt32(rule, "rarity", out var parsedRarity) && Enum.IsDefined(typeof(Rarity), parsedRarity)
+                ? (Rarity)parsedRarity
+                : Rarity.Common;
+
+            updatedRules[itemDefId] = new ItemRuleSnapshot(itemDefId, type, weight, slots, rarity);
+        }
+
+        if (updatedRules.Count > 0)
+        {
+            _itemRulesById = updatedRules;
+        }
     }
 
     private static bool TryReadPlayerStats(JsonElement statsElement, out PlayerStats parsedStats)
@@ -1269,7 +1336,7 @@ public partial class Home : IDisposable
 
     private async Task ExecuteLootActionAsync(string action, Item item, string eventName)
     {
-        await ExecuteRaidActionAsync(action, new { itemName = item.Name });
+        await ExecuteRaidActionAsync(action, new { itemDefId = item.ItemDefId });
         GameEventLog.Append(new GameEvent(
             eventName,
             _activeRaidId,
@@ -1291,7 +1358,9 @@ public partial class Home : IDisposable
     private string GetEquippedWeaponName()
     {
         var weapon = _raid?.Inventory.EquippedWeapon;
-        return weapon?.Name ?? FallbackKnifeName;
+        return ItemPresentationCatalog.GetLabel(weapon) is { Length: > 0 } label
+            ? label
+            : ItemPresentationCatalog.GetLabel(ItemCatalog.GetByItemDefId(FallbackKnifeItemDefId));
     }
 
     private string GetAmmoHudText()
@@ -1387,7 +1456,7 @@ public partial class Home : IDisposable
         {
             return Task.CompletedTask;
         }
-        return ExecuteRaidActionAsync("drop-carried", new { itemName = item.Name });
+        return ExecuteRaidActionAsync("drop-carried", new { itemDefId = item.ItemDefId });
     }
 
     private Task DropEquippedAsync(ItemType slotType)
@@ -1471,7 +1540,7 @@ public partial class Home : IDisposable
 
         if (item.Type == ItemType.Backpack)
         {
-            var backpackCapacity = CombatBalance.GetBackpackCapacity(item.Name);
+            var backpackCapacity = CombatBalance.GetBackpackCapacity(item);
             var currentSlots = carriedItems.Sum(x => x.Slots);
             var spilledWeight = 0;
             while (currentSlots > backpackCapacity && carriedItems.Count > 0)
@@ -1627,10 +1696,10 @@ public partial class Home : IDisposable
         return $"${GetReallocateStatCost()}";
     }
 
-    private int GetBuyPrice(string itemName)
+    private int GetBuyPrice(Item item)
     {
         return CombatBalance.GetShopPrice(
-            CombatBalance.GetBuyPrice(itemName),
+            CombatBalance.GetBuyPrice(item),
             CombatBalance.GetCharismaModifier(_acceptedStats.Charisma),
             isBuying: true);
     }
@@ -1643,7 +1712,7 @@ public partial class Home : IDisposable
 
     private int GetSellPrice(Item item)
     {
-        if (string.Equals(item.Name, FallbackKnifeName, StringComparison.OrdinalIgnoreCase))
+        if (item.ItemDefId == FallbackKnifeItemDefId)
         {
             return 0;
         }
@@ -1669,7 +1738,7 @@ public partial class Home : IDisposable
             return false;
         }
 
-        if (string.Equals(item.Name, "Medkit", StringComparison.OrdinalIgnoreCase))
+        if (item.ItemDefId == MedkitItemDefId)
         {
             return true;
         }
@@ -1730,7 +1799,14 @@ public partial class Home : IDisposable
         }
 
         _money = snapshot.Money;
-        _shopStock = snapshot.ShopStock.Select(item => new ShopStock(item)).ToList();
+        _shopStock = snapshot.ShopStock
+            .Select(offer => ItemCatalog.TryGetByItemDefId(offer.ItemDefId, out var item) && item is not null
+                ? new ShopStock(offer, item)
+                : null)
+            .Where(stock => stock is not null)
+            .Cast<ShopStock>()
+            .ToList();
+        _itemRulesById = snapshot.ItemRules.ToDictionary(rule => rule.ItemDefId);
         _acceptedStats = snapshot.AcceptedStats;
         _draftStats = snapshot.DraftStats;
         _availableStatPoints = snapshot.AvailableStatPoints;
@@ -1763,13 +1839,13 @@ public partial class Home : IDisposable
 
     private void ApplyActiveRaidSnapshot(RaidSnapshot snapshot)
     {
-        var broughtItems = snapshot.EquippedItems.ToList();
-        var carriedItems = snapshot.CarriedLoot.ToList();
+        var broughtItems = (snapshot.EquippedItems ?? []).ToList();
+        var carriedItems = (snapshot.CarriedLoot ?? []).ToList();
         _raid = new RaidState(
             snapshot.Health,
             RaidInventory.FromItems(broughtItems, carriedItems, snapshot.BackpackCapacity));
         _raid.Inventory.DiscoveredLoot.Clear();
-        _raid.Inventory.DiscoveredLoot.AddRange(snapshot.DiscoveredLoot);
+        _raid.Inventory.DiscoveredLoot.AddRange(snapshot.DiscoveredLoot ?? []);
         _raid.Inventory.MedkitCount = snapshot.Medkits;
         _raid.Inventory.BackpackCapacity = snapshot.BackpackCapacity;
         _raidEncumbrance = snapshot.Encumbrance > 0 || snapshot.MaxEncumbrance > 0 ? snapshot.Encumbrance : null;
@@ -1785,20 +1861,26 @@ public partial class Home : IDisposable
         _challenge = snapshot.Challenge;
         _distanceFromExtract = snapshot.DistanceFromExtract;
         _ammo = snapshot.Ammo;
-        _encounterDescription = snapshot.EncounterDescription;
+        _encounterDescription = RaidPresentationCatalog.GetEncounterDescription(
+            snapshot.EncounterDescriptionKey,
+            Enum.TryParse<EncounterType>(snapshot.EncounterType, ignoreCase: true, out var snapshotEncounterType)
+                ? snapshotEncounterType
+                : EncounterType.Neutral,
+            snapshot.EncounterDescription,
+            snapshot.ExtractHoldActive);
         _contactState = string.IsNullOrWhiteSpace(snapshot.ContactState) ? string.Empty : snapshot.ContactState;
         _surpriseSide = string.IsNullOrWhiteSpace(snapshot.SurpriseSide) ? string.Empty : snapshot.SurpriseSide;
         _initiativeWinner = string.IsNullOrWhiteSpace(snapshot.InitiativeWinner) ? string.Empty : snapshot.InitiativeWinner;
         _openingActionsRemaining = snapshot.OpeningActionsRemaining;
         _surprisePersistenceEligible = snapshot.SurprisePersistenceEligible;
-        _enemyName = snapshot.EnemyName;
+        _enemyName = RaidPresentationCatalog.GetEnemyLabel(snapshot.EnemyKey, snapshot.EnemyName);
         _enemyHealth = snapshot.EnemyHealth;
         _enemyDexterity = snapshot.EnemyDexterity;
         _enemyConstitution = snapshot.EnemyConstitution;
         _enemyStrength = snapshot.EnemyStrength;
         _lootContainer = snapshot.LootContainer;
         _log.Clear();
-        _log.AddRange(snapshot.LogEntries);
+        _log.AddRange((snapshot.LogEntries ?? []).Select(RaidPresentationCatalog.LocalizeLogEntry));
 
         if (!Enum.TryParse<EncounterType>(snapshot.EncounterType, ignoreCase: true, out var encounterType))
         {

@@ -90,7 +90,7 @@ test("local profile_bootstrap re-derives stale raid max encumbrance and max heal
   assert.equal(bootstrap.activeRaid.maxEncumbrance, 175);
 });
 
-test("local profile_bootstrap exposes keyed item identities for legacy saved items", async () => {
+test("local profile_bootstrap exposes itemDefId identities for legacy saved items", async () => {
   const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? DEFAULT_SUPABASE_URL;
   const publishableKey = Deno.env.get("SUPABASE_PUBLISHABLE_KEY") ?? DEFAULT_PUBLISHABLE_KEY;
   const repository = createProfileRpcRepository({ supabaseUrl, publishableKey, fetchImpl: fetch });
@@ -112,9 +112,33 @@ test("local profile_bootstrap exposes keyed item identities for legacy saved ite
 
   const bootstrap = await repository.bootstrapProfile(accessToken);
 
-  assert.equal(bootstrap.mainStash[0].itemKey, "makarov");
-  assert.equal(bootstrap.mainStash[1].itemKey, "6b2_body_armor");
-  assert.equal(bootstrap.onPersonItems[0].item.itemKey, "ak74");
+  assert.deepEqual(
+    bootstrap.mainStash.map((item) => item.itemDefId).sort((left, right) => left - right),
+    [2, 8],
+  );
+  assert.equal(bootstrap.onPersonItems[0].item.itemDefId, 4);
+});
+
+test("local profile_bootstrap prefers authoritative raid session log entries over stale save payload nulls", async () => {
+  const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? DEFAULT_SUPABASE_URL;
+  const publishableKey = Deno.env.get("SUPABASE_PUBLISHABLE_KEY") ?? DEFAULT_PUBLISHABLE_KEY;
+  const repository = createProfileRpcRepository({ supabaseUrl, publishableKey, fetchImpl: fetch });
+  const { accessToken, userId } = await signUpLocalUser(supabaseUrl, publishableKey);
+
+  await seedMainCharacterProfile(repository, supabaseUrl, publishableKey, accessToken, userId);
+  const startedRaid = await repository.dispatchAction(accessToken, "start-main-raid", {});
+  assert.ok(startedRaid.activeRaid);
+
+  const saveRow = await getSingleRow(supabaseUrl, publishableKey, accessToken, "game_saves", userId);
+  const staleSavePayload = structuredClone(saveRow.payload);
+  staleSavePayload.activeRaid.logEntries = null;
+
+  await updateRow(supabaseUrl, publishableKey, accessToken, "game_saves", userId, { payload: staleSavePayload });
+
+  const bootstrap = await repository.bootstrapProfile(accessToken);
+
+  assert.ok(bootstrap.activeRaid);
+  assert.deepEqual(bootstrap.activeRaid.logEntries, startedRaid.activeRaid.logEntries);
 });
 
 test("local start-main-raid uses accepted stats for raid max health and encumbrance", async () => {
@@ -139,6 +163,54 @@ test("local start-main-raid uses accepted stats for raid max health and encumbra
     wisdom: 9,
     charisma: 16,
   });
+});
+
+test("local game_action accepts itemDefId for buy-from-shop", async () => {
+  const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? DEFAULT_SUPABASE_URL;
+  const publishableKey = Deno.env.get("SUPABASE_PUBLISHABLE_KEY") ?? DEFAULT_PUBLISHABLE_KEY;
+  const repository = createProfileRpcRepository({ supabaseUrl, publishableKey, fetchImpl: fetch });
+  const { accessToken, userId } = await signUpLocalUser(supabaseUrl, publishableKey);
+
+  await seedMainCharacterProfile(repository, supabaseUrl, publishableKey, accessToken, userId);
+
+  const updated = await repository.dispatchAction(accessToken, "buy-from-shop", {
+    itemDefId: 19,
+  });
+
+  assert.ok(Array.isArray(updated.onPersonItems));
+  assert.equal(updated.onPersonItems.at(-1).item.itemDefId, 19);
+});
+
+test("local game_action accepts itemDefId for take-loot", async () => {
+  const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? DEFAULT_SUPABASE_URL;
+  const publishableKey = Deno.env.get("SUPABASE_PUBLISHABLE_KEY") ?? DEFAULT_PUBLISHABLE_KEY;
+  const repository = createProfileRpcRepository({ supabaseUrl, publishableKey, fetchImpl: fetch });
+  const { accessToken, userId } = await signUpLocalUser(supabaseUrl, publishableKey);
+
+  await seedMainCharacterProfile(repository, supabaseUrl, publishableKey, accessToken, userId);
+  const startedRaid = await repository.dispatchAction(accessToken, "start-main-raid", {});
+  assert.ok(startedRaid.activeRaid);
+
+  const raidRow = await getSingleRow(supabaseUrl, publishableKey, accessToken, "raid_sessions", userId);
+  const lootRaidPayload = structuredClone(raidRow.payload);
+  lootRaidPayload.encounterType = "Loot";
+  lootRaidPayload.encounterTitle = "Loot Encounter";
+  lootRaidPayload.encounterDescription = "A searchable container appears.";
+  lootRaidPayload.lootContainer = "Dead Body";
+  lootRaidPayload.awaitingDecision = false;
+  lootRaidPayload.discoveredLoot = [createItem("Bandage", 4, 15, 1, 0, 0, 1)];
+  lootRaidPayload.carriedLoot = [];
+  lootRaidPayload.logEntries = ["Raid started on server."];
+
+  await updateRow(supabaseUrl, publishableKey, accessToken, "raid_sessions", userId, { payload: lootRaidPayload });
+
+  const updated = await repository.dispatchAction(accessToken, "take-loot", {
+    itemDefId: 20,
+    knownLogCount: 1,
+  });
+
+  assert.equal(updated.activeRaid.discoveredLoot.length, 0);
+  assert.equal(updated.activeRaid.carriedLoot[0].itemDefId, 20);
 });
 
 test("local game_action re-derives stale raid session encumbrance from accepted stats", async () => {

@@ -37,8 +37,8 @@ public sealed class RaidActionApiTests
                     "discoveredLoot": [],
                     "carriedLoot": [],
                     "equippedItems": [
-                      { "name": "AK74", "itemKey": "ak74", "type": 0, "value": 320, "slots": 1, "rarity": 2, "displayRarity": 3 },
-                      { "name": "Small Backpack", "itemKey": "small_backpack", "type": 2, "value": 75, "slots": 2, "rarity": 2, "displayRarity": 3 }
+                      { "itemDefId": 4 },
+                      { "itemDefId": 14 }
                     ],
                     "logEntries": ["Raid updated on server."]
                   }
@@ -53,7 +53,7 @@ public sealed class RaidActionApiTests
         Assert.Single(actionClient.Requests);
         Assert.Equal(7, Assert.IsType<int>(GetField(home, "_ammo")));
         Assert.Equal(11, Assert.IsType<int>(GetField(home, "_enemyHealth")));
-        Assert.Equal("Scav", Assert.IsType<string>(GetField(home, "_enemyName")));
+        Assert.Equal("Scavenger", Assert.IsType<string>(GetField(home, "_enemyName")));
         Assert.Equal(34, Assert.IsType<int>(GetField(home, "_maxHealth")));
         var raid = Assert.IsType<RaidState>(GetField(home, "_raid"));
         Assert.Equal("ak74", raid.Inventory.EquippedWeapon?.Key);
@@ -62,11 +62,57 @@ public sealed class RaidActionApiTests
     }
 
     [Fact]
+    public async Task AttackAsync_AppliesLeanItemDefIdRaidProjectionUsingRulesCatalog()
+    {
+        var actionClient = CreateActionClient("attack", payload =>
+        {
+            Assert.Equal("enemy", payload.GetProperty("target").GetString());
+            return CreateRaidResult("""
+                {
+                  "raid": {
+                    "health": 28,
+                    "ammo": 7,
+                    "weaponMalfunction": false,
+                    "encounterType": "Combat",
+                    "encounterDescription": "Server combat",
+                    "contactState": "PlayerAmbush",
+                    "surpriseSide": "Player",
+                    "initiativeWinner": "None",
+                    "openingActionsRemaining": 1,
+                    "surprisePersistenceEligible": true,
+                    "enemyName": "Scav",
+                    "enemyHealth": 11,
+                    "lootContainer": "Dead Body",
+                    "awaitingDecision": false,
+                    "discoveredLoot": [],
+                    "carriedLoot": [],
+                    "equippedItems": [
+                      { "itemDefId": 4 },
+                      { "itemDefId": 14 }
+                    ],
+                    "logEntries": ["Raid updated on server."]
+                  }
+                }
+                """);
+        });
+        var home = CreateHome(actionClient);
+        SeedRaid(home);
+
+        await InvokePrivateAsync(home, "AttackAsync");
+
+        var raid = Assert.IsType<RaidState>(GetField(home, "_raid"));
+        Assert.Equal("ak74", raid.Inventory.EquippedWeapon?.Key);
+        Assert.Equal("small_backpack", raid.Inventory.EquippedBackpack?.Key);
+        Assert.Equal(7, raid.Inventory.EquippedWeapon?.Weight);
+        Assert.Equal(1, raid.Inventory.EquippedBackpack?.Weight);
+    }
+
+    [Fact]
     public async Task TakeLootAsync_CallsBackend_And_AppliesReturnedRaidSnapshot()
     {
         var actionClient = CreateActionClient("take-loot", payload =>
         {
-            Assert.Equal("Bandage", payload.GetProperty("itemName").GetString());
+            Assert.Equal(20, payload.GetProperty("itemDefId").GetInt32());
             return CreateRaidResult("""
                 {
                   "raid": {
@@ -86,11 +132,11 @@ public sealed class RaidActionApiTests
                     "awaitingDecision": false,
                     "discoveredLoot": [],
                     "carriedLoot": [
-                      { "name": "Bandage", "itemKey": "bandage", "type": 4, "value": 15, "slots": 1, "rarity": 0, "displayRarity": 0 }
+                      { "itemDefId": 20 }
                     ],
                     "equippedItems": [
-                      { "name": "AK74", "itemKey": "ak74", "type": 0, "value": 320, "slots": 1, "rarity": 2, "displayRarity": 3 },
-                      { "name": "Small Backpack", "itemKey": "small_backpack", "type": 2, "value": 75, "slots": 2, "rarity": 2, "displayRarity": 3 }
+                      { "itemDefId": 4 },
+                      { "itemDefId": 14 }
                     ],
                     "logEntries": ["Raid updated on server."]
                   }
@@ -134,12 +180,12 @@ public sealed class RaidActionApiTests
                     "challenge": 3,
                     "distanceFromExtract": 4,
                     "discoveredLoot": [
-                      { "name": "Scrap Metal", "type": 5, "value": 18, "slots": 1, "rarity": 0, "displayRarity": 0 }
+                      { "itemDefId": 22 }
                     ],
                     "carriedLoot": [],
                     "equippedItems": [
-                      { "name": "AK74", "type": 0, "value": 320, "slots": 1, "rarity": 2, "displayRarity": 3 },
-                      { "name": "Small Backpack", "type": 2, "value": 75, "slots": 2, "rarity": 2, "displayRarity": 3 }
+                      { "itemDefId": 4 },
+                      { "itemDefId": 14 }
                     ],
                     "logEntries": ["Raid updated on server."]
                   }
@@ -185,8 +231,8 @@ public sealed class RaidActionApiTests
                     "discoveredLoot": [],
                     "carriedLoot": [],
                     "equippedItems": [
-                      { "name": "AK74", "type": 0, "value": 320, "slots": 1, "rarity": 2, "displayRarity": 3 },
-                      { "name": "Small Backpack", "type": 2, "value": 75, "slots": 2, "rarity": 2, "displayRarity": 3 }
+                      { "itemDefId": 4 },
+                      { "itemDefId": 14 }
                     ],
                     "logEntries": ["Moved one step closer to extract."]
                   }
@@ -229,8 +275,8 @@ public sealed class RaidActionApiTests
                     "discoveredLoot": [],
                     "carriedLoot": [],
                     "equippedItems": [
-                      { "name": "AK74", "type": 0, "value": 320, "slots": 1, "rarity": 2, "displayRarity": 3 },
-                      { "name": "Small Backpack", "type": 2, "value": 75, "slots": 2, "rarity": 2, "displayRarity": 3 }
+                      { "itemDefId": 4 },
+                      { "itemDefId": 14 }
                     ],
                     "logEntries": ["You drifted one step away from extract."]
                   }
@@ -275,8 +321,8 @@ public sealed class RaidActionApiTests
                     "discoveredLoot": [],
                     "carriedLoot": [],
                     "equippedItems": [
-                      { "name": "AK74", "type": 0, "value": 320, "slots": 1, "rarity": 2, "displayRarity": 3 },
-                      { "name": "Small Backpack", "type": 2, "value": 75, "slots": 2, "rarity": 2, "displayRarity": 3 }
+                      { "itemDefId": 4 },
+                      { "itemDefId": 14 }
                     ],
                     "logEntries": ["Raid updated on server."]
                   }
@@ -461,8 +507,8 @@ public sealed class RaidActionApiTests
                     "discoveredLoot": [],
                     "carriedLoot": [],
                     "equippedItems": [
-                      { "name": "AK74", "itemKey": "ak74", "type": 0, "value": 320, "slots": 1, "rarity": 2, "displayRarity": 3 },
-                      { "name": "Small Backpack", "itemKey": "small_backpack", "type": 2, "value": 75, "slots": 2, "rarity": 2, "displayRarity": 3 }
+                      { "itemDefId": 4 },
+                      { "itemDefId": 14 }
                     ],
                     "logEntries": ["Raid updated on server."]
                   }
@@ -525,6 +571,47 @@ public sealed class RaidActionApiTests
 
         Assert.True(Assert.IsType<bool>(GetField(home, "_extractHoldActive")));
         Assert.Equal(DateTimeOffset.Parse("2026-03-28T12:34:56Z"), (DateTimeOffset?)GetField(home, "_holdAtExtractUntil"));
+    }
+
+    [Fact]
+    public void ApplyActiveRaidSnapshot_ToleratesNullLogEntries()
+    {
+        var home = CreateHome(new FakeGameActionApiClient());
+
+        InvokePrivate(
+            home,
+            "ApplyActiveRaidSnapshot",
+            new RaidSnapshot(
+                Health: 30,
+                BackpackCapacity: 3,
+                Ammo: 8,
+                WeaponMalfunction: false,
+                Medkits: 1,
+                LootSlots: 0,
+                Challenge: 0,
+                DistanceFromExtract: 0,
+                EncounterType: "Extraction",
+                EncounterTitle: "Extraction",
+                EncounterDescription: "Holding extract.",
+                EnemyName: string.Empty,
+                EnemyHealth: 0,
+                EnemyDexterity: 0,
+                EnemyConstitution: 0,
+                EnemyStrength: 0,
+                LootContainer: string.Empty,
+                AwaitingDecision: false,
+                ContactState: "None",
+                SurpriseSide: "None",
+                InitiativeWinner: "None",
+                OpeningActionsRemaining: 0,
+                SurprisePersistenceEligible: false,
+                DiscoveredLoot: [],
+                CarriedLoot: [],
+                EquippedItems: [],
+                LogEntries: null!));
+
+        var log = Assert.IsType<List<string>>(GetField(home, "_log"));
+        Assert.Empty(log);
     }
 
     [Fact]
@@ -659,11 +746,11 @@ public sealed class RaidActionApiTests
                     {
                       "raid": {
                         "carriedLoot": [
-                          { "name": "Bandage", "type": 3, "value": 15, "slots": 1, "rarity": 0, "displayRarity": 0, "weight": 1 }
+                          { "itemDefId": 20 }
                         ],
                         "equippedItems": [
-                          { "name": "AK74", "type": 0, "value": 320, "slots": 1, "rarity": 2, "displayRarity": 3, "weight": 9 },
-                          { "name": "Small Backpack", "type": 2, "value": 75, "slots": 2, "rarity": 2, "displayRarity": 3, "weight": 4 }
+                          { "itemDefId": 4 },
+                          { "itemDefId": 14 }
                         ]
                       }
                     }
@@ -694,6 +781,7 @@ public sealed class RaidActionApiTests
         var home = new Home();
         SetProperty(home, "Profiles", new FakeProfileApiClient());
         SetProperty(home, "Actions", actionClient);
+        SetProperty(home, "Telemetry", new NoOpTelemetryService());
         return home;
     }
 
@@ -701,6 +789,12 @@ public sealed class RaidActionApiTests
     {
         SetField(home, "_inRaid", true);
         SetField(home, "_maxHealth", 34);
+        SetField(home, "_itemRulesById", new Dictionary<int, ItemRuleSnapshot>
+        {
+            [4] = new(4, ItemType.Weapon, 7, 1, Rarity.Rare),
+            [14] = new(14, ItemType.Backpack, 1, 1, Rarity.Common),
+            [20] = new(20, ItemType.Sellable, 1, 1, Rarity.Common)
+        });
         SetField(home, "_raid", new RaidState(
             30,
             RaidInventory.FromItems([ItemCatalog.Create("AK74"), ItemCatalog.Create("Small Backpack")], [], 3)));
@@ -830,6 +924,14 @@ public sealed class RaidActionApiTests
             var request = new GameActionRequest(action, JsonSerializer.SerializeToElement(payload));
             Requests.Add(request);
             return Task.FromResult(ResponseFactory(request));
+        }
+    }
+
+    private sealed class NoOpTelemetryService : IClientTelemetryService
+    {
+        public ValueTask ReportErrorAsync(string message, object? details = null, CancellationToken cancellationToken = default)
+        {
+            return ValueTask.CompletedTask;
         }
     }
 }

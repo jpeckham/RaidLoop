@@ -34,4 +34,6 @@ public sealed record RaidSnapshot(
     int MaxEncumbrance = 0,
     bool ExtractHoldActive = false,
     [property: JsonConverter(typeof(FlexibleNullableDateTimeOffsetJsonConverter))]
-    DateTimeOffset? HoldAtExtractUntil = null);
+    DateTimeOffset? HoldAtExtractUntil = null,
+    string? EncounterDescriptionKey = null,
+    string? EnemyKey = null);

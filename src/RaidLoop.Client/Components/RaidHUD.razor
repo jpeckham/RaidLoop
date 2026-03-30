@@ -74,7 +74,7 @@
                                 <li>
                                     <div class="row-item row-item-inline">
                                         <ItemTypeIcon Type="lootItem.Type" />
-                                        <span class="item-name rarity-@lootItem.DisplayRarity.ToString().ToLower()">@lootItem.Name</span>
+                                        <span class="item-name rarity-@lootItem.DisplayRarity.ToString().ToLower()">@ItemPresentationCatalog.GetLabel(lootItem)</span>
                                         <div class="row-actions">
                                             @if (IsEquipable(lootItem))
                                             {
@@ -103,7 +103,7 @@
                     {
                         <div class="row-item">
                             <ItemTypeIcon Type="equipped.Type" />
-                            <span class="item-name rarity-@equipped.DisplayRarity.ToString().ToLower()">@equipped.Name</span>
+                            <span class="item-name rarity-@equipped.DisplayRarity.ToString().ToLower()">@ItemPresentationCatalog.GetLabel(equipped)</span>
                             <div class="row-actions">
                                 <button class="action" @onclick="() => OnDropEquipped.InvokeAsync(equipped.Type)">Drop</button>
                             </div>
@@ -121,7 +121,7 @@
                         {
                             <div class="row-item">
                                 <ItemTypeIcon Type="carried.Type" />
-                                <span class="item-name rarity-@carried.DisplayRarity.ToString().ToLower()">@carried.Name</span>
+                                <span class="item-name rarity-@carried.DisplayRarity.ToString().ToLower()">@ItemPresentationCatalog.GetLabel(carried)</span>
                                 <div class="row-actions">
                                     <button class="action" @onclick="() => OnDropCarried.InvokeAsync(carried)">Drop</button>
                                     @if (IsEquipable(carried))

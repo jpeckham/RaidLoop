@@ -35,6 +35,7 @@ public sealed record OpeningPhaseContext(
     int PlayerGearAwarenessModifier = 0,
     int EnemyLocalizationModifier = 0);
 
+[JsonConverter(typeof(ItemJsonConverter))]
 public sealed record Item(
     string Name,
     ItemType Type,
@@ -44,6 +45,31 @@ public sealed record Item(
     Rarity Rarity = Rarity.Common,
     DisplayRarity DisplayRarity = DisplayRarity.Common)
 {
+    [JsonPropertyName("itemDefId")]
+    public int ItemDefId
+    {
+        get
+        {
+            if (_itemDefId > 0)
+            {
+                return _itemDefId;
+            }
+
+            if (!string.IsNullOrWhiteSpace(_key) && ItemCatalog.TryGetItemDefIdByKey(_key!, out var resolvedFromKey))
+            {
+                return resolvedFromKey;
+            }
+
+            if (!string.IsNullOrWhiteSpace(Name) && ItemCatalog.TryGetItemDefIdByLegacyName(Name, out var resolvedFromName))
+            {
+                return resolvedFromName;
+            }
+
+            return 0;
+        }
+        init => _itemDefId = value;
+    }
+
     [JsonPropertyName("itemKey")]
     public string Key
     {
@@ -65,6 +91,7 @@ public sealed record Item(
     }
 
     private string? _key;
+    private int _itemDefId;
 }
 
 public sealed class GameState
@@ -159,7 +186,7 @@ public sealed class RaidInventory
 
         foreach (var item in broughtItems.Where(x => x.Type is not (ItemType.Weapon or ItemType.Armor or ItemType.Backpack)))
         {
-            if (string.Equals(item.Name, "Medkit", StringComparison.OrdinalIgnoreCase))
+            if (CombatBalance.IsMedkit(item))
             {
                 inventory.MedkitCount++;
                 continue;
@@ -170,7 +197,7 @@ public sealed class RaidInventory
 
         foreach (var item in carriedItems)
         {
-            if (string.Equals(item.Name, "Medkit", StringComparison.OrdinalIgnoreCase))
+            if (CombatBalance.IsMedkit(item))
             {
                 inventory.MedkitCount++;
                 continue;

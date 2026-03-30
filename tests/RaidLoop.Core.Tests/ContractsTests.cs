@@ -12,12 +12,12 @@ public sealed class ContractsTests
         var response = new AuthBootstrapResponse(
             IsAuthenticated: true,
             UserEmail: "player@example.com",
-            Snapshot: new PlayerSnapshot(
-                Money: 500,
-                MainStash: [ItemCatalog.Create("Makarov")],
-                OnPersonItems: [new OnPersonSnapshot(ItemCatalog.Create("Small Backpack"), true)],
-                ShopStock: [ItemCatalog.Create("Makarov"), ItemCatalog.Create("PPSH")],
-                AcceptedStats: new PlayerStats(8, 14, 12, 10, 13, 16),
+                Snapshot: new PlayerSnapshot(
+                    Money: 500,
+                    MainStash: [ItemCatalog.Create("Makarov")],
+                    OnPersonItems: [new OnPersonSnapshot(ItemCatalog.Create("Small Backpack"), true)],
+                    ShopStock: [new ShopOfferSnapshot(2, 60, 1), new ShopOfferSnapshot(3, 160, 1)],
+                    AcceptedStats: new PlayerStats(8, 14, 12, 10, 13, 16),
                 DraftStats: new PlayerStats(8, 15, 12, 10, 13, 16),
                 AvailableStatPoints: 5,
                 StatsAccepted: true,
@@ -64,7 +64,8 @@ public sealed class ContractsTests
         Assert.Equal("player@example.com", roundTrip.UserEmail);
         Assert.Equal(500, roundTrip.Snapshot.Money);
         Assert.Equal("Makarov", Assert.Single(roundTrip.Snapshot.MainStash).Name);
-        Assert.Equal(["Makarov", "PPSH"], roundTrip.Snapshot.ShopStock.Select(item => item.Name).ToArray());
+        Assert.Equal([2, 3], roundTrip.Snapshot.ShopStock.Select(item => item.ItemDefId).ToArray());
+        Assert.Equal([60, 160], roundTrip.Snapshot.ShopStock.Select(item => item.Price).ToArray());
         Assert.Equal(14, roundTrip.Snapshot.AcceptedStats.Dexterity);
         Assert.Equal(15, roundTrip.Snapshot.DraftStats.Dexterity);
         Assert.Equal(5, roundTrip.Snapshot.AvailableStatPoints);
@@ -186,7 +187,7 @@ public sealed class ContractsTests
     }
 
     [Fact]
-    public void AuthBootstrapResponse_RoundTripsItemKeyInMainStash()
+    public void AuthBootstrapResponse_RoundTripsItemDefIdInMainStash()
     {
         const string json = """
             {
@@ -195,7 +196,7 @@ public sealed class ContractsTests
               "snapshot": {
                 "money": 500,
                 "mainStash": [
-                  { "itemKey": "makarov", "name": "Makarov", "type": 0, "value": 60, "slots": 1, "rarity": 0, "displayRarity": 1 }
+                  { "itemDefId": 2, "type": 0, "value": 60, "slots": 1, "rarity": 0, "displayRarity": 1, "weight": 2 }
                 ],
                 "onPersonItems": [],
                 "shopStock": [],
@@ -210,11 +211,49 @@ public sealed class ContractsTests
 
         var serialized = RoundTripBootstrapJson(json);
 
-        Assert.Contains("\"itemKey\":\"makarov\"", serialized);
+        Assert.Contains("\"itemDefId\":2", serialized);
+        Assert.DoesNotContain("\"itemKey\":", serialized);
+        Assert.DoesNotContain("\"name\":", serialized);
     }
 
     [Fact]
-    public void AuthBootstrapResponse_RoundTripsItemKeyInOnPersonItems()
+    public void AuthBootstrapResponse_RoundTripsLeanShopOffersWithoutEmbeddedItems()
+    {
+        const string json = """
+            {
+              "isAuthenticated": true,
+              "userEmail": "player@example.com",
+              "snapshot": {
+                "money": 500,
+                "mainStash": [],
+                "onPersonItems": [],
+                "shopStock": [
+                  { "itemDefId": 2, "price": 60, "stock": 1 },
+                  { "itemDefId": 3, "price": 160, "stock": 1 }
+                ],
+                "itemRules": [
+                  { "itemDefId": 2, "type": 0, "weight": 2, "slots": 1, "rarity": 0 },
+                  { "itemDefId": 3, "type": 0, "weight": 12, "slots": 1, "rarity": 1 }
+                ],
+                "playerConstitution": 10,
+                "playerMaxHealth": 30,
+                "randomCharacterAvailableAt": "2026-03-18T00:00:00Z",
+                "randomCharacter": null,
+                "activeRaid": null
+              }
+            }
+            """;
+
+        var serialized = RoundTripBootstrapJson(json);
+
+        Assert.Contains("\"shopStock\":[{\"itemDefId\":2,\"price\":60,\"stock\":1},{\"itemDefId\":3,\"price\":160,\"stock\":1}]", serialized);
+        Assert.DoesNotContain("\"name\":", serialized);
+        Assert.DoesNotContain("\"itemKey\":", serialized);
+        Assert.Contains("\"itemRules\":[{\"itemDefId\":2,\"type\":0,\"weight\":2,\"slots\":1,\"rarity\":0},{\"itemDefId\":3,\"type\":0,\"weight\":12,\"slots\":1,\"rarity\":1}]", serialized);
+    }
+
+    [Fact]
+    public void AuthBootstrapResponse_RoundTripsItemDefIdInOnPersonItems()
     {
         const string json = """
             {
@@ -225,7 +264,7 @@ public sealed class ContractsTests
                 "mainStash": [],
                 "onPersonItems": [
                   {
-                    "item": { "itemKey": "6sh118", "name": "6Sh118", "type": 2, "value": 600, "slots": 4, "rarity": 4, "displayRarity": 4 },
+                    "item": { "itemDefId": 18, "type": 2, "value": 600, "slots": 4, "rarity": 4, "displayRarity": 4, "weight": 8 },
                     "isEquipped": true
                   }
                 ],
@@ -241,11 +280,13 @@ public sealed class ContractsTests
 
         var serialized = RoundTripBootstrapJson(json);
 
-        Assert.Contains("\"itemKey\":\"6sh118\"", serialized);
+        Assert.Contains("\"itemDefId\":18", serialized);
+        Assert.DoesNotContain("\"itemKey\":", serialized);
+        Assert.DoesNotContain("\"name\":", serialized);
     }
 
     [Fact]
-    public void AuthBootstrapResponse_RoundTripsItemKeyInActiveRaid()
+    public void AuthBootstrapResponse_RoundTripsItemDefIdInActiveRaid()
     {
         const string json = """
             {
@@ -285,11 +326,11 @@ public sealed class ContractsTests
                   "openingActionsRemaining": 1,
                   "surprisePersistenceEligible": false,
                   "discoveredLoot": [
-                    { "itemKey": "6b2_body_armor", "name": "6B2 body armor", "type": 1, "value": 95, "slots": 1, "rarity": 0, "displayRarity": 1 }
+                    { "itemDefId": 8, "type": 1, "value": 95, "slots": 1, "rarity": 0, "displayRarity": 1, "weight": 9 }
                   ],
                   "carriedLoot": [],
                   "equippedItems": [
-                    { "itemKey": "ak74", "name": "AK74", "type": 0, "value": 320, "slots": 1, "rarity": 2, "displayRarity": 3 }
+                    { "itemDefId": 4, "type": 0, "value": 320, "slots": 1, "rarity": 2, "displayRarity": 3, "weight": 7 }
                   ],
                   "logEntries": ["Raid started."],
                   "encumbrance": 19,
@@ -303,8 +344,10 @@ public sealed class ContractsTests
 
         var serialized = RoundTripBootstrapJson(json);
 
-        Assert.Contains("\"itemKey\":\"6b2_body_armor\"", serialized);
-        Assert.Contains("\"itemKey\":\"ak74\"", serialized);
+        Assert.Contains("\"itemDefId\":8", serialized);
+        Assert.Contains("\"itemDefId\":4", serialized);
+        Assert.DoesNotContain("\"itemKey\":", serialized);
+        Assert.DoesNotContain("\"name\":", serialized);
     }
 
     [Fact]

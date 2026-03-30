@@ -31,7 +31,7 @@
             var item = lootCharacter.Inventory[luckIndex];
             <div class="row-item">
                 <ItemTypeIcon Type="item.Type" />
-                <span class="item-name rarity-@item.DisplayRarity.ToString().ToLower()">@item.Name</span>
+                <span class="item-name rarity-@item.DisplayRarity.ToString().ToLower()">@ItemPresentationCatalog.GetLabel(item)</span>
                 <div class="row-actions">
                     <button class="action" disabled="@IsStashFull" @onclick="() => OnStoreLuckRunItem.InvokeAsync(luckIndex)">Store</button>
                     <button class="action" @onclick="() => OnMoveToForRaid.InvokeAsync(luckIndex)">For Raid</button>

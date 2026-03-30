@@ -212,8 +212,8 @@ public sealed class HomeMarkupBindingTests
     {
         var markup = File.ReadAllText(ShopPanelPath);
 
-        Assert.Contains("Buy ($@GetBuyPrice(stock.Item.Name))", markup);
-        Assert.DoesNotContain("<small>$@GetBuyPrice(stock.Item.Name)</small>", markup);
+        Assert.Contains("Buy ($@GetBuyPrice(stock.Item))", markup);
+        Assert.DoesNotContain("<small>$@stock.Price</small>", markup);
     }
 
     [Fact]
@@ -232,7 +232,7 @@ public sealed class HomeMarkupBindingTests
         Assert.Contains("<span class=\"encumbrance-value @GetEncumbranceSeverityCssClass()\">@EncumbranceText</span>", loadoutMarkup);
         Assert.Contains("<span class=\"encumbrance-tier @GetEncumbranceSeverityCssClass()\">@GetEncumbranceTierLabel()</span>", loadoutMarkup);
         Assert.Contains("disabled=\"@(!CanMoveToLoadoutItem(item))\"", stashMarkup);
-        Assert.Contains("disabled=\"@(!CanBuyItem(stock.Item) || !CanPurchaseItem(stock.Item) || Money < GetBuyPrice(stock.Item.Name))\"", shopMarkup);
+        Assert.Contains("disabled=\"@(!CanBuyItem(stock.Item) || !CanPurchaseItem(stock.Item) || Money < stock.Price)\"", shopMarkup);
     }
 
     [Fact]
@@ -442,7 +442,7 @@ public sealed class HomeMarkupBindingTests
 
         Assert.Contains("Stock=\"VisibleShopStock\"", homeMarkup);
         Assert.Contains("CanBuyItem=\"CanBuyItem\"", homeMarkup);
-        Assert.Contains("disabled=\"@(!CanBuyItem(stock.Item) || !CanPurchaseItem(stock.Item) || Money < GetBuyPrice(stock.Item.Name))\"", shopMarkup);
+        Assert.Contains("disabled=\"@(!CanBuyItem(stock.Item) || !CanPurchaseItem(stock.Item) || Money < stock.Price)\"", shopMarkup);
     }
 
     [Fact]
@@ -451,7 +451,8 @@ public sealed class HomeMarkupBindingTests
         var codeBehind = File.ReadAllText(HomeCodeBehindPath);
         var migration = File.ReadAllText(PlayerStatSystemMigrationPath.Replace("2026032603_add_player_stat_system.sql", "2026032604_author_shop_stock_from_item_defs.sql"));
 
-        Assert.Contains("_shopStock = snapshot.ShopStock.Select(item => new ShopStock(item)).ToList();", codeBehind);
+        Assert.Contains("_shopStock = snapshot.ShopStock", codeBehind);
+        Assert.Contains("new ShopStock(offer, item)", codeBehind);
         Assert.DoesNotContain("new(ItemCatalog.Create(\"Makarov\"))", codeBehind);
         Assert.Contains("add column if not exists shop_enabled boolean not null default false", migration);
         Assert.Contains("create or replace function game.shop_stock()", migration);

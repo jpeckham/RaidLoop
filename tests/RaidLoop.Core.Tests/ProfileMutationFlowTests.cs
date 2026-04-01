@@ -1415,6 +1415,30 @@ public sealed class ProfileMutationFlowTests
         Assert.Equal(ItemCatalog.Get("Makarov"), Assert.IsType<Item>(args[1]));
     }
 
+    [Fact]
+    public void TryReadItem_KnownItemDefinitionPrefersClientOwnedIdentityOverLegacyName()
+    {
+        using var document = JsonDocument.Parse("""
+        {
+            "name": "Server-authored alias",
+            "itemDefId": "AK74",
+            "type": 0,
+            "value": 320,
+            "slots": 1,
+            "weight": 7
+        }
+        """);
+
+        var method = typeof(Home).GetMethod("TryReadItem", BindingFlags.Static | BindingFlags.NonPublic);
+        Assert.NotNull(method);
+
+        var args = new object?[] { document.RootElement, null };
+        var parsed = Assert.IsType<bool>(method!.Invoke(null, args));
+
+        Assert.True(parsed);
+        Assert.Equal(ItemCatalog.Get("AK74"), Assert.IsType<Item>(args[1]));
+    }
+
     private static Home CreateHome(
         IProfileApiClient? profileApiClient = null,
         IGameActionApiClient? actionClient = null,

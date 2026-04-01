@@ -217,6 +217,15 @@ public sealed class HomeMarkupBindingTests
     }
 
     [Fact]
+    public void ItemRowsDoNotBindServerAuthoredNamesDirectly()
+    {
+        Assert.DoesNotContain("@entry.Item.Name", File.ReadAllText(LoadoutPanelPath));
+        Assert.DoesNotContain("@item.Name", File.ReadAllText(StashPanelPath));
+        Assert.DoesNotContain("@item.Name", File.ReadAllText(PreRaidPanelPath));
+        Assert.DoesNotContain("@stock.Item.Name", File.ReadAllText(ShopPanelPath));
+    }
+
+    [Fact]
     public void HomeWiresPreRaidEncumbranceIntoLoadoutAndInventoryPanels()
     {
         var markup = File.ReadAllText(HomeMarkupPath);

@@ -56,6 +56,63 @@ public sealed class StashStorageTests
     }
 
     [Fact]
+    public async Task LoadAsync_PrefersItemDefinitionIdOverLegacyNameWhenBothArePresent()
+    {
+        const string raw = """
+            {
+              "MainStash": [
+                {
+                  "name": "Server-authored alias",
+                  "itemDefId": "Makarov",
+                  "type": 0,
+                  "value": 60,
+                  "slots": 1,
+                  "weight": 2
+                }
+              ],
+              "RandomCharacterAvailableAt": "0001-01-01T00:00:00+00:00",
+              "RandomCharacter": null,
+              "Money": 500,
+              "OnPersonItems": []
+            }
+            """;
+
+        var storage = new StashStorage(new FakeJsRuntime(raw));
+
+        var save = await storage.LoadAsync();
+
+        Assert.Equal([ItemCatalog.Get("Makarov")], save.MainStash);
+    }
+
+    [Fact]
+    public async Task LoadAsync_UsesLegacyNameWhenItemDefinitionIdIsMissing()
+    {
+        const string raw = """
+            {
+              "MainStash": [
+                {
+                  "name": "Legacy label",
+                  "type": 0,
+                  "value": 60,
+                  "slots": 1,
+                  "weight": 2
+                }
+              ],
+              "RandomCharacterAvailableAt": "0001-01-01T00:00:00+00:00",
+              "RandomCharacter": null,
+              "Money": 500,
+              "OnPersonItems": []
+            }
+            """;
+
+        var storage = new StashStorage(new FakeJsRuntime(raw));
+
+        var save = await storage.LoadAsync();
+
+        Assert.Equal("Legacy label", Assert.Single(save.MainStash).Name);
+    }
+
+    [Fact]
     public async Task LoadAsync_MigratesLegacyRandomCharacterWithoutStats()
     {
         const string raw = """

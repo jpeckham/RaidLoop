@@ -84,6 +84,8 @@ public sealed class HomeMarkupBindingTests
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "RaidLoop.Client", "Services", "IProfileApiClient.cs"));
     private static readonly string ProfileSaveHandlerPath = Path.GetFullPath(
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "functions", "profile-save", "handler.mjs"));
+    private static readonly string ItemPresentationCatalogResxPath = Path.GetFullPath(
+        Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "RaidLoop.Client", "ItemPresentationCatalog.resx"));
     private static readonly string HomeMarkupPath = Path.GetFullPath(
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "RaidLoop.Client", "Pages", "Home.razor"));
     private static readonly string ClientIndexPath = Path.GetFullPath(
@@ -215,8 +217,9 @@ public sealed class HomeMarkupBindingTests
     }
 
     [Fact]
-    public void ItemRowsDoNotBindServerAuthoredNamesDirectly()
+    public void ClientItemLabelsComeFromAResourceBoundary()
     {
+        Assert.True(File.Exists(ItemPresentationCatalogResxPath));
         Assert.DoesNotContain("@entry.Item.Name", File.ReadAllText(LoadoutPanelPath));
         Assert.DoesNotContain("@item.Name", File.ReadAllText(StashPanelPath));
         Assert.DoesNotContain("@item.Name", File.ReadAllText(PreRaidPanelPath));

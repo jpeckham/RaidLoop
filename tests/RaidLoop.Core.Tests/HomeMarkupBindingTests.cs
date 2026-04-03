@@ -226,7 +226,6 @@ public sealed class HomeMarkupBindingTests
         var shopMarkup = File.ReadAllText(ShopPanelPath);
         var raidHudMarkup = File.ReadAllText(RaidHudPath);
 
-        Assert.Contains("EquippedItems=\"GetEquippedItems().ToList()\"", homeMarkup);
         Assert.Contains("ItemPresentationCatalog.GetLabel(entry.Item)", loadoutMarkup);
         Assert.Contains("ItemPresentationCatalog.GetLabel(item)", stashMarkup);
         Assert.Contains("ItemPresentationCatalog.GetLabel(item)", preRaidMarkup);

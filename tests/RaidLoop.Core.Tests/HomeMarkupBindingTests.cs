@@ -86,8 +86,6 @@ public sealed class HomeMarkupBindingTests
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "RaidLoop.Client", "Services", "IProfileApiClient.cs"));
     private static readonly string ProfileSaveHandlerPath = Path.GetFullPath(
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "functions", "profile-save", "handler.mjs"));
-    private static readonly string ItemPresentationCatalogResxPath = Path.GetFullPath(
-        Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "RaidLoop.Client", "ItemPresentationCatalog.resx"));
     private static readonly string HomeMarkupPath = Path.GetFullPath(
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "RaidLoop.Client", "Pages", "Home.razor"));
     private static readonly string ClientIndexPath = Path.GetFullPath(
@@ -219,13 +217,30 @@ public sealed class HomeMarkupBindingTests
     }
 
     [Fact]
-    public void ClientItemLabelsComeFromAResourceBoundary()
+    public void ClientFacingItemLabelsRouteThroughALocalizationLookupSeam()
     {
-        Assert.True(File.Exists(ItemPresentationCatalogResxPath));
-        Assert.DoesNotContain("@entry.Item.Name", File.ReadAllText(LoadoutPanelPath));
-        Assert.DoesNotContain("@item.Name", File.ReadAllText(StashPanelPath));
-        Assert.DoesNotContain("@item.Name", File.ReadAllText(PreRaidPanelPath));
-        Assert.DoesNotContain("@stock.Item.Name", File.ReadAllText(ShopPanelPath));
+        var homeMarkup = File.ReadAllText(HomeMarkupPath);
+        var loadoutMarkup = File.ReadAllText(LoadoutPanelPath);
+        var stashMarkup = File.ReadAllText(StashPanelPath);
+        var preRaidMarkup = File.ReadAllText(PreRaidPanelPath);
+        var shopMarkup = File.ReadAllText(ShopPanelPath);
+        var raidHudMarkup = File.ReadAllText(RaidHudPath);
+
+        Assert.Contains("EquippedItems=\"GetEquippedItems().ToList()\"", homeMarkup);
+        Assert.Contains("@GetItemLabel(entry.Item)", loadoutMarkup);
+        Assert.Contains("@GetItemLabel(item)", stashMarkup);
+        Assert.Contains("@GetItemLabel(item)", preRaidMarkup);
+        Assert.Contains("@GetItemLabel(stock.Item)", shopMarkup);
+        Assert.Contains("@GetItemLabel(lootItem)", raidHudMarkup);
+        Assert.Contains("@GetItemLabel(equipped)", raidHudMarkup);
+        Assert.Contains("@GetItemLabel(carried)", raidHudMarkup);
+        Assert.DoesNotContain("@entry.Item.Name", loadoutMarkup);
+        Assert.DoesNotContain("@item.Name", stashMarkup);
+        Assert.DoesNotContain("@item.Name", preRaidMarkup);
+        Assert.DoesNotContain("@stock.Item.Name", shopMarkup);
+        Assert.DoesNotContain("@lootItem.Name", raidHudMarkup);
+        Assert.DoesNotContain("@equipped.Name", raidHudMarkup);
+        Assert.DoesNotContain("@carried.Name", raidHudMarkup);
     }
 
     [Fact]

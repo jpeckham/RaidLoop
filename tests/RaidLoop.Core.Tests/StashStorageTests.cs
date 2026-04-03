@@ -63,11 +63,11 @@ public sealed class StashStorageTests
               "MainStash": [
                 {
                   "name": "Server-authored alias",
-                  "itemDefId": "Makarov",
+                  "itemDefId": 2,
                   "type": 0,
-                  "value": 60,
-                  "slots": 1,
-                  "weight": 2
+                  "value": 777,
+                  "slots": 9,
+                  "weight": 13
                 }
               ],
               "RandomCharacterAvailableAt": "0001-01-01T00:00:00+00:00",
@@ -81,7 +81,9 @@ public sealed class StashStorageTests
 
         var save = await storage.LoadAsync();
 
-        Assert.Equal([ItemCatalog.Get("Makarov")], save.MainStash);
+        var item = Assert.Single(save.MainStash);
+        Assert.Equal(ItemCatalog.Get("Makarov"), item);
+        Assert.NotEqual("Server-authored alias", item.Name);
     }
 
     [Fact]
@@ -93,9 +95,9 @@ public sealed class StashStorageTests
                 {
                   "name": "Legacy label",
                   "type": 0,
-                  "value": 60,
-                  "slots": 1,
-                  "weight": 2
+                  "value": 777,
+                  "slots": 9,
+                  "weight": 13
                 }
               ],
               "RandomCharacterAvailableAt": "0001-01-01T00:00:00+00:00",
@@ -109,7 +111,14 @@ public sealed class StashStorageTests
 
         var save = await storage.LoadAsync();
 
-        Assert.Equal("Legacy label", Assert.Single(save.MainStash).Name);
+        var item = Assert.Single(save.MainStash);
+        Assert.Equal("Legacy label", item.Name);
+        Assert.Equal(ItemType.Weapon, item.Type);
+        Assert.Equal(777, item.Value);
+        Assert.Equal(9, item.Slots);
+        Assert.Equal(13, item.Weight);
+        Assert.NotEqual(ItemCatalog.Get("Makarov"), item);
+        Assert.NotEqual(ItemCatalog.Get("AK74"), item);
     }
 
     [Fact]
@@ -122,9 +131,9 @@ public sealed class StashStorageTests
                   "name": "Legacy label",
                   "itemDefId": 9999,
                   "type": 0,
-                  "value": 60,
-                  "slots": 1,
-                  "weight": 2
+                  "value": 777,
+                  "slots": 9,
+                  "weight": 13
                 }
               ],
               "RandomCharacterAvailableAt": "0001-01-01T00:00:00+00:00",
@@ -138,7 +147,14 @@ public sealed class StashStorageTests
 
         var save = await storage.LoadAsync();
 
-        Assert.Equal("Legacy label", Assert.Single(save.MainStash).Name);
+        var item = Assert.Single(save.MainStash);
+        Assert.Equal("Legacy label", item.Name);
+        Assert.Equal(ItemType.Weapon, item.Type);
+        Assert.Equal(777, item.Value);
+        Assert.Equal(9, item.Slots);
+        Assert.Equal(13, item.Weight);
+        Assert.NotEqual(ItemCatalog.Get("Makarov"), item);
+        Assert.NotEqual(ItemCatalog.Get("AK74"), item);
     }
 
     [Fact]

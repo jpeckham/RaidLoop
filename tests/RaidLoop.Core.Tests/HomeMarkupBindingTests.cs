@@ -219,7 +219,6 @@ public sealed class HomeMarkupBindingTests
     [Fact]
     public void ClientFacingItemLabelsRouteThroughALocalizationLookupSeam()
     {
-        var homeMarkup = File.ReadAllText(HomeMarkupPath);
         var loadoutMarkup = File.ReadAllText(LoadoutPanelPath);
         var stashMarkup = File.ReadAllText(StashPanelPath);
         var preRaidMarkup = File.ReadAllText(PreRaidPanelPath);

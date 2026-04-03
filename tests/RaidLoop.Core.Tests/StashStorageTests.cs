@@ -58,12 +58,14 @@ public sealed class StashStorageTests
     [Fact]
     public async Task LoadAsync_PrefersItemDefinitionIdOverLegacyNameWhenBothArePresent()
     {
-        const string raw = """
+        var itemDefId = ItemCatalog.Get("Makarov").ItemDefId;
+
+        var raw = """
             {
               "MainStash": [
                 {
                   "name": "Server-authored alias",
-                  "itemDefId": 2,
+                  "itemDefId": __ITEM_DEF_ID__,
                   "type": 0,
                   "value": 777,
                   "slots": 9,
@@ -75,7 +77,7 @@ public sealed class StashStorageTests
               "Money": 500,
               "OnPersonItems": []
             }
-            """;
+            """.Replace("__ITEM_DEF_ID__", itemDefId.ToString());
 
         var storage = new StashStorage(new FakeJsRuntime(raw));
 
@@ -113,6 +115,7 @@ public sealed class StashStorageTests
 
         var item = Assert.Single(save.MainStash);
         Assert.Equal("Legacy label", item.Name);
+        Assert.Equal(0, item.ItemDefId);
         Assert.Equal(ItemType.Weapon, item.Type);
         Assert.Equal(777, item.Value);
         Assert.Equal(9, item.Slots);
@@ -124,12 +127,14 @@ public sealed class StashStorageTests
     [Fact]
     public async Task LoadAsync_UsesLegacyNameWhenItemDefinitionIdIsUnknown()
     {
-        const string raw = """
+        var itemDefId = ItemCatalog.Get("Makarov").ItemDefId + 9999;
+
+        var raw = """
             {
               "MainStash": [
                 {
                   "name": "Legacy label",
-                  "itemDefId": 9999,
+                  "itemDefId": __ITEM_DEF_ID__,
                   "type": 0,
                   "value": 777,
                   "slots": 9,
@@ -141,7 +146,7 @@ public sealed class StashStorageTests
               "Money": 500,
               "OnPersonItems": []
             }
-            """;
+            """.Replace("__ITEM_DEF_ID__", itemDefId.ToString());
 
         var storage = new StashStorage(new FakeJsRuntime(raw));
 
@@ -149,6 +154,7 @@ public sealed class StashStorageTests
 
         var item = Assert.Single(save.MainStash);
         Assert.Equal("Legacy label", item.Name);
+        Assert.Equal(itemDefId, item.ItemDefId);
         Assert.Equal(ItemType.Weapon, item.Type);
         Assert.Equal(777, item.Value);
         Assert.Equal(9, item.Slots);

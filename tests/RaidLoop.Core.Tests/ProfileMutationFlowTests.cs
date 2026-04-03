@@ -1407,16 +1407,18 @@ public sealed class ProfileMutationFlowTests
     [Fact]
     public void TryReadItem_KnownItemDefinitionPrefersClientOwnedIdentityOverLegacyName()
     {
+        var itemDefId = ItemCatalog.Get("AK74").ItemDefId;
+
         using var document = JsonDocument.Parse("""
         {
             "name": "Server-authored alias",
-            "itemDefId": 4,
+            "itemDefId": __ITEM_DEF_ID__,
             "type": 0,
             "value": 777,
             "slots": 9,
             "weight": 13
         }
-        """);
+        """.Replace("__ITEM_DEF_ID__", itemDefId.ToString()));
 
         var method = typeof(Home).GetMethod("TryReadItem", BindingFlags.Static | BindingFlags.NonPublic);
         Assert.NotNull(method);
@@ -1450,6 +1452,7 @@ public sealed class ProfileMutationFlowTests
         Assert.True(parsed);
         var item = Assert.IsType<Item>(args[1]);
         Assert.Equal("Legacy label", item.Name);
+        Assert.Equal(0, item.ItemDefId);
         Assert.Equal(ItemType.Weapon, item.Type);
         Assert.Equal(777, item.Value);
         Assert.Equal(9, item.Slots);
@@ -1461,16 +1464,18 @@ public sealed class ProfileMutationFlowTests
     [Fact]
     public void TryReadItem_UsesLegacyNameWhenItemDefinitionIdIsUnknown()
     {
+        var itemDefId = ItemCatalog.Get("AK74").ItemDefId + 9999;
+
         using var document = JsonDocument.Parse("""
         {
             "name": "Legacy label",
-            "itemDefId": 9999,
+            "itemDefId": __ITEM_DEF_ID__,
             "type": 0,
             "value": 777,
             "slots": 9,
             "weight": 13
         }
-        """);
+        """.Replace("__ITEM_DEF_ID__", itemDefId.ToString()));
 
         var method = typeof(Home).GetMethod("TryReadItem", BindingFlags.Static | BindingFlags.NonPublic);
         Assert.NotNull(method);
@@ -1481,6 +1486,7 @@ public sealed class ProfileMutationFlowTests
         Assert.True(parsed);
         var item = Assert.IsType<Item>(args[1]);
         Assert.Equal("Legacy label", item.Name);
+        Assert.Equal(0, item.ItemDefId);
         Assert.Equal(ItemType.Weapon, item.Type);
         Assert.Equal(777, item.Value);
         Assert.Equal(9, item.Slots);

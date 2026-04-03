@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata" type="xsd:anyType" minOccurs="0" maxOccurs="unbounded" />
+          <xsd:element name="assembly" type="xsd:anyType" minOccurs="0" maxOccurs="unbounded" />
+          <xsd:element name="data" minOccurs="0" maxOccurs="unbounded">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+              <xsd:attribute name="type" type="xsd:string" use="optional" />
+              <xsd:attribute name="mimetype" type="xsd:string" use="optional" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader" type="xsd:anyType" minOccurs="0" maxOccurs="unbounded" />
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Items.1" xml:space="preserve">
+    <value>Rusty Knife</value>
+  </data>
+  <data name="Items.2" xml:space="preserve">
+    <value>Makarov</value>
+  </data>
+  <data name="Items.3" xml:space="preserve">
+    <value>PPSH</value>
+  </data>
+  <data name="Items.4" xml:space="preserve">
+    <value>AK74</value>
+  </data>
+  <data name="Items.5" xml:space="preserve">
+    <value>AK47</value>
+  </data>
+  <data name="Items.6" xml:space="preserve">
+    <value>SVDS</value>
+  </data>
+  <data name="Items.7" xml:space="preserve">
+    <value>PKP</value>
+  </data>
+  <data name="Items.8" xml:space="preserve">
+    <value>6B2 body armor</value>
+  </data>
+  <data name="Items.9" xml:space="preserve">
+    <value>BNTI Kirasa-N</value>
+  </data>
+  <data name="Items.10" xml:space="preserve">
+    <value>6B13 assault armor</value>
+  </data>
+  <data name="Items.11" xml:space="preserve">
+    <value>FORT Defender-2</value>
+  </data>
+  <data name="Items.12" xml:space="preserve">
+    <value>6B43 Zabralo-Sh body armor</value>
+  </data>
+  <data name="Items.13" xml:space="preserve">
+    <value>NFM THOR</value>
+  </data>
+  <data name="Items.14" xml:space="preserve">
+    <value>Small Backpack</value>
+  </data>
+  <data name="Items.15" xml:space="preserve">
+    <value>Large Backpack</value>
+  </data>
+  <data name="Items.16" xml:space="preserve">
+    <value>Tactical Backpack</value>
+  </data>
+  <data name="Items.17" xml:space="preserve">
+    <value>Tasmanian Tiger Trooper 35</value>
+  </data>
+  <data name="Items.18" xml:space="preserve">
+    <value>6Sh118</value>
+  </data>
+  <data name="Items.19" xml:space="preserve">
+    <value>Medkit</value>
+  </data>
+  <data name="Items.20" xml:space="preserve">
+    <value>Bandage</value>
+  </data>
+  <data name="Items.21" xml:space="preserve">
+    <value>Ammo Box</value>
+  </data>
+  <data name="Items.22" xml:space="preserve">
+    <value>Scrap Metal</value>
+  </data>
+  <data name="Items.23" xml:space="preserve">
+    <value>Rare Scope</value>
+  </data>
+  <data name="Items.24" xml:space="preserve">
+    <value>Legendary Trigger Group</value>
+  </data>
+</root>

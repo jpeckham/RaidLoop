@@ -1097,7 +1097,19 @@ public partial class Home : IDisposable
 
     private static bool TryReadItem(JsonElement item, out Item parsedItem)
     {
-        if (TryGetInt32(item, "itemDefId", out var itemDefId)
+        var hasItemDefId = TryGetInt32(item, "itemDefId", out var itemDefId) && itemDefId > 0;
+        var itemKey = TryGetString(item, "itemKey", out var itemKeyValue)
+            ? itemKeyValue
+            : TryGetString(item, "ItemKey", out var itemKeyUpperCase)
+                ? itemKeyUpperCase
+                : string.Empty;
+        var name = TryGetString(item, "name", out var itemName)
+            ? itemName
+            : TryGetString(item, "Name", out var itemNameUpperCase)
+                ? itemNameUpperCase
+                : string.Empty;
+
+        if (hasItemDefId
             && ItemCatalog.TryGetByItemDefId(itemDefId, out var catalogItemById)
             && catalogItemById is not null)
         {
@@ -1105,23 +1117,27 @@ public partial class Home : IDisposable
             return true;
         }
 
-        var name = TryGetString(item, "name", out var itemName)
-            ? itemName
-            : TryGetString(item, "Name", out var itemNameUpperCase)
-                ? itemNameUpperCase
-                : string.Empty;
-        if (string.IsNullOrWhiteSpace(name))
+        if (!hasItemDefId
+            && !string.IsNullOrWhiteSpace(itemKey)
+            && ItemCatalog.TryGetByKey(itemKey, out var catalogItemByKey)
+            && catalogItemByKey is not null)
         {
-            parsedItem = default!;
-            return false;
+            parsedItem = catalogItemByKey;
+            return true;
         }
 
-        // Authored items intentionally hydrate from the catalog here so their canonical weight stays aligned
-        // until backend encumbrance projections are rolled out everywhere.
-        if (ItemCatalog.TryGet(name, out var catalogItem))
+        if (!hasItemDefId
+            && !string.IsNullOrWhiteSpace(name)
+            && ItemCatalog.TryGet(name, out var catalogItem))
         {
             parsedItem = catalogItem!;
             return true;
+        }
+
+        if (!hasItemDefId && string.IsNullOrWhiteSpace(name) && string.IsNullOrWhiteSpace(itemKey))
+        {
+            parsedItem = default!;
+            return false;
         }
 
         var type = TryGetInt32(item, "type", out var parsedType) && Enum.IsDefined(typeof(ItemType), parsedType)
@@ -1156,7 +1172,11 @@ public partial class Home : IDisposable
                 ? (DisplayRarity)parsedDisplayRarityUpperCase
             : DisplayRarity.Common;
 
-        parsedItem = new Item(name, type, parsedWeight, value, slots, rarity, displayRarity);
+        parsedItem = new Item(string.IsNullOrWhiteSpace(name) ? itemKey : name, type, parsedWeight, value, slots, rarity, displayRarity)
+        {
+            ItemDefId = hasItemDefId ? itemDefId : 0,
+            Key = itemKey
+        };
         return true;
     }
 

@@ -19,11 +19,11 @@ internal sealed class ItemJsonConverter : JsonConverter<Item>
         {
             authoredItem = itemById;
         }
-        else if (!string.IsNullOrWhiteSpace(itemKey) && ItemCatalog.TryGetByKey(itemKey!, out var itemByKey))
+        else if (itemDefId == 0 && !string.IsNullOrWhiteSpace(itemKey) && ItemCatalog.TryGetByKey(itemKey!, out var itemByKey))
         {
             authoredItem = itemByKey;
         }
-        else if (!string.IsNullOrWhiteSpace(itemName) && ItemCatalog.TryGetByLegacyName(itemName!, out var itemByName))
+        else if (itemDefId == 0 && !string.IsNullOrWhiteSpace(itemName) && ItemCatalog.TryGetByLegacyName(itemName!, out var itemByName))
         {
             authoredItem = itemByName;
         }

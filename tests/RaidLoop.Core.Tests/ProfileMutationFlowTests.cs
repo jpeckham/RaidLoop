@@ -62,6 +62,26 @@ public sealed class ProfileMutationFlowTests
     }
 
     [Fact]
+    public async Task OnInitializedAsync_ReportsServiceUnavailableBootstrapFailuresWithoutCrashingHome()
+    {
+        var telemetry = new RecordingTelemetryService();
+        var authService = CreateAuthService(telemetry);
+        var home = CreateHome(
+            profileApiClient: new ThrowingProfileApiClient(() => new HttpRequestException("Service Unavailable", null, HttpStatusCode.ServiceUnavailable)),
+            telemetry: telemetry,
+            authService: authService);
+
+        await InvokePrivateAsync(home, "OnInitializedAsync");
+
+        Assert.Single(telemetry.Errors);
+        Assert.Contains("bootstrap", telemetry.Errors[0].Message, StringComparison.OrdinalIgnoreCase);
+        Assert.False(Assert.IsType<bool>(GetField(home, "_isLoading")));
+        Assert.Equal(
+            "The profile service is temporarily unavailable. Try again in a moment.",
+            Assert.IsType<string>(GetField(home, "_loadErrorMessage")));
+    }
+
+    [Fact]
     public async Task SellStashItemAsync_ReportsActionFailuresThroughTelemetryAndRethrows()
     {
         var telemetry = new RecordingTelemetryService();
@@ -1462,13 +1482,13 @@ public sealed class ProfileMutationFlowTests
     }
 
     [Fact]
-    public void TryReadItem_UsesLegacyNameWhenItemDefinitionIdIsUnknown()
+    public void TryReadItem_PreservesUnknownItemDefinitionIdInsteadOfHydratingLegacyName()
     {
         var itemDefId = ItemCatalog.Get("AK74").ItemDefId + 9999;
 
         using var document = JsonDocument.Parse("""
         {
-            "name": "Legacy label",
+            "name": "AK74",
             "itemDefId": __ITEM_DEF_ID__,
             "type": 0,
             "value": 777,
@@ -1485,13 +1505,12 @@ public sealed class ProfileMutationFlowTests
 
         Assert.True(parsed);
         var item = Assert.IsType<Item>(args[1]);
-        Assert.Equal("Legacy label", item.Name);
-        Assert.Equal(0, item.ItemDefId);
+        Assert.Equal("AK74", item.Name);
+        Assert.Equal(itemDefId, item.ItemDefId);
         Assert.Equal(ItemType.Weapon, item.Type);
         Assert.Equal(777, item.Value);
         Assert.Equal(9, item.Slots);
         Assert.Equal(13, item.Weight);
-        Assert.NotEqual(ItemCatalog.Get("Makarov"), item);
         Assert.NotEqual(ItemCatalog.Get("AK74"), item);
     }
 

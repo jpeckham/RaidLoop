@@ -1,5 +1,6 @@
 using System.Reflection;
 using System.Text.Json;
+using RaidLoop.Client;
 using RaidLoop.Core.Contracts;
 
 namespace RaidLoop.Core.Tests;
@@ -377,6 +378,26 @@ public sealed class ContractsTests
 
         Assert.NotNull(roundTrip);
         Assert.Equal("Makarov", Assert.Single(roundTrip!.Snapshot.MainStash).Name);
+    }
+
+    [Fact]
+    public void Item_DoesNotInferIdentityFromLegacyName()
+    {
+        var item = new Item("Makarov", ItemType.Weapon, Weight: 2);
+
+        Assert.Equal(0, item.ItemDefId);
+        Assert.Equal(string.Empty, item.Key);
+    }
+
+    [Fact]
+    public void ItemPresentationCatalog_FallsBackToNameWhenItemDefinitionIdIsUnknown()
+    {
+        var item = new Item("Legacy label", ItemType.Weapon, Weight: 2)
+        {
+            ItemDefId = 99999
+        };
+
+        Assert.Equal("Legacy label", ItemPresentationCatalog.GetLabel(item));
     }
 
     [Fact]

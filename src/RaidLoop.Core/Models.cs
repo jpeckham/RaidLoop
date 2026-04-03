@@ -60,11 +60,6 @@ public sealed record Item(
                 return resolvedFromKey;
             }
 
-            if (!string.IsNullOrWhiteSpace(Name) && ItemCatalog.TryGetItemDefIdByLegacyName(Name, out var resolvedFromName))
-            {
-                return resolvedFromName;
-            }
-
             return 0;
         }
         init => _itemDefId = value;
@@ -80,9 +75,9 @@ public sealed record Item(
                 return _key!;
             }
 
-            if (ItemCatalog.TryGetKeyByLegacyName(Name, out var resolvedKey))
+            if (_itemDefId > 0 && ItemCatalog.TryGetByItemDefId(_itemDefId, out var resolvedById) && resolvedById is not null)
             {
-                return resolvedKey;
+                return resolvedById.Key;
             }
 
             return string.Empty;

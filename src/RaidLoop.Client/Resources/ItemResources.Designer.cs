@@ -1,4 +1,4 @@
-namespace RaidLoop.Client.Resources;
+namespace RaidLoop.Client;
 
 public partial class ItemResources
 {

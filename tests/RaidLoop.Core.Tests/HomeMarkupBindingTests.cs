@@ -1507,6 +1507,18 @@ public sealed class HomeMarkupBindingTests
     }
 
     [Fact]
+    public void RepoNoLongerContainsLegacyGameplayStorage()
+    {
+        var stashStoragePath = Path.GetFullPath(
+            Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "RaidLoop.Client", "Services", "StashStorage.cs"));
+        var stashStorageTestsPath = Path.GetFullPath(
+            Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "tests", "RaidLoop.Core.Tests", "StashStorageTests.cs"));
+
+        Assert.False(File.Exists(stashStoragePath));
+        Assert.False(File.Exists(stashStorageTestsPath));
+    }
+
+    [Fact]
     public void PreRaidPanelTreatsEmptyLuckRunInventoryAsStartableState()
     {
         var markup = File.ReadAllText(PreRaidPanelPath);

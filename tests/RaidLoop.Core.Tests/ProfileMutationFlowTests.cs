@@ -1428,6 +1428,67 @@ public sealed class ProfileMutationFlowTests
         Assert.Equal(ItemCatalog.Get("AK74"), Assert.IsType<Item>(args[1]));
     }
 
+    [Fact]
+    public void TryReadItem_UsesLegacyNameWhenItemDefinitionIdIsMissing()
+    {
+        using var document = JsonDocument.Parse("""
+        {
+            "name": "Legacy label",
+            "type": 0,
+            "value": 777,
+            "slots": 9,
+            "weight": 13
+        }
+        """);
+
+        var method = typeof(Home).GetMethod("TryReadItem", BindingFlags.Static | BindingFlags.NonPublic);
+        Assert.NotNull(method);
+
+        var args = new object?[] { document.RootElement, null };
+        var parsed = Assert.IsType<bool>(method!.Invoke(null, args));
+
+        Assert.True(parsed);
+        var item = Assert.IsType<Item>(args[1]);
+        Assert.Equal("Legacy label", item.Name);
+        Assert.Equal(ItemType.Weapon, item.Type);
+        Assert.Equal(777, item.Value);
+        Assert.Equal(9, item.Slots);
+        Assert.Equal(13, item.Weight);
+        Assert.NotEqual(ItemCatalog.Get("Makarov"), item);
+        Assert.NotEqual(ItemCatalog.Get("AK74"), item);
+    }
+
+    [Fact]
+    public void TryReadItem_UsesLegacyNameWhenItemDefinitionIdIsUnknown()
+    {
+        using var document = JsonDocument.Parse("""
+        {
+            "name": "Legacy label",
+            "itemDefId": 9999,
+            "type": 0,
+            "value": 777,
+            "slots": 9,
+            "weight": 13
+        }
+        """);
+
+        var method = typeof(Home).GetMethod("TryReadItem", BindingFlags.Static | BindingFlags.NonPublic);
+        Assert.NotNull(method);
+
+        var args = new object?[] { document.RootElement, null };
+        var parsed = Assert.IsType<bool>(method!.Invoke(null, args));
+
+        Assert.True(parsed);
+        var item = Assert.IsType<Item>(args[1]);
+        Assert.Equal("Legacy label", item.Name);
+        Assert.Equal(ItemType.Weapon, item.Type);
+        Assert.Equal(777, item.Value);
+        Assert.Equal(9, item.Slots);
+        Assert.Equal(13, item.Weight);
+        Assert.NotEqual(ItemCatalog.Get("Makarov"), item);
+        Assert.NotEqual(ItemCatalog.Get("AK74"), item);
+    }
+
     private static Home CreateHome(
         IProfileApiClient? profileApiClient = null,
         IGameActionApiClient? actionClient = null,

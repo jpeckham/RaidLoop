@@ -10,19 +10,23 @@ public sealed class StashStorageTests
     [Fact]
     public async Task LoadAsync_NormalizesKnownItemsToAuthoredCatalog()
     {
-        var raw = JsonSerializer.Serialize(new GameSave(
-            MainStash:
-            [
-                new Item("Makarov", ItemType.Weapon, Weight: 4, Value: 1, Slots: 1),
-                new Item("Bandage", ItemType.Sellable, Weight: 1, Value: 1, Slots: 1)
-            ],
-            RandomCharacterAvailableAt: DateTimeOffset.MinValue,
-            RandomCharacter: null,
-            Money: 500,
-            OnPersonItems:
-            [
-                new OnPersonEntry(new Item("Medkit", ItemType.Consumable, Weight: 3, Value: 1, Slots: 1), false)
-            ]));
+        const string raw = """
+            {
+              "MainStash": [
+                { "name": "Makarov", "type": 0, "value": 1, "slots": 1, "weight": 4 },
+                { "name": "Bandage", "type": 4, "value": 1, "slots": 1, "weight": 1 }
+              ],
+              "RandomCharacterAvailableAt": "0001-01-01T00:00:00+00:00",
+              "RandomCharacter": null,
+              "Money": 500,
+              "OnPersonItems": [
+                {
+                  "item": { "name": "Medkit", "type": 3, "value": 1, "slots": 1, "weight": 3 },
+                  "isEquipped": false
+                }
+              ]
+            }
+            """;
 
         var storage = new StashStorage(new FakeJsRuntime(raw));
 
@@ -36,15 +40,17 @@ public sealed class StashStorageTests
     [Fact]
     public async Task LoadAsync_NormalizesLegacyAliasesToCatalogDefinitions()
     {
-        var raw = JsonSerializer.Serialize(new GameSave(
-            MainStash:
-            [
-                new Item("Hunting Rifle", ItemType.Weapon, Weight: 1, Value: 1, Slots: 1)
-            ],
-            RandomCharacterAvailableAt: DateTimeOffset.MinValue,
-            RandomCharacter: null,
-            Money: 500,
-            OnPersonItems: []));
+        const string raw = """
+            {
+              "MainStash": [
+                { "Name": "Hunting Rifle", "Type": 0, "Value": 1, "Slots": 1, "Weight": 1 }
+              ],
+              "RandomCharacterAvailableAt": "0001-01-01T00:00:00+00:00",
+              "RandomCharacter": null,
+              "Money": 500,
+              "OnPersonItems": []
+            }
+            """;
 
         var storage = new StashStorage(new FakeJsRuntime(raw));
 
@@ -56,12 +62,14 @@ public sealed class StashStorageTests
     [Fact]
     public async Task LoadAsync_PrefersItemDefinitionIdOverLegacyNameWhenBothArePresent()
     {
-        const string raw = """
+        var itemDefId = ItemCatalog.Get("Makarov").ItemDefId;
+
+        var raw = """
             {
               "MainStash": [
                 {
                   "name": "Server-authored alias",
-                  "itemDefId": 2,
+                  "itemDefId": __ITEM_DEF_ID__,
                   "type": 0,
                   "value": 777,
                   "slots": 9,
@@ -73,7 +81,7 @@ public sealed class StashStorageTests
               "Money": 500,
               "OnPersonItems": []
             }
-            """;
+            """.Replace("__ITEM_DEF_ID__", itemDefId.ToString());
 
         var storage = new StashStorage(new FakeJsRuntime(raw));
 
@@ -111,6 +119,7 @@ public sealed class StashStorageTests
 
         var item = Assert.Single(save.MainStash);
         Assert.Equal("Legacy label", item.Name);
+        Assert.Equal(0, item.ItemDefId);
         Assert.Equal(ItemType.Weapon, item.Type);
         Assert.Equal(777, item.Value);
         Assert.Equal(9, item.Slots);
@@ -120,14 +129,16 @@ public sealed class StashStorageTests
     }
 
     [Fact]
-    public async Task LoadAsync_UsesLegacyNameWhenItemDefinitionIdIsUnknown()
+    public async Task LoadAsync_PreservesUnknownItemDefinitionIdInsteadOfHydratingLegacyName()
     {
-        const string raw = """
+        var itemDefId = ItemCatalog.Get("Makarov").ItemDefId + 9999;
+
+        var raw = """
             {
               "MainStash": [
                 {
-                  "name": "Legacy label",
-                  "itemDefId": 9999,
+                  "name": "Makarov",
+                  "itemDefId": __ITEM_DEF_ID__,
                   "type": 0,
                   "value": 777,
                   "slots": 9,
@@ -139,14 +150,15 @@ public sealed class StashStorageTests
               "Money": 500,
               "OnPersonItems": []
             }
-            """;
+            """.Replace("__ITEM_DEF_ID__", itemDefId.ToString());
 
         var storage = new StashStorage(new FakeJsRuntime(raw));
 
         var save = await storage.LoadAsync();
 
         var item = Assert.Single(save.MainStash);
-        Assert.Equal("Legacy label", item.Name);
+        Assert.Equal("Makarov", item.Name);
+        Assert.Equal(itemDefId, item.ItemDefId);
         Assert.Equal(ItemType.Weapon, item.Type);
         Assert.Equal(777, item.Value);
         Assert.Equal(9, item.Slots);

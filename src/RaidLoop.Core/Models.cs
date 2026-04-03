@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace RaidLoop.Core;
 
 public enum ItemType
@@ -33,6 +35,7 @@ public sealed record OpeningPhaseContext(
     int PlayerGearAwarenessModifier = 0,
     int EnemyLocalizationModifier = 0);
 
+[JsonConverter(typeof(ItemJsonConverter))]
 public sealed record Item(
     string Name,
     ItemType Type,
@@ -40,7 +43,51 @@ public sealed record Item(
     int Value = 1,
     int Slots = 1,
     Rarity Rarity = Rarity.Common,
-    DisplayRarity DisplayRarity = DisplayRarity.Common);
+    DisplayRarity DisplayRarity = DisplayRarity.Common)
+{
+    [JsonPropertyName("itemDefId")]
+    public int ItemDefId
+    {
+        get
+        {
+            if (_itemDefId > 0)
+            {
+                return _itemDefId;
+            }
+
+            if (!string.IsNullOrWhiteSpace(_key) && ItemCatalog.TryGetItemDefIdByKey(_key!, out var resolvedFromKey))
+            {
+                return resolvedFromKey;
+            }
+
+            return 0;
+        }
+        init => _itemDefId = value;
+    }
+
+    [JsonPropertyName("itemKey")]
+    public string Key
+    {
+        get
+        {
+            if (!string.IsNullOrWhiteSpace(_key))
+            {
+                return _key!;
+            }
+
+            if (_itemDefId > 0 && ItemCatalog.TryGetByItemDefId(_itemDefId, out var resolvedById) && resolvedById is not null)
+            {
+                return resolvedById.Key;
+            }
+
+            return string.Empty;
+        }
+        init => _key = value ?? string.Empty;
+    }
+
+    private string? _key;
+    private int _itemDefId;
+}
 
 public sealed class GameState
 {
@@ -134,7 +181,7 @@ public sealed class RaidInventory
 
         foreach (var item in broughtItems.Where(x => x.Type is not (ItemType.Weapon or ItemType.Armor or ItemType.Backpack)))
         {
-            if (string.Equals(item.Name, "Medkit", StringComparison.OrdinalIgnoreCase))
+            if (CombatBalance.IsMedkit(item))
             {
                 inventory.MedkitCount++;
                 continue;
@@ -145,7 +192,7 @@ public sealed class RaidInventory
 
         foreach (var item in carriedItems)
         {
-            if (string.Equals(item.Name, "Medkit", StringComparison.OrdinalIgnoreCase))
+            if (CombatBalance.IsMedkit(item))
             {
                 inventory.MedkitCount++;
                 continue;

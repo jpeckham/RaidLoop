@@ -21,7 +21,7 @@
             var entry = OnPersonItems[onPersonIndex];
             <div class="row-item">
                 <ItemTypeIcon Type="entry.Item.Type" />
-                <span class="item-name rarity-@entry.Item.DisplayRarity.ToString().ToLower()">@entry.Item.Name</span>
+                <span class="item-name rarity-@entry.Item.DisplayRarity.ToString().ToLower()">@ItemPresentationCatalog.GetLabel(entry.Item)</span>
                 <div class="row-actions">
                     @if (IsSlotType(entry.Item.Type))
                     {

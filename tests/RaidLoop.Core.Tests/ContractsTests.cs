@@ -1,5 +1,6 @@
 using System.Reflection;
 using System.Text.Json;
+using RaidLoop.Client;
 using RaidLoop.Core.Contracts;
 
 namespace RaidLoop.Core.Tests;
@@ -12,12 +13,12 @@ public sealed class ContractsTests
         var response = new AuthBootstrapResponse(
             IsAuthenticated: true,
             UserEmail: "player@example.com",
-            Snapshot: new PlayerSnapshot(
-                Money: 500,
-                MainStash: [ItemCatalog.Create("Makarov")],
-                OnPersonItems: [new OnPersonSnapshot(ItemCatalog.Create("Small Backpack"), true)],
-                ShopStock: [ItemCatalog.Create("Makarov"), ItemCatalog.Create("PPSH")],
-                AcceptedStats: new PlayerStats(8, 14, 12, 10, 13, 16),
+                Snapshot: new PlayerSnapshot(
+                    Money: 500,
+                    MainStash: [ItemCatalog.Create("Makarov")],
+                    OnPersonItems: [new OnPersonSnapshot(ItemCatalog.Create("Small Backpack"), true)],
+                    ShopStock: [new ShopOfferSnapshot(2, 60, 1), new ShopOfferSnapshot(3, 160, 1)],
+                    AcceptedStats: new PlayerStats(8, 14, 12, 10, 13, 16),
                 DraftStats: new PlayerStats(8, 15, 12, 10, 13, 16),
                 AvailableStatPoints: 5,
                 StatsAccepted: true,
@@ -64,7 +65,8 @@ public sealed class ContractsTests
         Assert.Equal("player@example.com", roundTrip.UserEmail);
         Assert.Equal(500, roundTrip.Snapshot.Money);
         Assert.Equal("Makarov", Assert.Single(roundTrip.Snapshot.MainStash).Name);
-        Assert.Equal(["Makarov", "PPSH"], roundTrip.Snapshot.ShopStock.Select(item => item.Name).ToArray());
+        Assert.Equal([2, 3], roundTrip.Snapshot.ShopStock.Select(item => item.ItemDefId).ToArray());
+        Assert.Equal([60, 160], roundTrip.Snapshot.ShopStock.Select(item => item.Price).ToArray());
         Assert.Equal(14, roundTrip.Snapshot.AcceptedStats.Dexterity);
         Assert.Equal(15, roundTrip.Snapshot.DraftStats.Dexterity);
         Assert.Equal(5, roundTrip.Snapshot.AvailableStatPoints);
@@ -186,6 +188,219 @@ public sealed class ContractsTests
     }
 
     [Fact]
+    public void AuthBootstrapResponse_RoundTripsItemDefIdInMainStash()
+    {
+        const string json = """
+            {
+              "isAuthenticated": true,
+              "userEmail": "player@example.com",
+              "snapshot": {
+                "money": 500,
+                "mainStash": [
+                  { "itemDefId": 2, "type": 0, "value": 60, "slots": 1, "rarity": 0, "displayRarity": 1, "weight": 2 }
+                ],
+                "onPersonItems": [],
+                "shopStock": [],
+                "playerConstitution": 10,
+                "playerMaxHealth": 30,
+                "randomCharacterAvailableAt": "2026-03-18T00:00:00Z",
+                "randomCharacter": null,
+                "activeRaid": null
+              }
+            }
+            """;
+
+        var serialized = RoundTripBootstrapJson(json);
+
+        Assert.Contains("\"itemDefId\":2", serialized);
+        Assert.DoesNotContain("\"itemKey\":", serialized);
+        Assert.DoesNotContain("\"name\":", serialized);
+    }
+
+    [Fact]
+    public void AuthBootstrapResponse_RoundTripsLeanShopOffersWithoutEmbeddedItems()
+    {
+        const string json = """
+            {
+              "isAuthenticated": true,
+              "userEmail": "player@example.com",
+              "snapshot": {
+                "money": 500,
+                "mainStash": [],
+                "onPersonItems": [],
+                "shopStock": [
+                  { "itemDefId": 2, "price": 60, "stock": 1 },
+                  { "itemDefId": 3, "price": 160, "stock": 1 }
+                ],
+                "itemRules": [
+                  { "itemDefId": 2, "type": 0, "weight": 2, "slots": 1, "rarity": 0 },
+                  { "itemDefId": 3, "type": 0, "weight": 12, "slots": 1, "rarity": 1 }
+                ],
+                "playerConstitution": 10,
+                "playerMaxHealth": 30,
+                "randomCharacterAvailableAt": "2026-03-18T00:00:00Z",
+                "randomCharacter": null,
+                "activeRaid": null
+              }
+            }
+            """;
+
+        var serialized = RoundTripBootstrapJson(json);
+
+        Assert.Contains("\"shopStock\":[{\"itemDefId\":2,\"price\":60,\"stock\":1},{\"itemDefId\":3,\"price\":160,\"stock\":1}]", serialized);
+        Assert.DoesNotContain("\"name\":", serialized);
+        Assert.DoesNotContain("\"itemKey\":", serialized);
+        Assert.Contains("\"itemRules\":[{\"itemDefId\":2,\"type\":0,\"weight\":2,\"slots\":1,\"rarity\":0},{\"itemDefId\":3,\"type\":0,\"weight\":12,\"slots\":1,\"rarity\":1}]", serialized);
+    }
+
+    [Fact]
+    public void AuthBootstrapResponse_RoundTripsItemDefIdInOnPersonItems()
+    {
+        const string json = """
+            {
+              "isAuthenticated": true,
+              "userEmail": "player@example.com",
+              "snapshot": {
+                "money": 500,
+                "mainStash": [],
+                "onPersonItems": [
+                  {
+                    "item": { "itemDefId": 18, "type": 2, "value": 600, "slots": 4, "rarity": 4, "displayRarity": 4, "weight": 8 },
+                    "isEquipped": true
+                  }
+                ],
+                "shopStock": [],
+                "playerConstitution": 10,
+                "playerMaxHealth": 30,
+                "randomCharacterAvailableAt": "2026-03-18T00:00:00Z",
+                "randomCharacter": null,
+                "activeRaid": null
+              }
+            }
+            """;
+
+        var serialized = RoundTripBootstrapJson(json);
+
+        Assert.Contains("\"itemDefId\":18", serialized);
+        Assert.DoesNotContain("\"itemKey\":", serialized);
+        Assert.DoesNotContain("\"name\":", serialized);
+    }
+
+    [Fact]
+    public void AuthBootstrapResponse_RoundTripsItemDefIdInActiveRaid()
+    {
+        const string json = """
+            {
+              "isAuthenticated": true,
+              "userEmail": "player@example.com",
+              "snapshot": {
+                "money": 500,
+                "mainStash": [],
+                "onPersonItems": [],
+                "shopStock": [],
+                "playerConstitution": 10,
+                "playerMaxHealth": 30,
+                "randomCharacterAvailableAt": "2026-03-18T00:00:00Z",
+                "randomCharacter": null,
+                "activeRaid": {
+                  "health": 30,
+                  "backpackCapacity": 3,
+                  "ammo": 8,
+                  "weaponMalfunction": false,
+                  "medkits": 1,
+                  "lootSlots": 0,
+                  "challenge": 0,
+                  "distanceFromExtract": 0,
+                  "encounterType": "Neutral",
+                  "encounterTitle": "Area Clear",
+                  "encounterDescription": "Nothing found.",
+                  "enemyName": "",
+                  "enemyHealth": 0,
+                  "enemyDexterity": 0,
+                  "enemyConstitution": 0,
+                  "enemyStrength": 0,
+                  "lootContainer": "",
+                  "awaitingDecision": false,
+                  "contactState": "PlayerAmbush",
+                  "surpriseSide": "Player",
+                  "initiativeWinner": "None",
+                  "openingActionsRemaining": 1,
+                  "surprisePersistenceEligible": false,
+                  "discoveredLoot": [
+                    { "itemDefId": 8, "type": 1, "value": 95, "slots": 1, "rarity": 0, "displayRarity": 1, "weight": 9 }
+                  ],
+                  "carriedLoot": [],
+                  "equippedItems": [
+                    { "itemDefId": 4, "type": 0, "value": 320, "slots": 1, "rarity": 2, "displayRarity": 3, "weight": 7 }
+                  ],
+                  "logEntries": ["Raid started."],
+                  "encumbrance": 19,
+                  "maxEncumbrance": 40,
+                  "extractHoldActive": false,
+                  "holdAtExtractUntil": null
+                }
+              }
+            }
+            """;
+
+        var serialized = RoundTripBootstrapJson(json);
+
+        Assert.Contains("\"itemDefId\":8", serialized);
+        Assert.Contains("\"itemDefId\":4", serialized);
+        Assert.DoesNotContain("\"itemKey\":", serialized);
+        Assert.DoesNotContain("\"name\":", serialized);
+    }
+
+    [Fact]
+    public void AuthBootstrapResponse_DeserializesLegacyItemPayloadsWithoutItemKeys()
+    {
+        const string json = """
+            {
+              "isAuthenticated": true,
+              "userEmail": "player@example.com",
+              "snapshot": {
+                "money": 500,
+                "mainStash": [
+                  { "name": "Makarov", "type": 0, "value": 60, "slots": 1, "rarity": 0, "displayRarity": 1 }
+                ],
+                "onPersonItems": [],
+                "shopStock": [],
+                "playerConstitution": 10,
+                "playerMaxHealth": 30,
+                "randomCharacterAvailableAt": "2026-03-18T00:00:00Z",
+                "randomCharacter": null,
+                "activeRaid": null
+              }
+            }
+            """;
+
+        var roundTrip = JsonSerializer.Deserialize<AuthBootstrapResponse>(json, new JsonSerializerOptions(JsonSerializerDefaults.Web));
+
+        Assert.NotNull(roundTrip);
+        Assert.Equal("Makarov", Assert.Single(roundTrip!.Snapshot.MainStash).Name);
+    }
+
+    [Fact]
+    public void Item_DoesNotInferIdentityFromLegacyName()
+    {
+        var item = new Item("Makarov", ItemType.Weapon, Weight: 2);
+
+        Assert.Equal(0, item.ItemDefId);
+        Assert.Equal(string.Empty, item.Key);
+    }
+
+    [Fact]
+    public void ItemPresentationCatalog_FallsBackToNameWhenItemDefinitionIdIsUnknown()
+    {
+        var item = new Item("Legacy label", ItemType.Weapon, Weight: 2)
+        {
+            ItemDefId = 99999
+        };
+
+        Assert.Equal("Legacy label", ItemPresentationCatalog.GetLabel(item));
+    }
+
+    [Fact]
     public void GameActionRequest_HasExplicitActionEnvelope()
     {
         var request = new GameActionRequest(
@@ -248,4 +463,14 @@ public sealed class ContractsTests
         Assert.Equal(17, response.Projections.Value.GetProperty("raid").GetProperty("health").GetInt32());
         Assert.Equal("Action resolved.", response.Message);
     }
+
+    private static string RoundTripBootstrapJson(string json)
+    {
+        var roundTrip = JsonSerializer.Deserialize<AuthBootstrapResponse>(json, new JsonSerializerOptions(JsonSerializerDefaults.Web));
+
+        Assert.NotNull(roundTrip);
+        return JsonSerializer.Serialize(roundTrip, new JsonSerializerOptions(JsonSerializerDefaults.Web));
+    }
 }
+
+

@@ -398,6 +398,24 @@ public sealed class StashStorage
 
     private static Item NormalizeItem(Item item)
     {
+        if (item.ItemDefId > 0 && ItemCatalog.TryGetByItemDefId(item.ItemDefId, out var catalogItemById) && catalogItemById is not null)
+        {
+            return catalogItemById;
+        }
+
+        if (item.ItemDefId == 0
+            && !string.IsNullOrWhiteSpace(item.Key)
+            && ItemCatalog.TryGetByKey(item.Key, out var catalogItemByKey)
+            && catalogItemByKey is not null)
+        {
+            return catalogItemByKey;
+        }
+
+        if (item.ItemDefId > 0)
+        {
+            return item;
+        }
+
         var normalizedName = CombatBalance.NormalizeItemName(item.Name);
         var normalizedType = normalizedName switch
         {

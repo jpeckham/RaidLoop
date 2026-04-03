@@ -73,6 +73,26 @@ public sealed class ProfileMutationFlowTests
     }
 
     [Fact]
+    public async Task OnInitializedAsync_ReportsServiceUnavailableBootstrapFailuresWithoutCrashingHome()
+    {
+        var telemetry = new RecordingTelemetryService();
+        var authService = CreateAuthService(telemetry);
+        var home = CreateHome(
+            profileApiClient: new ThrowingProfileApiClient(() => new HttpRequestException("Service Unavailable", null, HttpStatusCode.ServiceUnavailable)),
+            telemetry: telemetry,
+            authService: authService);
+
+        await InvokePrivateAsync(home, "OnInitializedAsync");
+
+        Assert.Single(telemetry.Errors);
+        Assert.Contains("bootstrap", telemetry.Errors[0].Message, StringComparison.OrdinalIgnoreCase);
+        Assert.False(Assert.IsType<bool>(GetField(home, "_isLoading")));
+        Assert.Equal(
+            "The profile service is temporarily unavailable. Try again in a moment.",
+            Assert.IsType<string>(GetField(home, "_loadErrorMessage")));
+    }
+
+    [Fact]
     public async Task SellStashItemAsync_ReportsActionFailuresThroughTelemetryAndRethrows()
     {
         var telemetry = new RecordingTelemetryService();
@@ -128,7 +148,7 @@ public sealed class ProfileMutationFlowTests
             ResponseFactory = request =>
             {
                 Assert.Equal("buy-from-shop", request.Action);
-                Assert.Equal("Medkit", request.Payload.GetProperty("itemName").GetString());
+                Assert.Equal(19, request.Payload.GetProperty("itemDefId").GetInt32());
                 return Response(
                     money: 490,
                     mainStash: [],
@@ -140,7 +160,7 @@ public sealed class ProfileMutationFlowTests
         SetField(home, "_money", 500);
         SetField(home, "_onPersonItems", new List<OnPersonEntry>());
 
-        await InvokePrivateAsync(home, "BuyFromShopAsync", new ShopStock(ItemCatalog.Create("Medkit")));
+        await InvokePrivateAsync(home, "BuyFromShopAsync", CreateShopStock("medkit"));
 
         Assert.Single(actionClient.Requests);
         Assert.Equal(490, Assert.IsType<int>(GetField(home, "_money")));
@@ -224,7 +244,7 @@ public sealed class ProfileMutationFlowTests
             new(ItemCatalog.Create("Medkit"), false)
         });
 
-        await InvokePrivateAsync(home, "BuyFromShopAsync", new ShopStock(ItemCatalog.Create("6B2 body armor")));
+        await InvokePrivateAsync(home, "BuyFromShopAsync", CreateShopStock("6b2_body_armor"));
 
         Assert.Empty(actionClient.Requests);
         Assert.Equal(500, Assert.IsType<int>(GetField(home, "_money")));
@@ -244,15 +264,15 @@ public sealed class ProfileMutationFlowTests
                 OnPersonItems: [new OnPersonSnapshot(ItemCatalog.Create("AK74"), true)],
                 ShopStock:
                 [
-                    ItemCatalog.Create("Medkit"),
-                    ItemCatalog.Create("Makarov"),
-                    ItemCatalog.Create("6B2 body armor"),
-                    ItemCatalog.Create("BNTI Kirasa-N"),
-                    ItemCatalog.Create("PPSH"),
-                    ItemCatalog.Create("Small Backpack"),
-                    ItemCatalog.Create("Large Backpack"),
-                    ItemCatalog.Create("AK74"),
-                    ItemCatalog.Create("6B13 assault armor")
+                    CreateShopOffer("medkit"),
+                    CreateShopOffer("makarov"),
+                    CreateShopOffer("6b2_body_armor"),
+                    CreateShopOffer("bnti_kirasa_n"),
+                    CreateShopOffer("ppsh"),
+                    CreateShopOffer("small_backpack"),
+                    CreateShopOffer("large_backpack"),
+                    CreateShopOffer("ak74"),
+                    CreateShopOffer("6b13_assault_armor")
                 ],
                 PlayerConstitution: 12,
                 PlayerMaxHealth: 34,
@@ -282,7 +302,7 @@ public sealed class ProfileMutationFlowTests
                 Money: 500,
                 MainStash: [],
                 OnPersonItems: [new OnPersonSnapshot(ItemCatalog.Create("AK74"), true)],
-                ShopStock: [ItemCatalog.Create("Makarov"), ItemCatalog.Create("PPSH"), ItemCatalog.Create("6B2 body armor")],
+                ShopStock: [CreateShopOffer("makarov"), CreateShopOffer("ppsh"), CreateShopOffer("6b2_body_armor")],
                 PlayerConstitution: 12,
                 PlayerMaxHealth: 34,
                 RandomCharacterAvailableAt: DateTimeOffset.MinValue,
@@ -307,14 +327,14 @@ public sealed class ProfileMutationFlowTests
                 OnPersonItems: [new OnPersonSnapshot(ItemCatalog.Create("AK74"), true)],
                 ShopStock:
                 [
-                    ItemCatalog.Create("Makarov"),
-                    ItemCatalog.Create("6B2 body armor"),
-                    ItemCatalog.Create("BNTI Kirasa-N"),
-                    ItemCatalog.Create("PPSH"),
-                    ItemCatalog.Create("Small Backpack"),
-                    ItemCatalog.Create("Large Backpack"),
-                    ItemCatalog.Create("AK74"),
-                    ItemCatalog.Create("6B13 assault armor")
+                    CreateShopOffer("makarov"),
+                    CreateShopOffer("6b2_body_armor"),
+                    CreateShopOffer("bnti_kirasa_n"),
+                    CreateShopOffer("ppsh"),
+                    CreateShopOffer("small_backpack"),
+                    CreateShopOffer("large_backpack"),
+                    CreateShopOffer("ak74"),
+                    CreateShopOffer("6b13_assault_armor")
                 ],
                 AcceptedStats: new PlayerStats(8, 8, 8, 8, 8, 12),
                 DraftStats: new PlayerStats(8, 8, 8, 8, 8, 12),
@@ -758,7 +778,7 @@ public sealed class ProfileMutationFlowTests
         Assert.Equal(4, Assert.IsType<int>(GetField(home, "_ammo")));
         Assert.Equal(2, Assert.IsType<int>(GetField(home, "_challenge")));
         Assert.Equal(3, Assert.IsType<int>(GetField(home, "_distanceFromExtract")));
-        Assert.Equal("Scav", Assert.IsType<string>(GetField(home, "_enemyName")));
+        Assert.Equal("Scavenger", Assert.IsType<string>(GetField(home, "_enemyName")));
         Assert.Equal(6, Assert.IsType<int>(GetField(home, "_enemyHealth")));
         Assert.Equal("Combat", Assert.IsType<EncounterType>(GetField(home, "_encounterType")).ToString());
         Assert.Equal("Action resolved.", Assert.IsType<string>(GetField(home, "_resultMessage")));
@@ -1055,7 +1075,7 @@ public sealed class ProfileMutationFlowTests
         Assert.Equal(7, Assert.IsType<int>(GetField(home, "_ammo")));
         Assert.Equal(8, Assert.IsType<int>(GetField(home, "_enemyHealth")));
         Assert.Equal(
-            ["Raid started as Main Character.", "You hit Scav for 4.", "Scav hits you for 3."],
+            ["Raid started as Main Character.", "You hit Scavenger for 4.", "Scavenger hits you for 3."],
             Assert.IsType<List<string>>(GetField(home, "_log")));
     }
 
@@ -1418,16 +1438,18 @@ public sealed class ProfileMutationFlowTests
     [Fact]
     public void TryReadItem_KnownItemDefinitionPrefersClientOwnedIdentityOverLegacyName()
     {
+        var itemDefId = ItemCatalog.Get("AK74").ItemDefId;
+
         using var document = JsonDocument.Parse("""
         {
             "name": "Server-authored alias",
-            "itemDefId": 4,
+            "itemDefId": __ITEM_DEF_ID__,
             "type": 0,
             "value": 777,
             "slots": 9,
             "weight": 13
         }
-        """);
+        """.Replace("__ITEM_DEF_ID__", itemDefId.ToString()));
 
         var method = typeof(Home).GetMethod("TryReadItem", BindingFlags.Static | BindingFlags.NonPublic);
         Assert.NotNull(method);
@@ -1461,6 +1483,7 @@ public sealed class ProfileMutationFlowTests
         Assert.True(parsed);
         var item = Assert.IsType<Item>(args[1]);
         Assert.Equal("Legacy label", item.Name);
+        Assert.Equal(0, item.ItemDefId);
         Assert.Equal(ItemType.Weapon, item.Type);
         Assert.Equal(777, item.Value);
         Assert.Equal(9, item.Slots);
@@ -1470,18 +1493,20 @@ public sealed class ProfileMutationFlowTests
     }
 
     [Fact]
-    public void TryReadItem_UsesLegacyNameWhenItemDefinitionIdIsUnknown()
+    public void TryReadItem_PreservesUnknownItemDefinitionIdInsteadOfHydratingLegacyName()
     {
+        var itemDefId = ItemCatalog.Get("AK74").ItemDefId + 9999;
+
         using var document = JsonDocument.Parse("""
         {
-            "name": "Legacy label",
-            "itemDefId": 9999,
+            "name": "AK74",
+            "itemDefId": __ITEM_DEF_ID__,
             "type": 0,
             "value": 777,
             "slots": 9,
             "weight": 13
         }
-        """);
+        """.Replace("__ITEM_DEF_ID__", itemDefId.ToString()));
 
         var method = typeof(Home).GetMethod("TryReadItem", BindingFlags.Static | BindingFlags.NonPublic);
         Assert.NotNull(method);
@@ -1491,12 +1516,12 @@ public sealed class ProfileMutationFlowTests
 
         Assert.True(parsed);
         var item = Assert.IsType<Item>(args[1]);
-        Assert.Equal("Legacy label", item.Name);
+        Assert.Equal("AK74", item.Name);
+        Assert.Equal(itemDefId, item.ItemDefId);
         Assert.Equal(ItemType.Weapon, item.Type);
         Assert.Equal(777, item.Value);
         Assert.Equal(9, item.Slots);
         Assert.Equal(13, item.Weight);
-        Assert.NotEqual(ItemCatalog.Get("Makarov"), item);
         Assert.NotEqual(ItemCatalog.Get("AK74"), item);
     }
 
@@ -1583,6 +1608,18 @@ public sealed class ProfileMutationFlowTests
             null,
             System.Text.Json.JsonSerializer.SerializeToElement(projections),
             Message: null);
+    }
+
+    private static ShopOfferSnapshot CreateShopOffer(string itemKey, int stock = 1)
+    {
+        var item = ItemCatalog.GetByKey(itemKey);
+        return new ShopOfferSnapshot(item.ItemDefId, CombatBalance.GetBuyPrice(item), stock);
+    }
+
+    private static ShopStock CreateShopStock(string itemKey, int stock = 1)
+    {
+        var item = ItemCatalog.GetByKey(itemKey);
+        return new ShopStock(CreateShopOffer(itemKey, stock), item);
     }
 
     private static void SetProperty(object instance, string propertyName, object value)

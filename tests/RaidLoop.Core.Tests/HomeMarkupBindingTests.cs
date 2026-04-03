@@ -1,5 +1,6 @@
 using System.IO;
 using System.Linq;
+using System.Reflection;
 namespace RaidLoop.Core.Tests;
 
 public sealed class HomeMarkupBindingTests
@@ -52,6 +53,8 @@ public sealed class HomeMarkupBindingTests
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026032603_add_player_stat_system.sql"));
     private static readonly string RaidSessionPersistenceHotfixMigrationPath = Path.GetFullPath(
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026032606_restore_raid_session_persistence_for_stat_aware_raid_start.sql"));
+    private static readonly string ItemIdentityMigrationPath = Path.GetFullPath(
+        Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026032904_add_item_identity_keys.sql"));
     private static readonly string StrengthEncumbranceMigrationPath = Path.GetFullPath(
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026032701_add_strength_encumbrance.sql"));
     private static readonly string D20EncumbranceMigrationPath = Path.GetFullPath(
@@ -210,27 +213,39 @@ public sealed class HomeMarkupBindingTests
     {
         var markup = File.ReadAllText(ShopPanelPath);
 
-        Assert.Contains("Buy ($@GetBuyPrice(stock.Item.Name))", markup);
-        Assert.DoesNotContain("<small>$@GetBuyPrice(stock.Item.Name)</small>", markup);
+        Assert.Contains("Buy ($@GetBuyPrice(stock.Item))", markup);
+        Assert.DoesNotContain("<small>$@stock.Price</small>", markup);
+    }
+
+    [Fact]
+    public void ItemResourcesExposeAResourceManagerForClientItemLabels()
+    {
+        var resourceManagerProperty = typeof(RaidLoop.Client.ItemResources).GetProperty(
+            "ResourceManager",
+            BindingFlags.Public | BindingFlags.Static);
+
+        Assert.NotNull(resourceManagerProperty);
+        var resourceManager = Assert.IsType<System.Resources.ResourceManager>(resourceManagerProperty!.GetValue(null));
+        Assert.Equal("Rusty Knife", resourceManager.GetString("Items.1"));
+        Assert.Equal("Legendary Trigger Group", resourceManager.GetString("Items.24"));
     }
 
     [Fact]
     public void ClientFacingItemLabelsRouteThroughALocalizationLookupSeam()
     {
-        var homeMarkup = File.ReadAllText(HomeMarkupPath);
         var loadoutMarkup = File.ReadAllText(LoadoutPanelPath);
         var stashMarkup = File.ReadAllText(StashPanelPath);
         var preRaidMarkup = File.ReadAllText(PreRaidPanelPath);
         var shopMarkup = File.ReadAllText(ShopPanelPath);
         var raidHudMarkup = File.ReadAllText(RaidHudPath);
 
-        Assert.Contains("@GetItemLabel(entry.Item)", loadoutMarkup);
-        Assert.Contains("@GetItemLabel(item)", stashMarkup);
-        Assert.Contains("@GetItemLabel(item)", preRaidMarkup);
-        Assert.Contains("@GetItemLabel(stock.Item)", shopMarkup);
-        Assert.Contains("@GetItemLabel(lootItem)", raidHudMarkup);
-        Assert.Contains("@GetItemLabel(equipped)", raidHudMarkup);
-        Assert.Contains("@GetItemLabel(carried)", raidHudMarkup);
+        Assert.Contains("@ItemPresentationCatalog.GetLabel(entry.Item)", loadoutMarkup);
+        Assert.Contains("@ItemPresentationCatalog.GetLabel(item)", stashMarkup);
+        Assert.Contains("@ItemPresentationCatalog.GetLabel(item)", preRaidMarkup);
+        Assert.Contains("@ItemPresentationCatalog.GetLabel(stock.Item)", shopMarkup);
+        Assert.Contains("@ItemPresentationCatalog.GetLabel(lootItem)", raidHudMarkup);
+        Assert.Contains("@ItemPresentationCatalog.GetLabel(equipped)", raidHudMarkup);
+        Assert.Contains("@ItemPresentationCatalog.GetLabel(carried)", raidHudMarkup);
         Assert.DoesNotContain("@entry.Item.Name", loadoutMarkup);
         Assert.DoesNotContain("@item.Name", stashMarkup);
         Assert.DoesNotContain("@item.Name", preRaidMarkup);
@@ -256,7 +271,7 @@ public sealed class HomeMarkupBindingTests
         Assert.Contains("<span class=\"encumbrance-value @GetEncumbranceSeverityCssClass()\">@EncumbranceText</span>", loadoutMarkup);
         Assert.Contains("<span class=\"encumbrance-tier @GetEncumbranceSeverityCssClass()\">@GetEncumbranceTierLabel()</span>", loadoutMarkup);
         Assert.Contains("disabled=\"@(!CanMoveToLoadoutItem(item))\"", stashMarkup);
-        Assert.Contains("disabled=\"@(!CanBuyItem(stock.Item) || !CanPurchaseItem(stock.Item) || Money < GetBuyPrice(stock.Item.Name))\"", shopMarkup);
+        Assert.Contains("disabled=\"@(!CanBuyItem(stock.Item) || !CanPurchaseItem(stock.Item) || Money < stock.Price)\"", shopMarkup);
     }
 
     [Fact]
@@ -466,7 +481,7 @@ public sealed class HomeMarkupBindingTests
 
         Assert.Contains("Stock=\"VisibleShopStock\"", homeMarkup);
         Assert.Contains("CanBuyItem=\"CanBuyItem\"", homeMarkup);
-        Assert.Contains("disabled=\"@(!CanBuyItem(stock.Item) || !CanPurchaseItem(stock.Item) || Money < GetBuyPrice(stock.Item.Name))\"", shopMarkup);
+        Assert.Contains("disabled=\"@(!CanBuyItem(stock.Item) || !CanPurchaseItem(stock.Item) || Money < stock.Price)\"", shopMarkup);
     }
 
     [Fact]
@@ -475,7 +490,8 @@ public sealed class HomeMarkupBindingTests
         var codeBehind = File.ReadAllText(HomeCodeBehindPath);
         var migration = File.ReadAllText(PlayerStatSystemMigrationPath.Replace("2026032603_add_player_stat_system.sql", "2026032604_author_shop_stock_from_item_defs.sql"));
 
-        Assert.Contains("_shopStock = snapshot.ShopStock.Select(item => new ShopStock(item)).ToList();", codeBehind);
+        Assert.Contains("_shopStock = snapshot.ShopStock", codeBehind);
+        Assert.Contains("new ShopStock(offer, item)", codeBehind);
         Assert.DoesNotContain("new(ItemCatalog.Create(\"Makarov\"))", codeBehind);
         Assert.Contains("add column if not exists shop_enabled boolean not null default false", migration);
         Assert.Contains("create or replace function game.shop_stock()", migration);
@@ -1346,6 +1362,22 @@ public sealed class HomeMarkupBindingTests
         Assert.Contains("enemy_dropped_items", deathDropBlock);
         Assert.Contains("enemy_loadout", deathDropBlock);
         Assert.DoesNotContain("game.random_enemy_loadout()", deathDropBlock);
+    }
+
+    [Fact]
+    public void ItemIdentityMigrationAddsSurrogateKeyAndKeyedPayloadBackfill()
+    {
+        Assert.True(File.Exists(ItemIdentityMigrationPath), $"Expected item identity migration at '{ItemIdentityMigrationPath}'.");
+
+        var migration = File.ReadAllText(ItemIdentityMigrationPath);
+
+        Assert.Contains("add column if not exists item_def_id int generated always as identity", migration);
+        Assert.Contains("item_key text not null", migration);
+        Assert.Contains("unique (item_key)", migration);
+        Assert.Contains("update game.item_defs", migration);
+        Assert.Contains("update public.game_saves", migration);
+        Assert.Contains("update public.raid_sessions", migration);
+        Assert.Contains("itemKey", migration);
     }
 
     [Fact]

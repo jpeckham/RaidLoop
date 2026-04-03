@@ -68,6 +68,18 @@ public class RaidEngineTests
     }
 
     [Theory]
+    [InlineData("makarov", AttackMode.Standard, 2, 12)]
+    [InlineData("ppsh", AttackMode.Standard, 2, 8)]
+    [InlineData("ak74", AttackMode.Standard, 2, 16)]
+    public void CombatBalance_WeaponDamageProfiles_CanBeResolvedByItemKey(string weaponKey, AttackMode mode, int min, int max)
+    {
+        var range = CombatBalance.GetDamageRange(weaponKey, mode);
+
+        Assert.Equal(min, range.Min);
+        Assert.Equal(max, range.Max);
+    }
+
+    [Theory]
     [InlineData("6B2 body armor", 1)]
     [InlineData("BNTI Kirasa-N", 2)]
     [InlineData("6B13 assault armor", 3)]
@@ -78,6 +90,16 @@ public class RaidEngineTests
     public void CombatBalance_ArmorReduction_ByQuality(string armorName, int reduction)
     {
         Assert.Equal(reduction, CombatBalance.GetArmorReduction(armorName));
+    }
+
+    [Theory]
+    [InlineData("6b2_body_armor", 1)]
+    [InlineData("bnti_kirasa_n", 2)]
+    [InlineData("6b13_assault_armor", 3)]
+    [InlineData("fort_defender_2", 4)]
+    public void CombatBalance_ArmorReduction_CanBeResolvedByItemKey(string armorKey, int reduction)
+    {
+        Assert.Equal(reduction, CombatBalance.GetArmorReduction(armorKey));
     }
 
     [Fact]
@@ -295,11 +317,11 @@ public class RaidEngineTests
     }
 
     [Theory]
-    [InlineData("Small Backpack", 3)]
-    [InlineData("Large Backpack", 4)]
-    [InlineData("Tactical Backpack", 6)]
-    [InlineData("Tasmanian Tiger Trooper 35", 8)]
-    [InlineData("6Sh118", 10)]
+    [InlineData("small_backpack", 3)]
+    [InlineData("large_backpack", 4)]
+    [InlineData("tactical_backpack", 6)]
+    [InlineData("tasmanian_tiger_trooper_35", 8)]
+    [InlineData("6sh118", 10)]
     [InlineData(null, 2)]
     public void CombatBalance_BackpackCapacity_ByBackpack(string? backpackName, int capacity)
     {
@@ -751,3 +773,4 @@ public class RaidEngineTests
         }
     }
 }
+

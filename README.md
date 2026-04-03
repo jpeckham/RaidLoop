@@ -121,6 +121,17 @@ dotnet build RaidLoop.sln
 
 ## Contributing
 
+### Item Identity
+
+- `game.item_defs.item_def_id` is the database surrogate key for authored items.
+- `itemDefId` is the canonical runtime gameplay and contract identity.
+- `game.item_defs.item_key` is an internal authored lookup key, not the runtime contract identity.
+- Player-facing labels are client-owned display data and should not be used as server-side identity.
+- Bootstrap returns the full non-localized item rules catalog once, keyed by `itemDefId`.
+- Runtime action payloads stay lean and should not repeat the rules catalog or server-authored item labels.
+- Localization should resolve labels from client-owned assets keyed by `itemDefId`, not from server-authored English names.
+- Payload identity changes must use forward-only migrations. Do not rewrite already-applied migrations to rename or re-key persisted item data.
+
 ### Local Environment
 
 - Local development uses `ASPNETCORE_ENVIRONMENT=Local` from `src/RaidLoop.Client/Properties/launchSettings.json`.

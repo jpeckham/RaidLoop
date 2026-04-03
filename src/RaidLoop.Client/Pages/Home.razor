@@ -20,6 +20,14 @@
 {
     <p>Loading profiles...</p>
 }
+else if (!string.IsNullOrWhiteSpace(_loadErrorMessage))
+{
+    <section class="panel">
+        <h2>Profile unavailable</h2>
+        <p>@_loadErrorMessage</p>
+        <button class="action" @onclick="SignOutAsync">Sign out</button>
+    </section>
+}
 else if (!_inRaid)
 {
     <section class="panel top-status-bar">
@@ -66,7 +74,7 @@ else if (!_inRaid)
             <StashPanel Items="_mainGame.Stash" GetPrimaryActionLabel="GetStashPrimaryActionLabel" CanSellItem="CanSellItem" GetSellPrice="GetSellPrice" CanMoveToLoadoutItem="CanAddOnPersonItem" OnMoveToLoadout="MoveStashToOnPersonAsync" OnSell="SellStashItemAsync" />
         </div>
     </section>
-    <ShopPanel Stock="VisibleShopStock" Money="_money" GetBuyPrice="GetBuyPrice" CanBuyItem="CanBuyItem" CanPurchaseItem="CanAddOnPersonItem" OnBuy="BuyFromShopAsync" />
+    <ShopPanel Stock="VisibleShopStock" Money="_money" CanBuyItem="CanBuyItem" CanPurchaseItem="CanAddOnPersonItem" GetBuyPrice="GetBuyPrice" OnBuy="BuyFromShopAsync" />
     <PreRaidPanel RandomCharacter="_randomCharacter" IsRandomCharacterReady="IsRandomCharacterReady" CanStartLuckRunRaid="CanStartLuckRunRaid" LuckRunBlockReason="@LuckRunBlockReason" RandomCooldownText="@GetRandomCooldownText()" IsStashFull="@(_mainGame.Stash.Count >= MainStashCap)" CanSellItem="CanSellItem" GetSellPrice="GetSellPrice" AcceptedStats="_acceptedStats" DraftStats="_draftStats" AvailableStatPoints="_availableStatPoints" StatsAccepted="_statsAccepted" CanReallocateStats="CanReallocateStats" GetDraftModifier="GetDraftModifier" CanIncreaseDraftStat="CanIncreaseDraftStat" CanDecreaseDraftStat="CanDecreaseDraftStat" OnIncrementStat="IncrementDraftStat" OnDecrementStat="DecrementDraftStat" OnAcceptStats="AcceptStatsAsync" OnReallocateStats="ReallocateStatsAsync" OnStartLuckRun="StartRandomRaidAsync" OnStoreLuckRunItem="StoreLuckRunItemAsync" OnMoveToForRaid="MoveLuckRunItemToForRaidAsync" OnSellLuckRunItem="SellLuckRunItemAsync" />
 }
 else

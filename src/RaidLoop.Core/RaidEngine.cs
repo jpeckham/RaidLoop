@@ -40,7 +40,7 @@ public static class RaidEngine
         }
 
         var equippedBackpack = loadout.FirstOrDefault(x => x.Type == ItemType.Backpack);
-        var inventory = RaidInventory.FromItems([.. loadout], [], CombatBalance.GetBackpackCapacity(equippedBackpack?.Name));
+        var inventory = RaidInventory.FromItems([.. loadout], [], CombatBalance.GetBackpackCapacity(equippedBackpack));
         return new RaidState(startingHealth, inventory);
     }
 
@@ -131,7 +131,7 @@ public static class RaidEngine
                 break;
             case ItemType.Backpack:
                 state.Inventory.EquippedBackpack = null;
-                state.Inventory.BackpackCapacity = CombatBalance.GetBackpackCapacity(null);
+                state.Inventory.BackpackCapacity = CombatBalance.GetBackpackCapacity((string?)null);
                 // Requested behavior: dropping backpack drops everything carried.
                 state.Inventory.DiscoveredLoot.AddRange(state.Inventory.CarriedItems);
                 state.Inventory.CarriedItems.Clear();
@@ -207,7 +207,7 @@ public static class RaidEngine
                 break;
             case ItemType.Backpack:
                 state.Inventory.EquippedBackpack = item;
-                state.Inventory.BackpackCapacity = CombatBalance.GetBackpackCapacity(item.Name);
+                state.Inventory.BackpackCapacity = CombatBalance.GetBackpackCapacity(item);
                 break;
         }
 
@@ -223,7 +223,7 @@ public static class RaidEngine
 
     private static bool TryAddCarriedItem(RaidState state, Item item)
     {
-        if (string.Equals(item.Name, "Medkit", StringComparison.OrdinalIgnoreCase))
+        if (CombatBalance.IsMedkit(item))
         {
             if (!CanFitMedkitByWeight(state))
             {
@@ -281,7 +281,7 @@ public static class RaidEngine
         var carriedItems = state.Inventory.CarriedItems.ToList();
         if (item.Type == ItemType.Backpack)
         {
-            var backpackCapacity = CombatBalance.GetBackpackCapacity(item.Name);
+            var backpackCapacity = CombatBalance.GetBackpackCapacity(item);
             var currentSlots = carriedItems.Sum(x => x.Slots);
             while (currentSlots > backpackCapacity && carriedItems.Count > 0)
             {

@@ -105,7 +105,9 @@ test("game-action returns profile-mutated projections for sell-stash-item", asyn
   const body = await response.json();
   assert.equal(body.eventType, "ProfileMutated");
   assert.equal(body.projections.economy.money, 999);
-  assert.equal(body.projections.stash.mainStash[0].name, "Rusty Knife");
+  assert.equal(body.projections.stash.mainStash[0].itemDefId, 1);
+  assert.equal("name" in body.projections.stash.mainStash[0], false);
+  assert.equal("itemKey" in body.projections.stash.mainStash[0], false);
   assert.equal(body.snapshot, undefined);
 });
 
@@ -114,7 +116,7 @@ test("game-action returns profile-mutated projections for buy-from-shop", async 
     dispatchAction: async (accessToken, action, payload) => {
       assert.equal(accessToken, "token-123");
       assert.equal(action, "buy-from-shop");
-      assert.equal(payload.itemName, "Medkit");
+      assert.equal(payload.itemDefId, 19);
       return {
         money: 380,
         mainStash: [],
@@ -134,14 +136,16 @@ test("game-action returns profile-mutated projections for buy-from-shop", async 
     },
     body: JSON.stringify({
       action: "buy-from-shop",
-      payload: { itemName: "Medkit" },
+      payload: { itemDefId: 19 },
     }),
   }));
 
   const body = await response.json();
   assert.equal(body.eventType, "ProfileMutated");
   assert.equal(body.projections.economy.money, 380);
-  assert.equal(body.projections.loadout.onPersonItems[0].item.name, "Medkit");
+  assert.equal(body.projections.loadout.onPersonItems[0].item.itemDefId, 19);
+  assert.equal("name" in body.projections.loadout.onPersonItems[0].item, false);
+  assert.equal("itemKey" in body.projections.loadout.onPersonItems[0].item, false);
 });
 
 test("game-action returns profile-mutated projections for move-stash-to-on-person", async () => {
@@ -175,8 +179,12 @@ test("game-action returns profile-mutated projections for move-stash-to-on-perso
 
   const body = await response.json();
   assert.equal(body.eventType, "ProfileMutated");
-  assert.equal(body.projections.stash.mainStash[0].name, "Bandage");
-  assert.equal(body.projections.loadout.onPersonItems[0].item.name, "AK74");
+  assert.equal(body.projections.stash.mainStash[0].itemDefId, 20);
+  assert.equal(body.projections.loadout.onPersonItems[0].item.itemDefId, 4);
+  assert.equal("name" in body.projections.stash.mainStash[0], false);
+  assert.equal("itemKey" in body.projections.stash.mainStash[0], false);
+  assert.equal("name" in body.projections.loadout.onPersonItems[0].item, false);
+  assert.equal("itemKey" in body.projections.loadout.onPersonItems[0].item, false);
 });
 
 test("game-action returns profile-mutated projections for sell-luck-run-item", async () => {
@@ -310,7 +318,7 @@ test("game-action returns raid-started projections for start-main-raid", async (
         money: 500,
         mainStash: [],
         onPersonItems: [
-          { item: { name: "AK74", type: 0, value: 320, slots: 1, rarity: 2, displayRarity: 3 }, isEquipped: true },
+          { item: { itemDefId: 4 }, isEquipped: true },
         ],
         randomCharacterAvailableAt: "0001-01-01T00:00:00+00:00",
         randomCharacter: null,
@@ -340,7 +348,7 @@ test("game-action returns raid-started projections for start-main-raid", async (
           discoveredLoot: [],
           carriedLoot: [],
           equippedItems: [
-            { name: "AK74", type: 0, value: 320, slots: 1, rarity: 2, displayRarity: 3 },
+            { itemDefId: 4 },
           ],
           logEntries: ["Raid started as Main Character."],
         },
@@ -381,9 +389,14 @@ test("game-action returns raid-started projections for start-main-raid", async (
   assert.equal(body.projections.raid.enemyDexterity, 11);
   assert.equal(body.projections.raid.enemyConstitution, 12);
   assert.equal(body.projections.raid.enemyStrength, 10);
+  assert.equal(body.projections.raid.equippedItems[0].itemDefId, 4);
+  assert.equal("name" in body.projections.raid.equippedItems[0], false);
+  assert.equal("itemKey" in body.projections.raid.equippedItems[0], false);
+  assert.equal("type" in body.projections.raid.equippedItems[0], false);
+  assert.equal("weight" in body.projections.raid.equippedItems[0], false);
+  assert.equal("itemRules" in body.projections, false);
   assert.equal("extractProgress" in body.projections.raid, false);
   assert.equal("extractRequired" in body.projections.raid, false);
-  assert.equal(body.projections.raid.equippedItems[0].name, "AK74");
   assert.equal(body.snapshot, undefined);
 });
 
@@ -740,7 +753,9 @@ test("game-action returns loot-resolved projections for take-loot", async () => 
     dispatchAction: async (accessToken, action, payload) => {
       assert.equal(accessToken, "token-123");
       assert.equal(action, "take-loot");
-      assert.equal(payload.itemName, "Bandage");
+      assert.equal(payload.itemDefId, 20);
+      assert.equal("itemName" in payload, false);
+      assert.equal("itemKey" in payload, false);
       assert.equal(payload.knownLogCount, 1);
       return {
         money: 500,
@@ -786,13 +801,15 @@ test("game-action returns loot-resolved projections for take-loot", async () => 
     },
     body: JSON.stringify({
       action: "take-loot",
-      payload: { itemName: "Bandage", knownLogCount: 1 },
+      payload: { itemDefId: 20, knownLogCount: 1 },
     }),
   }));
 
   const body = await response.json();
   assert.equal(body.eventType, "LootResolved");
-  assert.equal(body.projections.raid.carriedLoot[0].name, "Bandage");
+  assert.equal(body.projections.raid.carriedLoot[0].itemDefId, 20);
+  assert.equal("name" in body.projections.raid.carriedLoot[0], false);
+  assert.equal("itemKey" in body.projections.raid.carriedLoot[0], false);
   assert.equal("extractProgress" in body.projections.raid, false);
   assert.equal("extractRequired" in body.projections.raid, false);
   assert.deepEqual(body.projections.raid.logEntriesAdded, ["Looted Bandage."]);
@@ -1203,8 +1220,12 @@ test("game-action returns raid-finished projections for attempt-extract", async 
   assert.equal(body.eventType, "RaidFinished");
   assert.deepEqual(body.event, { action: "attempt-extract" });
   assert.equal(body.projections.raid, null);
-  assert.equal(body.projections.loadout.onPersonItems[0].item.name, "AK74");
-  assert.equal(body.projections.loadout.onPersonItems[1].item.name, "Bandage");
+  assert.equal(body.projections.loadout.onPersonItems[0].item.itemDefId, 4);
+  assert.equal("name" in body.projections.loadout.onPersonItems[0].item, false);
+  assert.equal("itemKey" in body.projections.loadout.onPersonItems[0].item, false);
+  assert.equal(body.projections.loadout.onPersonItems[1].item.itemDefId, 20);
+  assert.equal("name" in body.projections.loadout.onPersonItems[1].item, false);
+  assert.equal("itemKey" in body.projections.loadout.onPersonItems[1].item, false);
   assert.equal(body.message, "Extracted successfully.");
   assert.equal(body.snapshot, undefined);
 });

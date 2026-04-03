@@ -23,6 +23,19 @@ public sealed class ItemCatalogTests
         Assert.True(ItemCatalog.Get("Small Backpack").Value > 1);
     }
 
+    [Theory]
+    [InlineData("makarov", "Makarov", ItemType.Weapon)]
+    [InlineData("ppsh", "PPSH", ItemType.Weapon)]
+    [InlineData("6sh118", "6Sh118", ItemType.Backpack)]
+    [InlineData("6b2_body_armor", "6B2 body armor", ItemType.Armor)]
+    public void AuthoredItems_CanBeResolvedByStableItemKey(string itemKey, string expectedName, ItemType expectedType)
+    {
+        var item = ItemCatalog.Get(itemKey);
+
+        Assert.Equal(expectedName, item.Name);
+        Assert.Equal(expectedType, item.Type);
+    }
+
     [Fact]
     public void AuthoredItems_HaveRequestedWeights()
     {
@@ -351,3 +364,5 @@ public sealed class ItemCatalogTests
         return migration[start..end];
     }
 }
+
+

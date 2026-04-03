@@ -13,27 +13,40 @@ public sealed class ProfileApiClientTests
     [Fact]
     public async Task BootstrapAsync_SendsBearerToken_And_ParsesSnapshot()
     {
-        var handler = new FakeHandler(_ =>
+        var handler = new FakeHandler(_ => new HttpResponseMessage(HttpStatusCode.OK)
         {
-            var response = new AuthBootstrapResponse(
-                IsAuthenticated: true,
-                UserEmail: "player@example.com",
-                Snapshot: new PlayerSnapshot(
-                    Money: 640,
-                    MainStash: [ItemCatalog.Create("Makarov")],
-                    OnPersonItems: [new OnPersonSnapshot(ItemCatalog.Create("Small Backpack"), true)],
-                    ShopStock: [ItemCatalog.Create("Makarov"), ItemCatalog.Create("PPSH")],
-                    AcceptedStats: new PlayerStats(8, 12, 10, 9, 11, 14),
-                    DraftStats: new PlayerStats(8, 13, 10, 9, 11, 14),
-                    AvailableStatPoints: 6,
-                    StatsAccepted: false,
-                    PlayerConstitution: 10,
-                    PlayerMaxHealth: 30,
-                    RandomCharacterAvailableAt: DateTimeOffset.MinValue,
-                    RandomCharacter: null,
-                    ActiveRaid: null));
-
-            return JsonResponse(HttpStatusCode.OK, response);
+            Content = new StringContent(
+                """
+                {
+                  "isAuthenticated": true,
+                  "userEmail": "player@example.com",
+                  "snapshot": {
+                    "money": 640,
+                    "mainStash": [{ "itemDefId": 2 }],
+                    "onPersonItems": [{ "item": { "itemDefId": 14 }, "isEquipped": true }],
+                    "shopStock": [
+                      { "itemDefId": 2, "price": 60, "stock": 1 },
+                      { "itemDefId": 3, "price": 160, "stock": 1 }
+                    ],
+                    "itemRules": [
+                      { "itemDefId": 2, "type": 0, "weight": 2, "slots": 1, "rarity": 0 },
+                      { "itemDefId": 3, "type": 0, "weight": 12, "slots": 1, "rarity": 1 },
+                      { "itemDefId": 14, "type": 2, "weight": 1, "slots": 1, "rarity": 0 }
+                    ],
+                    "acceptedStats": { "strength": 8, "dexterity": 12, "constitution": 10, "intelligence": 9, "wisdom": 11, "charisma": 14 },
+                    "draftStats": { "strength": 8, "dexterity": 13, "constitution": 10, "intelligence": 9, "wisdom": 11, "charisma": 14 },
+                    "availableStatPoints": 6,
+                    "statsAccepted": false,
+                    "playerConstitution": 10,
+                    "playerMaxHealth": 30,
+                    "randomCharacterAvailableAt": "0001-01-01T00:00:00+00:00",
+                    "randomCharacter": null,
+                    "activeRaid": null
+                  }
+                }
+                """,
+                Encoding.UTF8,
+                "application/json")
         });
         var httpClient = new HttpClient(handler)
         {
@@ -57,8 +70,11 @@ public sealed class ProfileApiClientTests
         Assert.Equal("publishable-key", Assert.Single(handler.LastRequest.Headers.GetValues("apikey")));
         Assert.True(response.IsAuthenticated);
         Assert.Equal(640, response.Snapshot.Money);
-        Assert.Equal("Small Backpack", Assert.Single(response.Snapshot.OnPersonItems).Item.Name);
-        Assert.Equal(["Makarov", "PPSH"], response.Snapshot.ShopStock.Select(item => item.Name).ToArray());
+        Assert.Equal([2, 3, 14], response.Snapshot.ItemRules.Select(rule => rule.ItemDefId).ToArray());
+        Assert.Equal("makarov", Assert.Single(response.Snapshot.MainStash).Key);
+        Assert.Equal("small_backpack", Assert.Single(response.Snapshot.OnPersonItems).Item.Key);
+        Assert.Equal([2, 3], response.Snapshot.ShopStock.Select(item => item.ItemDefId).ToArray());
+        Assert.Equal([60, 160], response.Snapshot.ShopStock.Select(item => item.Price).ToArray());
         Assert.Equal(12, response.Snapshot.AcceptedStats.Dexterity);
         Assert.Equal(13, response.Snapshot.DraftStats.Dexterity);
         Assert.Equal(6, response.Snapshot.AvailableStatPoints);
@@ -98,3 +114,4 @@ public sealed class ProfileApiClientTests
         }
     }
 }
+

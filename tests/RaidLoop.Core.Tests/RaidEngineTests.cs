@@ -67,6 +67,21 @@ public class RaidEngineTests
         Assert.Equal(max, range.Max);
     }
 
+    [Fact]
+    public void CombatBalance_WeaponItemOverloads_ResolveByItemDefId()
+    {
+        var weapon = new Item("Localized Carbine", ItemType.Weapon, Weight: 7)
+        {
+            ItemDefId = 4
+        };
+
+        Assert.True(InvokeItemBool("WeaponUsesAmmo", weapon));
+        Assert.Equal(30, InvokeItemInt("GetMagazineCapacity", weapon));
+        Assert.True(InvokeItemBool("SupportsSingleShot", weapon));
+        Assert.True(InvokeItemBool("SupportsBurstFire", weapon));
+        Assert.True(InvokeItemBool("SupportsFullAuto", weapon));
+    }
+
     [Theory]
     [InlineData("makarov", AttackMode.Standard, 2, 12)]
     [InlineData("ppsh", AttackMode.Standard, 2, 8)]
@@ -771,6 +786,20 @@ public class RaidEngineTests
             var span = maxExclusive - minInclusive;
             return minInclusive + (offset % span);
         }
+    }
+
+    private static bool InvokeItemBool(string methodName, Item item)
+    {
+        var method = typeof(CombatBalance).GetMethod(methodName, [typeof(Item)]);
+        Assert.NotNull(method);
+        return Assert.IsType<bool>(method!.Invoke(null, [item]));
+    }
+
+    private static int InvokeItemInt(string methodName, Item item)
+    {
+        var method = typeof(CombatBalance).GetMethod(methodName, [typeof(Item)]);
+        Assert.NotNull(method);
+        return Assert.IsType<int>(method!.Invoke(null, [item]));
     }
 }
 

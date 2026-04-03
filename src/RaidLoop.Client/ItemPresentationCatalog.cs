@@ -19,8 +19,16 @@ public static class ItemPresentationCatalog
             {
                 return label;
             }
+
+            return item.ItemDefId.ToString(CultureInfo.InvariantCulture);
         }
 
-        return item.Name;
+        if (!string.IsNullOrWhiteSpace(item.Name))
+        {
+            return item.Name;
+        }
+
+        return string.Empty;
     }
 }
+

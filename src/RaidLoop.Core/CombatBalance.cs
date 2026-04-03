@@ -173,6 +173,11 @@ public static class CombatBalance
         return new DamageRange(dieCount, dieCount * dieSize);
     }
 
+    public static DamageRange GetDamageRange(Item? weapon, AttackMode mode)
+    {
+        return GetDamageRange(ResolveItemIdentity(weapon), mode);
+    }
+
     public static int RollDamage(string weaponName, AttackMode mode, IRng rng)
     {
         var dieCount = GetDamageDieCount(mode);
@@ -187,6 +192,11 @@ public static class CombatBalance
         return total;
     }
 
+    public static int RollDamage(Item? weapon, AttackMode mode, IRng rng)
+    {
+        return RollDamage(ResolveItemIdentity(weapon), mode, rng);
+    }
+
     public static bool SupportsSingleShot(string weaponName)
     {
         return NormalizeItemName(weaponName) switch
@@ -194,6 +204,11 @@ public static class CombatBalance
             "pkp" => false,
             _ => true
         };
+    }
+
+    public static bool SupportsSingleShot(Item? weapon)
+    {
+        return SupportsSingleShot(ResolveItemIdentity(weapon));
     }
 
     public static bool SupportsBurstFire(string weaponName)
@@ -211,6 +226,11 @@ public static class CombatBalance
         };
     }
 
+    public static bool SupportsBurstFire(Item? weapon)
+    {
+        return SupportsBurstFire(ResolveItemIdentity(weapon));
+    }
+
     public static bool SupportsFullAuto(string weaponName)
     {
         return NormalizeItemName(weaponName) switch
@@ -221,6 +241,11 @@ public static class CombatBalance
             "Rusty Knife" => false,
             _ => true
         };
+    }
+
+    public static bool SupportsFullAuto(Item? weapon)
+    {
+        return SupportsFullAuto(ResolveItemIdentity(weapon));
     }
 
     public static int GetBurstAttackPenalty(string weaponName)
@@ -237,6 +262,11 @@ public static class CombatBalance
         };
     }
 
+    public static int GetBurstAttackPenalty(Item? weapon)
+    {
+        return GetBurstAttackPenalty(ResolveItemIdentity(weapon));
+    }
+
     public static int GetArmorReduction(string armorName)
     {
         return NormalizeItemName(armorName) switch
@@ -249,6 +279,11 @@ public static class CombatBalance
             "6b2_body_armor" => 1,
             _ => 0
         };
+    }
+
+    public static int GetArmorReduction(Item? armor)
+    {
+        return GetArmorReduction(ResolveItemIdentity(armor));
     }
 
     public static int ApplyArmorReduction(int incomingDamage, int armorReduction)
@@ -311,9 +346,19 @@ public static class CombatBalance
         };
     }
 
+    public static int GetMagazineCapacity(Item? weapon)
+    {
+        return GetMagazineCapacity(ResolveItemIdentity(weapon));
+    }
+
     public static bool WeaponUsesAmmo(string weaponName)
     {
         return GetMagazineCapacity(weaponName) > 0;
+    }
+
+    public static bool WeaponUsesAmmo(Item? weapon)
+    {
+        return GetMagazineCapacity(weapon) > 0;
     }
 
     public static int GetBackpackCapacity(string? backpackName)
@@ -410,6 +455,28 @@ public static class CombatBalance
             "Plate Carrier" => "6b13_assault_armor",
             _ => armorName
         };
+    }
+
+    private static string ResolveItemIdentity(Item? item)
+    {
+        if (item is null)
+        {
+            return string.Empty;
+        }
+
+        if (item.ItemDefId > 0
+            && ItemCatalog.TryGetByItemDefId(item.ItemDefId, out var authoredItem)
+            && authoredItem is not null)
+        {
+            return authoredItem.Key;
+        }
+
+        if (!string.IsNullOrWhiteSpace(item.Key))
+        {
+            return item.Key;
+        }
+
+        return item.Name;
     }
 
     private static int GetLightLoadLimit(int strength)

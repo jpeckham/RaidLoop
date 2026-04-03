@@ -179,11 +179,11 @@ public partial class Home : IDisposable
         return reasons.Count == 0 ? null : string.Join(" ", reasons);
     }
 
-    private bool EquippedWeaponUsesAmmo => CombatBalance.WeaponUsesAmmo(GetEquippedWeaponName());
-    private int CurrentMagazineCapacity => CombatBalance.GetMagazineCapacity(GetEquippedWeaponName());
-    private bool EquippedWeaponSupportsSingleShot => CombatBalance.SupportsSingleShot(GetEquippedWeaponName());
-    private bool EquippedWeaponSupportsBurstFire => CombatBalance.SupportsBurstFire(GetEquippedWeaponName());
-    private bool EquippedWeaponSupportsFullAuto => CombatBalance.SupportsFullAuto(GetEquippedWeaponName());
+    private bool EquippedWeaponUsesAmmo => CombatBalance.WeaponUsesAmmo(GetEquippedWeaponForCombat());
+    private int CurrentMagazineCapacity => CombatBalance.GetMagazineCapacity(GetEquippedWeaponForCombat());
+    private bool EquippedWeaponSupportsSingleShot => CombatBalance.SupportsSingleShot(GetEquippedWeaponForCombat());
+    private bool EquippedWeaponSupportsBurstFire => CombatBalance.SupportsBurstFire(GetEquippedWeaponForCombat());
+    private bool EquippedWeaponSupportsFullAuto => CombatBalance.SupportsFullAuto(GetEquippedWeaponForCombat());
     private bool CanAttack => EquippedWeaponSupportsSingleShot;
     private bool CanAttackEnabled => !EquippedWeaponUsesAmmo || _ammo > 0;
     private bool CanBurstFire => EquippedWeaponSupportsBurstFire;
@@ -1388,12 +1388,9 @@ public partial class Home : IDisposable
             : $"{left.Minutes:D2}:{left.Seconds:D2}";
     }
 
-    private string GetEquippedWeaponName()
+    private Item GetEquippedWeaponForCombat()
     {
-        var weapon = _raid?.Inventory.EquippedWeapon;
-        return ItemPresentationCatalog.GetLabel(weapon) is { Length: > 0 } label
-            ? label
-            : ItemPresentationCatalog.GetLabel(ItemCatalog.GetByItemDefId(FallbackKnifeItemDefId));
+        return _raid?.Inventory.EquippedWeapon ?? ItemCatalog.GetByItemDefId(FallbackKnifeItemDefId);
     }
 
     private string GetAmmoHudText()

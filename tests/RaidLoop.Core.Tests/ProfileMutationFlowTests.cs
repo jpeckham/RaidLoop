@@ -674,6 +674,14 @@ public sealed class ProfileMutationFlowTests
     }
 
     [Fact]
+    public void HomeNoLongerUsesDisplayLabelWeaponLookupForCombat()
+    {
+        var method = typeof(Home).GetMethod("GetEquippedWeaponName", BindingFlags.Instance | BindingFlags.NonPublic);
+
+        Assert.Null(method);
+    }
+
+    [Fact]
     public void ApplyActionResult_AppliesEconomyStashLoadoutLuckRunAndRaidProjections()
     {
         var home = CreateHome(new FakeGameActionApiClient());

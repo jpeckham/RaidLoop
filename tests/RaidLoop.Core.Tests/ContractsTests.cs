@@ -390,14 +390,22 @@ public sealed class ContractsTests
     }
 
     [Fact]
-    public void ItemPresentationCatalog_FallsBackToNameWhenItemDefinitionIdIsUnknown()
+    public void ItemPresentationCatalog_UsesLocalizedLabelWhenItemDefinitionIdIsKnown()
+    {
+        var item = ItemCatalog.GetByItemDefId(4);
+
+        Assert.Equal("AK74", ItemPresentationCatalog.GetLabel(item));
+    }
+
+    [Fact]
+    public void ItemPresentationCatalog_FallsBackToItemDefinitionIdWhenItemDefinitionIdIsUnknown()
     {
         var item = new Item("Legacy label", ItemType.Weapon, Weight: 2)
         {
             ItemDefId = 99999
         };
 
-        Assert.Equal("Legacy label", ItemPresentationCatalog.GetLabel(item));
+        Assert.Equal("99999", ItemPresentationCatalog.GetLabel(item));
     }
 
     [Fact]
@@ -472,5 +480,4 @@ public sealed class ContractsTests
         return JsonSerializer.Serialize(roundTrip, new JsonSerializerOptions(JsonSerializerDefaults.Web));
     }
 }
-
 

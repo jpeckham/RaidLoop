@@ -1,5 +1,6 @@
 using System.IO;
 using System.Linq;
+using System.Reflection;
 namespace RaidLoop.Core.Tests;
 
 public sealed class HomeMarkupBindingTests
@@ -239,6 +240,19 @@ public sealed class HomeMarkupBindingTests
         Assert.DoesNotContain("@lootItem.Name", raidHudMarkup);
         Assert.DoesNotContain("@equipped.Name", raidHudMarkup);
         Assert.DoesNotContain("@carried.Name", raidHudMarkup);
+    }
+
+    [Fact]
+    public void ItemResourcesExposeAResourceManagerForClientItemLabels()
+    {
+        var resourceManagerProperty = typeof(RaidLoop.Client.ItemResources).GetProperty(
+            "ResourceManager",
+            BindingFlags.Public | BindingFlags.Static);
+
+        Assert.NotNull(resourceManagerProperty);
+        var resourceManager = Assert.IsType<System.Resources.ResourceManager>(resourceManagerProperty!.GetValue(null));
+        Assert.Equal("Rusty Knife", resourceManager.GetString("Items.1"));
+        Assert.Equal("Legendary Trigger Group", resourceManager.GetString("Items.24"));
     }
 
     [Fact]

@@ -1421,11 +1421,11 @@ public sealed class ProfileMutationFlowTests
         using var document = JsonDocument.Parse("""
         {
             "name": "Server-authored alias",
-            "itemDefId": "AK74",
+            "itemDefId": 4,
             "type": 0,
-            "value": 320,
-            "slots": 1,
-            "weight": 7
+            "value": 777,
+            "slots": 9,
+            "weight": 13
         }
         """);
 

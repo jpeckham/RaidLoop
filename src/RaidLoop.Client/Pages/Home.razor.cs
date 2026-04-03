@@ -36,6 +36,7 @@ public partial class Home : IDisposable
 
     private RaidState? _raid;
     private bool _isLoading = true;
+    private string _loadErrorMessage = string.Empty;
     private bool _inRaid;
     private bool _awaitingDecision;
     private int? _raidEncumbrance;
@@ -75,6 +76,7 @@ public partial class Home : IDisposable
             ApplySnapshot(response.Snapshot);
             NormalizeEquippedSlots();
             EnsureMainCharacterHasWeaponFallback();
+            _loadErrorMessage = string.Empty;
         }
         catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.Unauthorized)
         {
@@ -83,10 +85,19 @@ public partial class Home : IDisposable
             _isLoading = false;
             return;
         }
+        catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.ServiceUnavailable or HttpStatusCode.BadGateway or HttpStatusCode.GatewayTimeout)
+        {
+            await ReportHandledErrorAsync("Profile bootstrap failed because the profile service is unavailable.", "bootstrap", ex);
+            _loadErrorMessage = "The profile service is temporarily unavailable. Try again in a moment.";
+            _isLoading = false;
+            return;
+        }
         catch (Exception ex)
         {
             await ReportHandledErrorAsync("Profile bootstrap failed.", "bootstrap", ex);
-            throw;
+            _loadErrorMessage = "The profile could not be loaded right now. Refresh and try again.";
+            _isLoading = false;
+            return;
         }
 
         _clockTimer = new System.Threading.Timer(async _ =>

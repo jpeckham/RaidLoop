@@ -20,6 +20,14 @@
 {
     <p>Loading profiles...</p>
 }
+else if (!string.IsNullOrWhiteSpace(_loadErrorMessage))
+{
+    <section class="panel">
+        <h2>Profile unavailable</h2>
+        <p>@_loadErrorMessage</p>
+        <button class="action" @onclick="SignOutAsync">Sign out</button>
+    </section>
+}
 else if (!_inRaid)
 {
     <section class="panel top-status-bar">

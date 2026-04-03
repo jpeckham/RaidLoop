@@ -227,13 +227,13 @@ public sealed class HomeMarkupBindingTests
         var raidHudMarkup = File.ReadAllText(RaidHudPath);
 
         Assert.Contains("EquippedItems=\"GetEquippedItems().ToList()\"", homeMarkup);
-        Assert.Contains("@GetItemLabel(entry.Item)", loadoutMarkup);
-        Assert.Contains("@GetItemLabel(item)", stashMarkup);
-        Assert.Contains("@GetItemLabel(item)", preRaidMarkup);
-        Assert.Contains("@GetItemLabel(stock.Item)", shopMarkup);
-        Assert.Contains("@GetItemLabel(lootItem)", raidHudMarkup);
-        Assert.Contains("@GetItemLabel(equipped)", raidHudMarkup);
-        Assert.Contains("@GetItemLabel(carried)", raidHudMarkup);
+        Assert.Contains("ItemPresentationCatalog.GetLabel(entry.Item)", loadoutMarkup);
+        Assert.Contains("ItemPresentationCatalog.GetLabel(item)", stashMarkup);
+        Assert.Contains("ItemPresentationCatalog.GetLabel(item)", preRaidMarkup);
+        Assert.Contains("ItemPresentationCatalog.GetLabel(stock.Item)", shopMarkup);
+        Assert.Contains("ItemPresentationCatalog.GetLabel(lootItem)", raidHudMarkup);
+        Assert.Contains("ItemPresentationCatalog.GetLabel(equipped)", raidHudMarkup);
+        Assert.Contains("ItemPresentationCatalog.GetLabel(carried)", raidHudMarkup);
         Assert.DoesNotContain("@entry.Item.Name", loadoutMarkup);
         Assert.DoesNotContain("@item.Name", stashMarkup);
         Assert.DoesNotContain("@item.Name", preRaidMarkup);

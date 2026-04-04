@@ -27,7 +27,7 @@ public class GameEventValueScenarioTests : IDisposable
     public async Task TakeLootAsync_EmitsLootAcquiredWithItemValue()
     {
         var home = CreateHome();
-        var loot = new Item("AK47", ItemType.Weapon, Weight: 10, Value: 20, Slots: 1, Rarity: Rarity.Legendary);
+        var loot = ItemCatalog.GetByItemDefId(5) with { Value = 20 };
         var raid = new RaidState(
             health: 30,
             inventory: RaidInventory.FromItems([], [], backpackCapacity: 4));
@@ -40,6 +40,7 @@ public class GameEventValueScenarioTests : IDisposable
 
         var evt = Assert.Single(GameEventLog.Events);
         Assert.Equal("loot.acquired", evt.EventName);
+        Assert.Equal(5, Assert.Single(evt.Items).ItemDefId);
         Assert.Equal(20, Assert.Single(evt.Items).Value);
     }
 

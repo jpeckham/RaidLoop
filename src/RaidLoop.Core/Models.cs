@@ -35,6 +35,7 @@ public sealed record OpeningPhaseContext(
     int PlayerGearAwarenessModifier = 0,
     int EnemyLocalizationModifier = 0);
 
+// Name is presentation metadata only. Runtime identity must use ItemDefId / Key.
 [JsonConverter(typeof(ItemJsonConverter))]
 public sealed record Item(
     string Name,

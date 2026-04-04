@@ -276,6 +276,27 @@ public static class ItemCatalog
         return LegacyNames.TryGetValue(name, out item);
     }
 
+    public static bool TryResolveAuthoredItem(int itemDefId, string? itemKey, string? legacyName, out Item? item)
+    {
+        if (TryGetByItemDefId(itemDefId, out item) && item is not null)
+        {
+            return true;
+        }
+
+        if (!string.IsNullOrWhiteSpace(itemKey) && TryGetByKey(itemKey, out item) && item is not null)
+        {
+            return true;
+        }
+
+        if (!string.IsNullOrWhiteSpace(legacyName) && TryGetByLegacyName(legacyName, out item) && item is not null)
+        {
+            return true;
+        }
+
+        item = null;
+        return false;
+    }
+
     public static bool TryGetKeyByLegacyName(string name, out string key)
     {
         if (string.IsNullOrWhiteSpace(name))

@@ -390,6 +390,69 @@ public sealed class ContractsTests
     }
 
     [Fact]
+    public void ItemJsonConverter_PrefersItemDefIdThenItemKeyThenLegacyName()
+    {
+        const string json = """
+            {
+              "itemDefId": 4,
+              "itemKey": "ak47",
+              "name": "Makarov",
+              "type": 0,
+              "value": 320,
+              "slots": 1,
+              "rarity": 2,
+              "displayRarity": 3,
+              "weight": 7
+            }
+            """;
+
+        var item = JsonSerializer.Deserialize<Item>(json, new JsonSerializerOptions(JsonSerializerDefaults.Web));
+
+        Assert.NotNull(item);
+        Assert.Equal(4, item!.ItemDefId);
+        Assert.Equal("ak74", item.Key);
+        Assert.Equal("AK74", item.Name);
+    }
+
+    [Fact]
+    public void ItemJsonConverter_FallsBackToItemDefIdWhenAuthoredItemIsMissing()
+    {
+        const string json = """
+            {
+              "itemDefId": 99999,
+              "itemKey": "unknown_key",
+              "name": "Unknown Label",
+              "type": 0,
+              "value": 320,
+              "slots": 1,
+              "rarity": 2,
+              "displayRarity": 3,
+              "weight": 7
+            }
+            """;
+
+        var item = JsonSerializer.Deserialize<Item>(json, new JsonSerializerOptions(JsonSerializerDefaults.Web));
+
+        Assert.NotNull(item);
+        Assert.Equal(99999, item!.ItemDefId);
+        Assert.Equal("unknown_key", item.Key);
+        Assert.Equal("99999", item.Name);
+    }
+
+    [Fact]
+    public void ItemCatalog_ResolvesAuthoredItemsByIdentityOrder()
+    {
+        Assert.True(ItemCatalog.TryResolveAuthoredItem(4, "pkp", "Makarov", out var byItemDefId));
+        Assert.Equal(4, byItemDefId!.ItemDefId);
+
+        Assert.True(ItemCatalog.TryResolveAuthoredItem(99999, "ak74", "Makarov", out var byItemKey));
+        Assert.Equal(4, byItemKey!.ItemDefId);
+
+        Assert.True(ItemCatalog.TryResolveAuthoredItem(0, null, "Makarov", out var byLegacyName));
+        Assert.Equal(2, byLegacyName!.ItemDefId);
+    }
+
+    [Fact]
     public void ItemPresentationCatalog_UsesLocalizedLabelWhenItemDefinitionIdIsKnown()
     {
         var item = ItemCatalog.GetByItemDefId(4);

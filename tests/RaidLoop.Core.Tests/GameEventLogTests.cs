@@ -13,8 +13,8 @@ public class GameEventLogTests : IDisposable
     [Fact]
     public void Append_StoresEventsInOrder()
     {
-        GameEventLog.Append(new GameEvent("one", "raid-1", [new ItemSnapshot("Bandage", "Sellable", "Common", 1)], DateTimeOffset.UtcNow));
-        GameEventLog.Append(new GameEvent("two", "raid-1", [new ItemSnapshot("AK74", "Weapon", "Rare", 8)], DateTimeOffset.UtcNow));
+        GameEventLog.Append(new GameEvent("one", "raid-1", [new ItemSnapshot(20, "Sellable", "Common", 1)], DateTimeOffset.UtcNow));
+        GameEventLog.Append(new GameEvent("two", "raid-1", [new ItemSnapshot(4, "Weapon", "Rare", 8)], DateTimeOffset.UtcNow));
 
         Assert.Collection(
             GameEventLog.Events,
@@ -25,7 +25,7 @@ public class GameEventLogTests : IDisposable
     [Fact]
     public void Clear_RemovesEvents()
     {
-        GameEventLog.Append(new GameEvent("one", "raid-1", [new ItemSnapshot("Bandage", "Sellable", "Common", 1)], DateTimeOffset.UtcNow));
+        GameEventLog.Append(new GameEvent("one", "raid-1", [new ItemSnapshot(20, "Sellable", "Common", 1)], DateTimeOffset.UtcNow));
 
         GameEventLog.Clear();
 
@@ -36,33 +36,35 @@ public class GameEventLogTests : IDisposable
     public void Events_AreReadableWhenEmptyAndPopulated()
     {
         _ = GameEventLog.Events.Count;
-        GameEventLog.Append(new GameEvent("one", "raid-1", [new ItemSnapshot("Bandage", "Sellable", "Common", 1)], DateTimeOffset.UtcNow));
+        GameEventLog.Append(new GameEvent("one", "raid-1", [new ItemSnapshot(20, "Sellable", "Common", 1)], DateTimeOffset.UtcNow));
 
         Assert.Single(GameEventLog.Events);
     }
 
     [Fact]
-    public void ItemSnapshot_PreservesValue()
+    public void ItemSnapshot_PreservesItemDefIdAndValue()
     {
-        var snapshot = new ItemSnapshot("AK47", "Weapon", "Legendary", 20);
+        var snapshot = new ItemSnapshot(5, "Weapon", "Legendary", 20);
 
+        Assert.Equal(5, snapshot.ItemDefId);
         Assert.Equal(20, snapshot.Value);
     }
 
     [Fact]
     public void GameEvent_TotalValueDefaultsToZero()
     {
-        var evt = new GameEvent("one", "raid-1", [new ItemSnapshot("Bandage", "Sellable", "Common", 1)], DateTimeOffset.UtcNow);
+        var evt = new GameEvent("one", "raid-1", [new ItemSnapshot(20, "Sellable", "Common", 1)], DateTimeOffset.UtcNow);
 
         Assert.Equal(0, evt.TotalValue);
     }
 
     [Fact]
-    public void CreateItemSnapshots_UsesDisplayRarityAndAuthoredValue()
+    public void CreateItemSnapshots_UsesItemDefIdDisplayRarityAndAuthoredValue()
     {
         var snapshots = GameEventLog.CreateItemSnapshots([ItemCatalog.Get("Bandage")]);
 
         var snapshot = Assert.Single(snapshots);
+        Assert.Equal(20, snapshot.ItemDefId);
         Assert.Equal("SellOnly", snapshot.Rarity);
         Assert.Equal(ItemCatalog.Get("Bandage").Value, snapshot.Value);
     }

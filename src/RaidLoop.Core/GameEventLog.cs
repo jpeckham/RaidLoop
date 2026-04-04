@@ -27,7 +27,7 @@ public static class GameEventLog
     public static IReadOnlyList<ItemSnapshot> CreateItemSnapshots(IEnumerable<Item> items)
     {
         return items
-            .Select(item => new ItemSnapshot(item.Name, item.Type.ToString(), item.DisplayRarity.ToString(), item.Value))
+            .Select(item => new ItemSnapshot(item.ItemDefId, item.Type.ToString(), item.DisplayRarity.ToString(), item.Value))
             .ToList();
     }
 }
@@ -39,4 +39,4 @@ public sealed record GameEvent(
     DateTimeOffset Timestamp,
     int TotalValue = 0);
 
-public sealed record ItemSnapshot(string Name, string Category, string Rarity, int Value);
+public sealed record ItemSnapshot(int ItemDefId, string Category, string Rarity, int Value);

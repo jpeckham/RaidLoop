@@ -37,6 +37,16 @@ public sealed class ItemCatalogTests
     }
 
     [Fact]
+    public void AuthoredItems_CanBeResolvedByStableItemDefId()
+    {
+        var item = ItemCatalog.GetByItemDefId(4);
+
+        Assert.Equal("AK74", item.Name);
+        Assert.Equal("ak74", item.Key);
+        Assert.Equal(ItemType.Weapon, item.Type);
+    }
+
+    [Fact]
     public void AuthoredItems_HaveRequestedWeights()
     {
         Assert.Equal(1, ItemCatalog.Get("Rusty Knife").Weight);

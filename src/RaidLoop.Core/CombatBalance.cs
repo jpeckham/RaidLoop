@@ -1,3 +1,5 @@
+using System.Globalization;
+
 namespace RaidLoop.Core;
 
 public enum AttackMode
@@ -323,9 +325,19 @@ public static class CombatBalance
 
     public static int GetBuyPrice(Item item)
     {
-        if (item.ItemDefId > 0 && ItemCatalog.TryGetByItemDefId(item.ItemDefId, out var authoredItem) && authoredItem is not null)
+        if (ItemCatalog.TryResolveAuthoredItem(item.ItemDefId, item.Key, item.Name, out var authoredItem) && authoredItem is not null)
         {
             return GetBuyPrice(authoredItem.Key);
+        }
+
+        if (item.ItemDefId > 0)
+        {
+            return GetBuyPrice(item.ItemDefId.ToString(CultureInfo.InvariantCulture));
+        }
+
+        if (!string.IsNullOrWhiteSpace(item.Key))
+        {
+            return GetBuyPrice(item.Key);
         }
 
         return GetBuyPrice(item.Name);
@@ -381,9 +393,19 @@ public static class CombatBalance
             return GetBackpackCapacity((string?)null);
         }
 
-        if (backpack.ItemDefId > 0 && ItemCatalog.TryGetByItemDefId(backpack.ItemDefId, out var authoredItem) && authoredItem is not null)
+        if (ItemCatalog.TryResolveAuthoredItem(backpack.ItemDefId, backpack.Key, backpack.Name, out var authoredItem) && authoredItem is not null)
         {
             return GetBackpackCapacity(authoredItem.Key);
+        }
+
+        if (backpack.ItemDefId > 0)
+        {
+            return GetBackpackCapacity(backpack.ItemDefId.ToString(CultureInfo.InvariantCulture));
+        }
+
+        if (!string.IsNullOrWhiteSpace(backpack.Key))
+        {
+            return GetBackpackCapacity(backpack.Key);
         }
 
         return GetBackpackCapacity(backpack.Name);
@@ -398,7 +420,17 @@ public static class CombatBalance
 
         if (item.ItemDefId > 0)
         {
+            if (ItemCatalog.TryResolveAuthoredItem(item.ItemDefId, item.Key, item.Name, out var authoredItem) && authoredItem is not null)
+            {
+                return authoredItem.ItemDefId == 19;
+            }
+
             return item.ItemDefId == 19;
+        }
+
+        if (!string.IsNullOrWhiteSpace(item.Key))
+        {
+            return string.Equals(item.Key, "medkit", StringComparison.OrdinalIgnoreCase);
         }
 
         return NormalizeItemName(item.Name) == "medkit";

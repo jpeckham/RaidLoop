@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -14,31 +15,15 @@ internal sealed class ItemJsonConverter : JsonConverter<Item>
         var itemKey = TryGetString(root, "itemKey");
         var itemName = TryGetString(root, "name");
 
-        Item? authoredItem = null;
-        if (itemDefId > 0 && ItemCatalog.TryGetByItemDefId(itemDefId, out var itemById))
+        if (ItemCatalog.TryResolveAuthoredItem(itemDefId, itemKey, itemName, out var authoredItem) && authoredItem is not null)
         {
-            authoredItem = itemById;
-        }
-        else if (itemDefId == 0 && !string.IsNullOrWhiteSpace(itemKey) && ItemCatalog.TryGetByKey(itemKey!, out var itemByKey))
-        {
-            authoredItem = itemByKey;
-        }
-        else if (itemDefId == 0 && !string.IsNullOrWhiteSpace(itemName) && ItemCatalog.TryGetByLegacyName(itemName!, out var itemByName))
-        {
-            authoredItem = itemByName;
-        }
-
-        if (authoredItem is not null)
-        {
-            return authoredItem with
-            {
-                ItemDefId = authoredItem.ItemDefId,
-                Key = authoredItem.Key
-            };
+            return authoredItem with { };
         }
 
         return new Item(
-            Name: itemName ?? string.Empty,
+            Name: itemDefId > 0
+                ? itemDefId.ToString(CultureInfo.InvariantCulture)
+                : itemKey ?? itemName ?? string.Empty,
             Type: TryGetInt(root, "type", TryGetInt(root, "Type")) is var typeValue ? (ItemType)typeValue : ItemType.Weapon,
             Weight: TryGetInt(root, "weight", TryGetInt(root, "Weight")),
             Value: TryGetInt(root, "value", TryGetInt(root, "Value", 1)),

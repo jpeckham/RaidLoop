@@ -21,9 +21,7 @@ internal sealed class ItemJsonConverter : JsonConverter<Item>
         }
 
         return new Item(
-            Name: itemDefId > 0
-                ? itemDefId.ToString(CultureInfo.InvariantCulture)
-                : itemKey ?? itemName ?? string.Empty,
+            Name: itemName ?? itemKey ?? (itemDefId > 0 ? itemDefId.ToString(CultureInfo.InvariantCulture) : string.Empty),
             Type: TryGetInt(root, "type", TryGetInt(root, "Type")) is var typeValue ? (ItemType)typeValue : ItemType.Weapon,
             Weight: TryGetInt(root, "weight", TryGetInt(root, "Weight")),
             Value: TryGetInt(root, "value", TryGetInt(root, "Value", 1)),

@@ -67,21 +67,6 @@ public class RaidEngineTests
         Assert.Equal(max, range.Max);
     }
 
-    [Fact]
-    public void CombatBalance_WeaponItemOverloads_ResolveByItemDefId()
-    {
-        var weapon = new Item("Localized Carbine", ItemType.Weapon, Weight: 7)
-        {
-            ItemDefId = 4
-        };
-
-        Assert.True(InvokeItemBool("WeaponUsesAmmo", weapon));
-        Assert.Equal(30, InvokeItemInt("GetMagazineCapacity", weapon));
-        Assert.True(InvokeItemBool("SupportsSingleShot", weapon));
-        Assert.True(InvokeItemBool("SupportsBurstFire", weapon));
-        Assert.True(InvokeItemBool("SupportsFullAuto", weapon));
-    }
-
     [Theory]
     [InlineData("makarov", AttackMode.Standard, 2, 12)]
     [InlineData("ppsh", AttackMode.Standard, 2, 8)]
@@ -590,10 +575,10 @@ public class RaidEngineTests
         var equipped = RaidEngine.TryEquipFromDiscovered(state, state.Inventory.DiscoveredLoot[0]);
 
         Assert.False(equipped);
-        Assert.Equal("Makarov", state.Inventory.EquippedWeapon?.Name);
-        Assert.Equal("Small Backpack", state.Inventory.EquippedBackpack?.Name);
+        Assert.Equal(2, state.Inventory.EquippedWeapon?.ItemDefId);
+        Assert.Equal(14, state.Inventory.EquippedBackpack?.ItemDefId);
         Assert.Single(state.Inventory.DiscoveredLoot);
-        Assert.Equal("6B13 assault armor", state.Inventory.DiscoveredLoot[0].Name);
+        Assert.Equal(10, state.Inventory.DiscoveredLoot[0].ItemDefId);
     }
 
     [Fact]
@@ -616,10 +601,10 @@ public class RaidEngineTests
         var equipped = RaidEngine.TryEquipFromCarried(state, state.Inventory.CarriedItems[0]);
 
         Assert.False(equipped);
-        Assert.Equal("Makarov", state.Inventory.EquippedWeapon?.Name);
-        Assert.Equal("Small Backpack", state.Inventory.EquippedBackpack?.Name);
+        Assert.Equal(2, state.Inventory.EquippedWeapon?.ItemDefId);
+        Assert.Equal(14, state.Inventory.EquippedBackpack?.ItemDefId);
         Assert.Single(state.Inventory.CarriedItems);
-        Assert.Equal("6B13 assault armor", state.Inventory.CarriedItems[0].Name);
+        Assert.Equal(10, state.Inventory.CarriedItems[0].ItemDefId);
     }
 
     [Fact]
@@ -645,12 +630,12 @@ public class RaidEngineTests
         var equipped = RaidEngine.TryEquipFromCarried(state, state.Inventory.CarriedItems[3]);
 
         Assert.True(equipped);
-        Assert.Equal("Small Backpack", state.Inventory.EquippedBackpack?.Name);
-        Assert.Contains(state.Inventory.DiscoveredLoot, x => x.Name == "Large Backpack");
-        Assert.Contains(state.Inventory.DiscoveredLoot, x => x.Name == "Tactical Backpack");
+        Assert.Equal(14, state.Inventory.EquippedBackpack?.ItemDefId);
+        Assert.Contains(state.Inventory.DiscoveredLoot, x => x.ItemDefId == 15);
+        Assert.Contains(state.Inventory.DiscoveredLoot, x => x.ItemDefId == 16);
         Assert.Equal(2, state.Inventory.CarriedItems.Count);
-        Assert.Contains(state.Inventory.CarriedItems, x => x.Name == "Bandage");
-        Assert.Contains(state.Inventory.CarriedItems, x => x.Name == "Ammo Box");
+        Assert.Contains(state.Inventory.CarriedItems, x => x.ItemDefId == 20);
+        Assert.Contains(state.Inventory.CarriedItems, x => x.ItemDefId == 21);
     }
 
     [Fact]
@@ -786,20 +771,6 @@ public class RaidEngineTests
             var span = maxExclusive - minInclusive;
             return minInclusive + (offset % span);
         }
-    }
-
-    private static bool InvokeItemBool(string methodName, Item item)
-    {
-        var method = typeof(CombatBalance).GetMethod(methodName, [typeof(Item)]);
-        Assert.NotNull(method);
-        return Assert.IsType<bool>(method!.Invoke(null, [item]));
-    }
-
-    private static int InvokeItemInt(string methodName, Item item)
-    {
-        var method = typeof(CombatBalance).GetMethod(methodName, [typeof(Item)]);
-        Assert.NotNull(method);
-        return Assert.IsType<int>(method!.Invoke(null, [item]));
     }
 }
 

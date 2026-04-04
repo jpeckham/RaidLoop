@@ -64,7 +64,7 @@ public sealed class ContractsTests
         Assert.True(roundTrip!.IsAuthenticated);
         Assert.Equal("player@example.com", roundTrip.UserEmail);
         Assert.Equal(500, roundTrip.Snapshot.Money);
-        Assert.Equal("Makarov", Assert.Single(roundTrip.Snapshot.MainStash).Name);
+        Assert.Equal(2, Assert.Single(roundTrip.Snapshot.MainStash).ItemDefId);
         Assert.Equal([2, 3], roundTrip.Snapshot.ShopStock.Select(item => item.ItemDefId).ToArray());
         Assert.Equal([60, 160], roundTrip.Snapshot.ShopStock.Select(item => item.Price).ToArray());
         Assert.Equal(14, roundTrip.Snapshot.AcceptedStats.Dexterity);
@@ -377,7 +377,7 @@ public sealed class ContractsTests
         var roundTrip = JsonSerializer.Deserialize<AuthBootstrapResponse>(json, new JsonSerializerOptions(JsonSerializerDefaults.Web));
 
         Assert.NotNull(roundTrip);
-        Assert.Equal("Makarov", Assert.Single(roundTrip!.Snapshot.MainStash).Name);
+        Assert.Equal(2, Assert.Single(roundTrip!.Snapshot.MainStash).ItemDefId);
     }
 
     [Fact]
@@ -394,8 +394,8 @@ public sealed class ContractsTests
     {
         const string json = """
             {
-              "itemDefId": 4,
-              "itemKey": "ak47",
+              "itemDefId": 99999,
+              "itemKey": "ak74",
               "name": "Makarov",
               "type": 0,
               "value": 320,
@@ -411,32 +411,30 @@ public sealed class ContractsTests
         Assert.NotNull(item);
         Assert.Equal(4, item!.ItemDefId);
         Assert.Equal("ak74", item.Key);
-        Assert.Equal("AK74", item.Name);
+        Assert.Equal(4, item.ItemDefId);
     }
 
     [Fact]
-    public void ItemJsonConverter_FallsBackToItemDefIdWhenAuthoredItemIsMissing()
+    public void LegacyNamePayloads_AreAcceptedOnlyAsCompatibilityInput()
     {
         const string json = """
             {
-              "itemDefId": 99999,
-              "itemKey": "unknown_key",
-              "name": "Unknown Label",
+              "name": "Makarov",
               "type": 0,
-              "value": 320,
+              "value": 60,
               "slots": 1,
-              "rarity": 2,
-              "displayRarity": 3,
-              "weight": 7
+              "rarity": 0,
+              "displayRarity": 1,
+              "weight": 2
             }
             """;
 
         var item = JsonSerializer.Deserialize<Item>(json, new JsonSerializerOptions(JsonSerializerDefaults.Web));
 
         Assert.NotNull(item);
-        Assert.Equal(99999, item!.ItemDefId);
-        Assert.Equal("unknown_key", item.Key);
-        Assert.Equal("99999", item.Name);
+        Assert.Equal(2, item!.ItemDefId);
+        Assert.NotEqual("ak74", item.Key);
+        Assert.Equal("makarov", item.Key);
     }
 
     [Fact]
@@ -453,11 +451,9 @@ public sealed class ContractsTests
     }
 
     [Fact]
-    public void ItemPresentationCatalog_UsesLocalizedLabelWhenItemDefinitionIdIsKnown()
+    public void ItemPresentationCatalog_UsesLocalizedLabelForAuthoredItems()
     {
-        var item = ItemCatalog.GetByItemDefId(4);
-
-        Assert.Equal("AK74", ItemPresentationCatalog.GetLabel(item));
+        Assert.Equal("AK74", ItemPresentationCatalog.GetLabel(ItemCatalog.GetByItemDefId(4)));
     }
 
     [Fact]
@@ -469,6 +465,24 @@ public sealed class ContractsTests
         };
 
         Assert.Equal("99999", ItemPresentationCatalog.GetLabel(item));
+    }
+
+    [Fact]
+    public void AuthoredItemLabelChanges_AreClientResourceOnly()
+    {
+        var item = ItemCatalog.GetByItemDefId(2) with { Name = "Server Old Name" };
+
+        Assert.Equal("Makarov", ItemPresentationCatalog.GetLabel(item));
+        Assert.Equal(240, CombatBalance.GetBuyPrice(item));
+    }
+
+    [Fact]
+    public void AuthoredItemSerialization_DoesNotWriteName()
+    {
+        var json = JsonSerializer.Serialize(ItemCatalog.GetByItemDefId(2), new JsonSerializerOptions(JsonSerializerDefaults.Web));
+
+        Assert.Contains("\"itemDefId\":2", json);
+        Assert.DoesNotContain("\"name\":", json);
     }
 
     [Fact]
@@ -543,4 +557,5 @@ public sealed class ContractsTests
         return JsonSerializer.Serialize(roundTrip, new JsonSerializerOptions(JsonSerializerDefaults.Web));
     }
 }
+
 

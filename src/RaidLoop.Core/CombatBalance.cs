@@ -1,5 +1,3 @@
-using System.Globalization;
-
 namespace RaidLoop.Core;
 
 public enum AttackMode
@@ -175,11 +173,6 @@ public static class CombatBalance
         return new DamageRange(dieCount, dieCount * dieSize);
     }
 
-    public static DamageRange GetDamageRange(Item? weapon, AttackMode mode)
-    {
-        return GetDamageRange(ResolveItemIdentity(weapon), mode);
-    }
-
     public static int RollDamage(string weaponName, AttackMode mode, IRng rng)
     {
         var dieCount = GetDamageDieCount(mode);
@@ -194,11 +187,6 @@ public static class CombatBalance
         return total;
     }
 
-    public static int RollDamage(Item? weapon, AttackMode mode, IRng rng)
-    {
-        return RollDamage(ResolveItemIdentity(weapon), mode, rng);
-    }
-
     public static bool SupportsSingleShot(string weaponName)
     {
         return NormalizeItemName(weaponName) switch
@@ -210,7 +198,7 @@ public static class CombatBalance
 
     public static bool SupportsSingleShot(Item? weapon)
     {
-        return SupportsSingleShot(ResolveItemIdentity(weapon));
+        return SupportsSingleShot(GetItemLookupToken(weapon));
     }
 
     public static bool SupportsBurstFire(string weaponName)
@@ -230,7 +218,7 @@ public static class CombatBalance
 
     public static bool SupportsBurstFire(Item? weapon)
     {
-        return SupportsBurstFire(ResolveItemIdentity(weapon));
+        return SupportsBurstFire(GetItemLookupToken(weapon));
     }
 
     public static bool SupportsFullAuto(string weaponName)
@@ -247,7 +235,7 @@ public static class CombatBalance
 
     public static bool SupportsFullAuto(Item? weapon)
     {
-        return SupportsFullAuto(ResolveItemIdentity(weapon));
+        return SupportsFullAuto(GetItemLookupToken(weapon));
     }
 
     public static int GetBurstAttackPenalty(string weaponName)
@@ -264,11 +252,6 @@ public static class CombatBalance
         };
     }
 
-    public static int GetBurstAttackPenalty(Item? weapon)
-    {
-        return GetBurstAttackPenalty(ResolveItemIdentity(weapon));
-    }
-
     public static int GetArmorReduction(string armorName)
     {
         return NormalizeItemName(armorName) switch
@@ -281,11 +264,6 @@ public static class CombatBalance
             "6b2_body_armor" => 1,
             _ => 0
         };
-    }
-
-    public static int GetArmorReduction(Item? armor)
-    {
-        return GetArmorReduction(ResolveItemIdentity(armor));
     }
 
     public static int ApplyArmorReduction(int incomingDamage, int armorReduction)
@@ -325,22 +303,7 @@ public static class CombatBalance
 
     public static int GetBuyPrice(Item item)
     {
-        if (ItemCatalog.TryResolveAuthoredItem(item.ItemDefId, item.Key, item.Name, out var authoredItem) && authoredItem is not null)
-        {
-            return GetBuyPrice(authoredItem.Key);
-        }
-
-        if (item.ItemDefId > 0)
-        {
-            return GetBuyPrice(item.ItemDefId.ToString(CultureInfo.InvariantCulture));
-        }
-
-        if (!string.IsNullOrWhiteSpace(item.Key))
-        {
-            return GetBuyPrice(item.Key);
-        }
-
-        return GetBuyPrice(item.Name);
+        return GetBuyPrice(GetItemLookupToken(item));
     }
 
     public static int GetMagazineCapacity(string weaponName)
@@ -360,7 +323,7 @@ public static class CombatBalance
 
     public static int GetMagazineCapacity(Item? weapon)
     {
-        return GetMagazineCapacity(ResolveItemIdentity(weapon));
+        return GetMagazineCapacity(GetItemLookupToken(weapon));
     }
 
     public static bool WeaponUsesAmmo(string weaponName)
@@ -393,22 +356,7 @@ public static class CombatBalance
             return GetBackpackCapacity((string?)null);
         }
 
-        if (ItemCatalog.TryResolveAuthoredItem(backpack.ItemDefId, backpack.Key, backpack.Name, out var authoredItem) && authoredItem is not null)
-        {
-            return GetBackpackCapacity(authoredItem.Key);
-        }
-
-        if (backpack.ItemDefId > 0)
-        {
-            return GetBackpackCapacity(backpack.ItemDefId.ToString(CultureInfo.InvariantCulture));
-        }
-
-        if (!string.IsNullOrWhiteSpace(backpack.Key))
-        {
-            return GetBackpackCapacity(backpack.Key);
-        }
-
-        return GetBackpackCapacity(backpack.Name);
+        return GetBackpackCapacity(GetItemLookupToken(backpack));
     }
 
     public static bool IsMedkit(Item? item)
@@ -420,20 +368,10 @@ public static class CombatBalance
 
         if (item.ItemDefId > 0)
         {
-            if (ItemCatalog.TryResolveAuthoredItem(item.ItemDefId, item.Key, item.Name, out var authoredItem) && authoredItem is not null)
-            {
-                return authoredItem.ItemDefId == 19;
-            }
-
             return item.ItemDefId == 19;
         }
 
-        if (!string.IsNullOrWhiteSpace(item.Key))
-        {
-            return string.Equals(item.Key, "medkit", StringComparison.OrdinalIgnoreCase);
-        }
-
-        return NormalizeItemName(item.Name) == "medkit";
+        return NormalizeItemName(GetItemLookupToken(item)) == "medkit";
     }
 
     public static int GetTotalEncumbrance(IEnumerable<Item> items)
@@ -489,28 +427,6 @@ public static class CombatBalance
         };
     }
 
-    private static string ResolveItemIdentity(Item? item)
-    {
-        if (item is null)
-        {
-            return string.Empty;
-        }
-
-        if (item.ItemDefId > 0
-            && ItemCatalog.TryGetByItemDefId(item.ItemDefId, out var authoredItem)
-            && authoredItem is not null)
-        {
-            return authoredItem.Key;
-        }
-
-        if (!string.IsNullOrWhiteSpace(item.Key))
-        {
-            return item.Key;
-        }
-
-        return item.Name;
-    }
-
     private static int GetLightLoadLimit(int strength)
     {
         return GetHeavyLoadLimit(strength) / 3;
@@ -557,6 +473,26 @@ public static class CombatBalance
             "Rusty Knife" => 6,
             _ => 6
         };
+    }
+
+    private static string GetItemLookupToken(Item? item)
+    {
+        if (item is null)
+        {
+            return string.Empty;
+        }
+
+        if (item.ItemDefId > 0 && ItemCatalog.TryGetByItemDefId(item.ItemDefId, out var authoredById) && authoredById is not null)
+        {
+            return authoredById.Key;
+        }
+
+        if (!string.IsNullOrWhiteSpace(item.Key) && ItemCatalog.TryGetByKey(item.Key, out var authoredByKey) && authoredByKey is not null)
+        {
+            return authoredByKey.Key;
+        }
+
+        return item.Name;
     }
 }
 

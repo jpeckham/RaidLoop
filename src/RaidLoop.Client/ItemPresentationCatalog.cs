@@ -23,12 +23,6 @@ public static class ItemPresentationCatalog
             return item.ItemDefId.ToString(CultureInfo.InvariantCulture);
         }
 
-        if (!string.IsNullOrWhiteSpace(item.Name))
-        {
-            return item.Name;
-        }
-
-        return string.Empty;
+        return item.Name;
     }
 }
-

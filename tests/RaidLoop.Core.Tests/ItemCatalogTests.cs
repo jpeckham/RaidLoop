@@ -177,6 +177,42 @@ public sealed class ItemCatalogTests
     }
 
     [Fact]
+    public void GetBuyPrice_UsesItemDefIdWhenAuthoredNameChanges()
+    {
+        var item = ItemCatalog.GetByItemDefId(4) with { Name = "Field Carbine" };
+
+        Assert.Equal(1250, CombatBalance.GetBuyPrice(item));
+    }
+
+    [Fact]
+    public void BackpackCapacity_UsesItemDefIdWhenAuthoredNameChanges()
+    {
+        var item = ItemCatalog.GetByItemDefId(18) with { Name = "Raid Pack" };
+
+        Assert.Equal(10, CombatBalance.GetBackpackCapacity(item));
+    }
+
+    [Fact]
+    public void IsMedkit_UsesItemDefIdWhenAuthoredNameChanges()
+    {
+        var item = ItemCatalog.GetByItemDefId(19) with { Name = "Trauma Kit" };
+
+        Assert.True(CombatBalance.IsMedkit(item));
+    }
+
+    [Fact]
+    public void AuthoredWeaponCombatCapabilities_UseItemIdentityInsteadOfLocalizedLabel()
+    {
+        var weapon = ItemCatalog.GetByItemDefId(4) with { Name = "Localized Label Does Not Matter" };
+
+        Assert.True(CombatBalance.SupportsSingleShot(weapon));
+        Assert.True(CombatBalance.SupportsBurstFire(weapon));
+        Assert.True(CombatBalance.SupportsFullAuto(weapon));
+        Assert.True(CombatBalance.WeaponUsesAmmo(weapon));
+        Assert.Equal(30, CombatBalance.GetMagazineCapacity(weapon));
+    }
+
+    [Fact]
     public void NewHighTierItems_UseRequestedDisplayRarity()
     {
         Assert.Equal(DisplayRarity.Epic, ItemCatalog.Get("FORT Defender-2").DisplayRarity);

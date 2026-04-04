@@ -150,7 +150,7 @@ public sealed class RaidActionApiTests
 
         Assert.Single(actionClient.Requests);
         var raid = Assert.IsType<RaidState>(GetField(home, "_raid"));
-        Assert.Equal("Bandage", Assert.Single(raid.Inventory.CarriedItems).Name);
+        Assert.Equal(20, Assert.Single(raid.Inventory.CarriedItems).ItemDefId);
         Assert.Equal("bandage", Assert.Single(raid.Inventory.CarriedItems).Key);
         Assert.Empty(raid.Inventory.DiscoveredLoot);
         AssertOpeningPhaseFields(home, "None", "None", "None", 0, false);
@@ -201,7 +201,7 @@ public sealed class RaidActionApiTests
         Assert.Equal(3, Assert.IsType<int>(GetField(home, "_challenge")));
         Assert.Equal(4, Assert.IsType<int>(GetField(home, "_distanceFromExtract")));
         var raid = Assert.IsType<RaidState>(GetField(home, "_raid"));
-        Assert.Equal("Scrap Metal", Assert.Single(raid.Inventory.DiscoveredLoot).Name);
+        Assert.Equal(22, Assert.Single(raid.Inventory.DiscoveredLoot).ItemDefId);
         AssertOpeningPhaseFields(home, "None", "None", "None", 0, false);
     }
 

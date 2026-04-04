@@ -288,7 +288,11 @@ public static class ItemCatalog
             return true;
         }
 
-        if (!string.IsNullOrWhiteSpace(legacyName) && TryGetByLegacyName(legacyName, out item) && item is not null)
+        if (itemDefId <= 0
+            && string.IsNullOrWhiteSpace(itemKey)
+            && !string.IsNullOrWhiteSpace(legacyName)
+            && TryGetByLegacyName(legacyName, out item)
+            && item is not null)
         {
             return true;
         }

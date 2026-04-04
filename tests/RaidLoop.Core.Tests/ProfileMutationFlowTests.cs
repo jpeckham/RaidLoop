@@ -40,7 +40,7 @@ public sealed class ProfileMutationFlowTests
         Assert.Single(actionClient.Requests);
         Assert.Equal(999, Assert.IsType<int>(GetField(home, "_money")));
         var mainGame = Assert.IsType<GameState>(GetField(home, "_mainGame"));
-        Assert.Equal(["Rusty Knife"], mainGame.Stash.Select(item => item.Name).ToArray());
+        Assert.Equal([1], mainGame.Stash.Select(item => item.ItemDefId).ToArray());
     }
 
     [Fact]
@@ -136,7 +136,7 @@ public sealed class ProfileMutationFlowTests
         Assert.Empty(mainGame.Stash);
         var onPerson = Assert.IsType<List<OnPersonEntry>>(GetField(home, "_onPersonItems"));
         var moved = Assert.Single(onPerson);
-        Assert.Equal("AK74", moved.Item.Name);
+        Assert.Equal(4, moved.Item.ItemDefId);
         Assert.True(moved.IsEquipped);
     }
 
@@ -165,7 +165,7 @@ public sealed class ProfileMutationFlowTests
         Assert.Single(actionClient.Requests);
         Assert.Equal(490, Assert.IsType<int>(GetField(home, "_money")));
         var onPerson = Assert.IsType<List<OnPersonEntry>>(GetField(home, "_onPersonItems"));
-        Assert.Equal("Medkit", Assert.Single(onPerson).Item.Name);
+        Assert.Equal(19, Assert.Single(onPerson).Item.ItemDefId);
     }
 
     [Fact]
@@ -207,7 +207,7 @@ public sealed class ProfileMutationFlowTests
         Assert.Empty(actionClient.Requests);
         var mainGame = Assert.IsType<GameState>(GetField(home, "_mainGame"));
         Assert.Single(mainGame.Stash);
-        Assert.Equal("6B43 Zabralo-Sh body armor", mainGame.Stash[0].Name);
+        Assert.Equal(12, mainGame.Stash[0].ItemDefId);
     }
 
     [Fact]
@@ -281,13 +281,13 @@ public sealed class ProfileMutationFlowTests
                 ActiveRaid: null));
 
         var shopStock = Assert.IsType<List<ShopStock>>(GetField(home, "_shopStock"));
-        var itemNames = shopStock.Select(stock => stock.Item.Name).ToArray();
+        var itemDefIds = shopStock.Select(stock => stock.Item.ItemDefId).ToArray();
 
-        Assert.Contains("PPSH", itemNames);
-        Assert.Contains("6B2 body armor", itemNames);
-        Assert.Contains("BNTI Kirasa-N", itemNames);
-        Assert.Contains("Large Backpack", itemNames);
-        Assert.Contains("6B13 assault armor", itemNames);
+        Assert.Contains(3, itemDefIds);
+        Assert.Contains(8, itemDefIds);
+        Assert.Contains(9, itemDefIds);
+        Assert.Contains(15, itemDefIds);
+        Assert.Contains(10, itemDefIds);
     }
 
     [Fact]
@@ -310,7 +310,7 @@ public sealed class ProfileMutationFlowTests
                 ActiveRaid: null));
 
         var shopStock = Assert.IsType<List<ShopStock>>(GetField(home, "_shopStock"));
-        Assert.Equal(["Makarov", "PPSH", "6B2 body armor"], shopStock.Select(stock => stock.Item.Name).ToArray());
+        Assert.Equal([2, 3, 8], shopStock.Select(stock => stock.Item.ItemDefId).ToArray());
     }
 
     [Fact]
@@ -347,7 +347,7 @@ public sealed class ProfileMutationFlowTests
                 ActiveRaid: null));
 
         var visibleShopStock = Assert.IsAssignableFrom<IReadOnlyList<ShopStock>>(GetPrivatePropertyValue(home, "VisibleShopStock"));
-        Assert.Equal(["Makarov", "6B2 body armor", "BNTI Kirasa-N", "PPSH", "Small Backpack", "Large Backpack"], visibleShopStock.Select(stock => stock.Item.Name).ToArray());
+        Assert.Equal([2, 8, 9, 3, 14, 15], visibleShopStock.Select(stock => stock.Item.ItemDefId).ToArray());
     }
 
     [Fact]
@@ -674,14 +674,6 @@ public sealed class ProfileMutationFlowTests
     }
 
     [Fact]
-    public void HomeNoLongerUsesDisplayLabelWeaponLookupForCombat()
-    {
-        var method = typeof(Home).GetMethod("GetEquippedWeaponName", BindingFlags.Instance | BindingFlags.NonPublic);
-
-        Assert.Null(method);
-    }
-
-    [Fact]
     public void ApplyActionResult_AppliesEconomyStashLoadoutLuckRunAndRaidProjections()
     {
         var home = CreateHome(new FakeGameActionApiClient());
@@ -769,15 +761,15 @@ public sealed class ProfileMutationFlowTests
 
         Assert.Equal(640, Assert.IsType<int>(GetField(home, "_money")));
         var mainGame = Assert.IsType<GameState>(GetField(home, "_mainGame"));
-        Assert.Equal(["Makarov"], mainGame.Stash.Select(item => item.Name).ToArray());
+        Assert.Equal([2], mainGame.Stash.Select(item => item.ItemDefId).ToArray());
         var onPersonItems = Assert.IsType<List<OnPersonEntry>>(GetField(home, "_onPersonItems"));
         Assert.Single(onPersonItems);
-        Assert.Equal("AK74", onPersonItems[0].Item.Name);
+        Assert.Equal(4, onPersonItems[0].Item.ItemDefId);
         Assert.True(onPersonItems[0].IsEquipped);
         Assert.Equal(DateTimeOffset.Parse("2026-03-20T06:00:00Z"), Assert.IsType<DateTimeOffset>(GetField(home, "_randomCharacterAvailableAt")));
         var randomCharacter = Assert.IsType<RandomCharacterState>(GetField(home, "_randomCharacter"));
         Assert.Equal("Ghost-101", randomCharacter.Name);
-        Assert.Equal("Bandage", Assert.Single(randomCharacter.Inventory).Name);
+        Assert.Equal(20, Assert.Single(randomCharacter.Inventory).ItemDefId);
         Assert.Equal(new PlayerStats(12, 11, 10, 9, 8, 13), randomCharacter.Stats);
         var raid = Assert.IsType<RaidState>(GetField(home, "_raid"));
         Assert.Equal(21, raid.Health);
@@ -877,10 +869,10 @@ public sealed class ProfileMutationFlowTests
 
         Assert.Equal(910, Assert.IsType<int>(GetField(home, "_money")));
         var mainGame = Assert.IsType<GameState>(GetField(home, "_mainGame"));
-        Assert.Equal(["Makarov"], mainGame.Stash.Select(item => item.Name).ToArray());
+        Assert.Equal([2], mainGame.Stash.Select(item => item.ItemDefId).ToArray());
         var onPersonItems = Assert.IsType<List<OnPersonEntry>>(GetField(home, "_onPersonItems"));
         Assert.Single(onPersonItems);
-        Assert.Equal("Medkit", onPersonItems[0].Item.Name);
+        Assert.Equal(19, onPersonItems[0].Item.ItemDefId);
         Assert.Equal(DateTimeOffset.Parse("2026-03-20T08:00:00Z"), Assert.IsType<DateTimeOffset>(GetField(home, "_randomCharacterAvailableAt")));
         var randomCharacter = Assert.IsType<RandomCharacterState>(GetField(home, "_randomCharacter"));
         Assert.Equal("Ghost-303", randomCharacter.Name);
@@ -906,10 +898,10 @@ public sealed class ProfileMutationFlowTests
 
         Assert.Equal(123, Assert.IsType<int>(GetField(home, "_money")));
         var mainGame = Assert.IsType<GameState>(GetField(home, "_mainGame"));
-        Assert.Equal(["AK74"], mainGame.Stash.Select(item => item.Name).ToArray());
+        Assert.Equal([4], mainGame.Stash.Select(item => item.ItemDefId).ToArray());
         var onPersonItems = Assert.IsType<List<OnPersonEntry>>(GetField(home, "_onPersonItems"));
         Assert.Single(onPersonItems);
-        Assert.Equal("Makarov", onPersonItems[0].Item.Name);
+        Assert.Equal(2, onPersonItems[0].Item.ItemDefId);
         Assert.Equal(DateTimeOffset.MinValue, Assert.IsType<DateTimeOffset>(GetField(home, "_randomCharacterAvailableAt")));
         Assert.Null(GetField(home, "_randomCharacter"));
     }
@@ -966,12 +958,12 @@ public sealed class ProfileMutationFlowTests
         var raid = Assert.IsType<RaidState>(GetField(home, "_raid"));
         Assert.Equal(18, raid.Health);
         Assert.Equal(9, raid.BackpackCapacity);
-        Assert.Equal("AK74", raid.Inventory.EquippedWeapon!.Name);
-        Assert.Equal("6B13 assault armor", raid.Inventory.EquippedArmor!.Name);
-        Assert.Equal("Tactical Backpack", raid.Inventory.EquippedBackpack!.Name);
-        Assert.Equal("Ammo Box", Assert.Single(raid.Inventory.CarriedItems).Name);
+        Assert.Equal(4, raid.Inventory.EquippedWeapon!.ItemDefId);
+        Assert.Equal(10, raid.Inventory.EquippedArmor!.ItemDefId);
+        Assert.Equal(16, raid.Inventory.EquippedBackpack!.ItemDefId);
+        Assert.Equal(21, Assert.Single(raid.Inventory.CarriedItems).ItemDefId);
         Assert.Equal(2, raid.Inventory.MedkitCount);
-        Assert.Equal("Bandage", Assert.Single(raid.Inventory.DiscoveredLoot).Name);
+        Assert.Equal(20, Assert.Single(raid.Inventory.DiscoveredLoot).ItemDefId);
         Assert.False(raid.IsDead);
         Assert.Equal(3, Assert.IsType<int>(GetField(home, "_ammo")));
         Assert.True(Assert.IsType<bool>(GetField(home, "_awaitingDecision")));
@@ -1154,7 +1146,7 @@ public sealed class ProfileMutationFlowTests
         Assert.Equal("Killed in raid. Loadout lost.", Assert.IsType<string>(GetField(home, "_resultMessage")));
 
         var onPersonItems = Assert.IsType<List<OnPersonEntry>>(GetField(home, "_onPersonItems"));
-        Assert.Equal(["AK74", "Bandage"], onPersonItems.Select(entry => entry.Item.Name).ToArray());
+        Assert.Equal([4, 20], onPersonItems.Select(entry => entry.Item.ItemDefId).ToArray());
     }
 
     [Fact]
@@ -1208,20 +1200,20 @@ public sealed class ProfileMutationFlowTests
                 null));
 
         var mainGame = Assert.IsType<GameState>(GetField(home, "_mainGame"));
-        Assert.Equal(["AK74"], mainGame.Stash.Select(item => item.Name).ToArray());
+        Assert.Equal([4], mainGame.Stash.Select(item => item.ItemDefId).ToArray());
 
         var onPersonItems = Assert.IsType<List<OnPersonEntry>>(GetField(home, "_onPersonItems"));
         Assert.Single(onPersonItems);
-        Assert.Equal("Makarov", onPersonItems[0].Item.Name);
+        Assert.Equal(2, onPersonItems[0].Item.ItemDefId);
         Assert.True(onPersonItems[0].IsEquipped);
 
         var raid = Assert.IsType<RaidState>(GetField(home, "_raid"));
         Assert.Equal(22, raid.Health);
-        Assert.Equal("AK74", raid.Inventory.EquippedWeapon!.Name);
-        Assert.Equal("6B13 assault armor", raid.Inventory.EquippedArmor!.Name);
-        Assert.Equal("Tactical Backpack", raid.Inventory.EquippedBackpack!.Name);
-        Assert.Equal("Ammo Box", Assert.Single(raid.Inventory.CarriedItems).Name);
-        Assert.Equal("Bandage", Assert.Single(raid.Inventory.DiscoveredLoot).Name);
+        Assert.Equal(4, raid.Inventory.EquippedWeapon!.ItemDefId);
+        Assert.Equal(10, raid.Inventory.EquippedArmor!.ItemDefId);
+        Assert.Equal(16, raid.Inventory.EquippedBackpack!.ItemDefId);
+        Assert.Equal(21, Assert.Single(raid.Inventory.CarriedItems).ItemDefId);
+        Assert.Equal(20, Assert.Single(raid.Inventory.DiscoveredLoot).ItemDefId);
         Assert.Equal(2, raid.Inventory.MedkitCount);
         Assert.Equal(9, raid.BackpackCapacity);
         Assert.Equal(EncounterType.Neutral, Assert.IsType<EncounterType>(GetField(home, "_encounterType")));
@@ -1524,7 +1516,6 @@ public sealed class ProfileMutationFlowTests
 
         Assert.True(parsed);
         var item = Assert.IsType<Item>(args[1]);
-        Assert.Equal("AK74", item.Name);
         Assert.Equal(itemDefId, item.ItemDefId);
         Assert.Equal(ItemType.Weapon, item.Type);
         Assert.Equal(777, item.Value);

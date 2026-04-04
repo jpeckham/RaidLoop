@@ -88,9 +88,9 @@ public sealed class RaidStartApiTests
         Assert.Equal(1, Assert.IsType<int>(GetField(home, "_openingActionsRemaining")));
         Assert.False(Assert.IsType<bool>(GetField(home, "_surprisePersistenceEligible")));
         var raid = Assert.IsType<RaidState>(GetField(home, "_raid"));
-        Assert.Equal("AK74", raid.Inventory.EquippedWeapon?.Name);
+        Assert.Equal(4, raid.Inventory.EquippedWeapon?.ItemDefId);
         Assert.Equal("ak74", raid.Inventory.EquippedWeapon?.Key);
-        Assert.Equal("Small Backpack", raid.Inventory.EquippedBackpack?.Name);
+        Assert.Equal(14, raid.Inventory.EquippedBackpack?.ItemDefId);
         Assert.Equal("small_backpack", raid.Inventory.EquippedBackpack?.Key);
         Assert.Equal("40/100 lbs", InvokePrivate<string>(home, "GetRaidEncumbranceText"));
     }
@@ -441,7 +441,7 @@ public sealed class RaidStartApiTests
         Assert.Equal(0, Assert.IsType<int>(GetField(home, "_openingActionsRemaining")));
         Assert.False(Assert.IsType<bool>(GetField(home, "_surprisePersistenceEligible")));
         var raid = Assert.IsType<RaidState>(GetField(home, "_raid"));
-        Assert.Equal("Makarov", raid.Inventory.EquippedWeapon?.Name);
+        Assert.Equal(2, raid.Inventory.EquippedWeapon?.ItemDefId);
         Assert.Equal("makarov", raid.Inventory.EquippedWeapon?.Key);
         AssertRandomCharacterStats(GetField(home, "_randomCharacter"), new PlayerStats(12, 11, 10, 9, 8, 13));
     }

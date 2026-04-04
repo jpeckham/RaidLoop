@@ -87,6 +87,10 @@ public sealed class HomeMarkupBindingTests
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "RaidLoop.Client", "Services", "IProfileApiClient.cs"));
     private static readonly string ProfileSaveHandlerPath = Path.GetFullPath(
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "functions", "profile-save", "handler.mjs"));
+    private static readonly string StashStoragePath = Path.GetFullPath(
+        Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "RaidLoop.Client", "Services", "StashStorage.cs"));
+    private static readonly string ClientProfileStatePath = Path.GetFullPath(
+        Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "RaidLoop.Client", "Services", "ClientProfileState.cs"));
     private static readonly string HomeMarkupPath = Path.GetFullPath(
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "RaidLoop.Client", "Pages", "Home.razor"));
     private static readonly string ClientIndexPath = Path.GetFullPath(
@@ -1507,15 +1511,17 @@ public sealed class HomeMarkupBindingTests
     }
 
     [Fact]
-    public void RepoNoLongerContainsLegacyGameplayStorage()
+    public void ClientProfileStateTypes_AreDefinedInOneSourceFile()
     {
-        var stashStoragePath = Path.GetFullPath(
-            Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "RaidLoop.Client", "Services", "StashStorage.cs"));
-        var stashStorageTestsPath = Path.GetFullPath(
-            Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "tests", "RaidLoop.Core.Tests", "StashStorageTests.cs"));
+        var stashStorage = File.ReadAllText(StashStoragePath);
+        var clientProfileState = File.ReadAllText(ClientProfileStatePath);
 
-        Assert.False(File.Exists(stashStoragePath));
-        Assert.False(File.Exists(stashStorageTestsPath));
+        Assert.DoesNotContain("public sealed record RandomCharacterState", stashStorage);
+        Assert.DoesNotContain("public sealed record GameSave", stashStorage);
+        Assert.DoesNotContain("public sealed record OnPersonEntry", stashStorage);
+        Assert.Contains("public sealed record RandomCharacterState", clientProfileState);
+        Assert.Contains("public sealed record GameSave", clientProfileState);
+        Assert.Contains("public sealed record OnPersonEntry", clientProfileState);
     }
 
     [Fact]

@@ -127,6 +127,8 @@ dotnet build RaidLoop.sln
 - `itemDefId` is the canonical runtime gameplay and contract identity.
 - `game.item_defs.item_key` is an internal authored lookup key, not the runtime contract identity.
 - Player-facing labels are client-owned display data and should not be used as server-side identity.
+- Authored item renames should be done in `src/RaidLoop.Client/Resources/ItemResources.resx`, not by changing gameplay logic or contracts.
+- For authored items, `Item.Name` is compatibility/presentation data only. Runtime gameplay behavior should follow `itemDefId` (and `itemKey` only as an internal authored lookup bridge).
 - Bootstrap returns the full non-localized item rules catalog once, keyed by `itemDefId`.
 - Runtime action payloads stay lean and should not repeat the rules catalog or server-authored item labels.
 - Localization should resolve labels from client-owned assets keyed by `itemDefId`, not from server-authored English names.

@@ -815,6 +815,124 @@ test("game-action returns loot-resolved projections for take-loot", async () => 
   assert.deepEqual(body.projections.raid.logEntriesAdded, ["Looted Bandage."]);
 });
 
+test("game-action accepts persisted authored raid items with itemDefId only", async () => {
+  const handler = createGameActionHandler({
+    dispatchAction: async (accessToken, action, payload) => {
+      assert.equal(accessToken, "token-123");
+      assert.equal(action, "take-loot");
+      assert.equal(payload.itemDefId, 20);
+      return {
+        money: 500,
+        mainStash: [],
+        onPersonItems: [],
+        randomCharacterAvailableAt: "0001-01-01T00:00:00+00:00",
+        randomCharacter: null,
+        activeRaid: {
+          health: 24,
+          backpackCapacity: 3,
+          ammo: 8,
+          weaponMalfunction: false,
+          medkits: 1,
+          lootSlots: 1,
+          challenge: 1,
+          distanceFromExtract: 3,
+          encounterType: "Loot",
+          encounterTitle: "Loot Encounter",
+          encounterDescription: "A searchable container appears.",
+          enemyName: "",
+          enemyHealth: 0,
+          lootContainer: "Dead Body",
+          awaitingDecision: false,
+          discoveredLoot: [],
+          carriedLoot: [{ itemDefId: 20 }],
+          equippedItems: [{ itemDefId: 4 }],
+          logEntries: [
+            "Raid started as Main Character.",
+            "Looted Bandage.",
+          ],
+        },
+      };
+    },
+  });
+
+  const response = await handler(new Request("https://example.test/game-action", {
+    method: "POST",
+    headers: {
+      Authorization: "Bearer token-123",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      action: "take-loot",
+      payload: { itemDefId: 20, knownLogCount: 1 },
+    }),
+  }));
+
+  assert.equal(response.status, 200);
+  const body = await response.json();
+  assert.equal(body.eventType, "LootResolved");
+  assert.equal(body.projections.raid.carriedLoot[0].itemDefId, 20);
+  assert.equal("name" in body.projections.raid.carriedLoot[0], false);
+  assert.equal("itemKey" in body.projections.raid.carriedLoot[0], false);
+  assert.equal(body.projections.raid.equippedItems[0].itemDefId, 4);
+  assert.equal("name" in body.projections.raid.equippedItems[0], false);
+  assert.equal("itemKey" in body.projections.raid.equippedItems[0], false);
+  assert.deepEqual(body.projections.raid.logEntriesAdded, ["Looted Bandage."]);
+});
+
+test("game-action does not resolve itemKey-only authored action payloads", async () => {
+  const handler = createGameActionHandler({
+    dispatchAction: async (accessToken, action, payload) => {
+      assert.equal(accessToken, "token-123");
+      assert.equal(action, "take-loot");
+      assert.equal("itemDefId" in payload, false);
+      assert.equal(payload.itemKey, "bandage");
+      return {
+        money: 500,
+        mainStash: [],
+        onPersonItems: [],
+        randomCharacterAvailableAt: "0001-01-01T00:00:00+00:00",
+        randomCharacter: null,
+        activeRaid: {
+          health: 24,
+          backpackCapacity: 3,
+          ammo: 8,
+          weaponMalfunction: false,
+          medkits: 1,
+          lootSlots: 0,
+          challenge: 1,
+          distanceFromExtract: 3,
+          encounterType: "Loot",
+          encounterTitle: "Loot Encounter",
+          encounterDescription: "A searchable container appears.",
+          enemyName: "",
+          enemyHealth: 0,
+          lootContainer: "Dead Body",
+          awaitingDecision: false,
+          discoveredLoot: [{ itemKey: "bandage", type: 4, value: 15, slots: 1, rarity: 0, displayRarity: 0, weight: 1 }],
+          carriedLoot: [],
+          equippedItems: [],
+          logEntries: ["Raid started as Main Character."],
+        },
+      };
+    },
+  });
+
+  const response = await handler(new Request("https://example.test/game-action", {
+    method: "POST",
+    headers: {
+      Authorization: "Bearer token-123",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      action: "take-loot",
+      payload: { itemKey: "bandage", knownLogCount: 0 },
+    }),
+  }));
+
+  const body = await response.json();
+  assert.equal("itemDefId" in body.projections.raid.discoveredLoot[0], false);
+});
+
 test("game-action returns encounter-advanced projections for go-deeper", async () => {
   const handler = createGameActionHandler({
     dispatchAction: async (accessToken, action, payload) => {

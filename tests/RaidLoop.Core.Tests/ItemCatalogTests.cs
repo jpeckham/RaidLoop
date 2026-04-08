@@ -24,25 +24,25 @@ public sealed class ItemCatalogTests
     }
 
     [Theory]
-    [InlineData("makarov", "Makarov", ItemType.Weapon)]
-    [InlineData("ppsh", "PPSH", ItemType.Weapon)]
-    [InlineData("6sh118", "6Sh118", ItemType.Backpack)]
-    [InlineData("6b2_body_armor", "6B2 body armor", ItemType.Armor)]
-    public void AuthoredItems_CanBeResolvedByStableItemKey(string itemKey, string expectedName, ItemType expectedType)
+    [InlineData("Makarov", "Makarov", ItemType.Weapon)]
+    [InlineData("PPSH", "PPSH", ItemType.Weapon)]
+    [InlineData("6Sh118", "6Sh118", ItemType.Backpack)]
+    [InlineData("6B2 body armor", "6B2 body armor", ItemType.Armor)]
+    public void AuthoredItems_CanBeResolvedByStableItemName(string itemName, string expectedName, ItemType expectedType)
     {
-        var item = ItemCatalog.Get(itemKey);
+        var item = ItemCatalog.Get(itemName);
 
         Assert.Equal(expectedName, item.Name);
         Assert.Equal(expectedType, item.Type);
     }
 
     [Fact]
-    public void AuthoredItems_CanBeResolvedByStableItemDefId()
+    public void AuthoredItems_CanBeResolvedByItemDefIdLookup()
     {
         var item = ItemCatalog.GetByItemDefId(4);
 
         Assert.Equal("AK74", item.Name);
-        Assert.Equal("ak74", item.Key);
+        Assert.Equal(4, item.ItemDefId);
         Assert.Equal(ItemType.Weapon, item.Type);
     }
 

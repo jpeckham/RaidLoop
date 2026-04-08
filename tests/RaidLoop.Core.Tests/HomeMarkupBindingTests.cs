@@ -75,6 +75,12 @@ public sealed class HomeMarkupBindingTests
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026032708_rebalance_item_weights.sql"));
     private static readonly string ReallocateStatsJsonNullGuardMigrationPath = Path.GetFullPath(
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026032702_fix_reallocate_stats_json_null_guard.sql"));
+    private static readonly string PersistedItemCleanupMigrationPath = Path.GetFullPath(
+        Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026040401_strip_persisted_item_name_and_key.sql"));
+    private static readonly string HardCutItemDefIdMigrationPath = Path.GetFullPath(
+        Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026040501_hard_cut_itemdefid_schema_migration.sql"));
+    private static readonly string LuckRunCooldownTimestampRegressionMigrationPath = Path.GetFullPath(
+        Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "supabase", "migrations", "2026040701_fix_luck_run_cooldown_timestamp_format.sql"));
     private static readonly string SupabaseAuthServicePath = Path.GetFullPath(
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "RaidLoop.Client", "Services", "SupabaseAuthService.cs"));
     private static readonly string ClientTelemetryServicePath = Path.GetFullPath(
@@ -232,6 +238,14 @@ public sealed class HomeMarkupBindingTests
         var resourceManager = Assert.IsType<System.Resources.ResourceManager>(resourceManagerProperty!.GetValue(null));
         Assert.Equal("Rusty Knife", resourceManager.GetString("Items.1"));
         Assert.Equal("Legendary Trigger Group", resourceManager.GetString("Items.24"));
+    }
+
+    [Fact]
+    public void Readme_StatesPersistedAuthoredItemsAreItemDefIdOnly()
+    {
+        var readme = File.ReadAllText(ReadmePath);
+
+        Assert.Contains("Persisted authored items should store `itemDefId` only", readme);
     }
 
     [Fact]
@@ -882,6 +896,16 @@ public sealed class HomeMarkupBindingTests
     }
 
     [Fact]
+    public void LatestLuckRunSettlementKeepsUtcOffsetQualifiedCooldownStrings()
+    {
+        var migration = File.ReadAllText(LuckRunCooldownTimestampRegressionMigrationPath);
+
+        Assert.Contains("replace(trim(both '\"' from normalized_available_at::text), ' ', 'T')", migration);
+        Assert.Contains("|| '+00:00'", migration);
+        Assert.Contains("normalized_available_at := to_jsonb('0001-01-01T00:00:00+00:00'::text);", migration);
+    }
+
+    [Fact]
     public void EmptyLuckRunSettlementResetsToReadyStateInsteadOfStartingCooldown()
     {
         var migration = File.ReadAllText(EmptyLuckRunReadyMigrationPath);
@@ -1382,6 +1406,59 @@ public sealed class HomeMarkupBindingTests
         Assert.Contains("update public.game_saves", migration);
         Assert.Contains("update public.raid_sessions", migration);
         Assert.Contains("itemKey", migration);
+    }
+
+    [Fact]
+    public void PersistedItemCleanupMigration_StopsWritingAuthoredItemNameAndItemKey()
+    {
+        Assert.True(File.Exists(PersistedItemCleanupMigrationPath), $"Expected persisted item cleanup migration at '{PersistedItemCleanupMigrationPath}'.");
+
+        var migration = File.ReadAllText(PersistedItemCleanupMigrationPath);
+        var authoredItemSection = ExtractSection(
+            migration,
+            "create or replace function game.authored_item(item_name text)",
+            "create or replace function game.normalize_item(item jsonb)");
+
+        Assert.Contains("'itemDefId'", authoredItemSection);
+        Assert.DoesNotContain("'itemKey'", authoredItemSection);
+        Assert.DoesNotContain("'name'", authoredItemSection);
+    }
+
+    [Fact]
+    public void HardCutItemDefIdMigration_PromotesItemDefIdToPrimaryKey()
+    {
+        Assert.True(File.Exists(HardCutItemDefIdMigrationPath), $"Expected hard-cut itemDefId migration at '{HardCutItemDefIdMigrationPath}'.");
+
+        var migration = File.ReadAllText(HardCutItemDefIdMigrationPath);
+
+        Assert.Contains("alter table game.item_defs drop constraint", migration);
+        Assert.Contains("primary key (item_def_id)", migration);
+        Assert.DoesNotContain("item_key text primary key", migration);
+    }
+
+    [Fact]
+    public void HardCutItemDefIdMigration_ReplacesAuthoredContentItemKeyColumns()
+    {
+        Assert.True(File.Exists(HardCutItemDefIdMigrationPath), $"Expected hard-cut itemDefId migration at '{HardCutItemDefIdMigrationPath}'.");
+
+        var migration = File.ReadAllText(HardCutItemDefIdMigrationPath);
+
+        Assert.Contains("enemy_loadout_variant_items", migration);
+        Assert.Contains("loot_table_variant_items", migration);
+        Assert.Contains("item_def_id", migration);
+        Assert.DoesNotContain("item_key text not null references game.item_defs(item_key)", migration);
+    }
+
+    [Fact]
+    public void HardCutItemDefIdMigration_DropsItemKeyFromItemDefs()
+    {
+        Assert.True(File.Exists(HardCutItemDefIdMigrationPath), $"Expected hard-cut itemDefId migration at '{HardCutItemDefIdMigrationPath}'.");
+
+        var migration = File.ReadAllText(HardCutItemDefIdMigrationPath);
+
+        Assert.Contains("drop column item_key", migration);
+        Assert.Contains("primary key (item_def_id)", migration);
+        Assert.DoesNotContain("unique (item_key)", migration);
     }
 
     [Fact]

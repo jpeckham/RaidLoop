@@ -160,7 +160,7 @@ public sealed class ProfileMutationFlowTests
         SetField(home, "_money", 500);
         SetField(home, "_onPersonItems", new List<OnPersonEntry>());
 
-        await InvokePrivateAsync(home, "BuyFromShopAsync", CreateShopStock("medkit"));
+        await InvokePrivateAsync(home, "BuyFromShopAsync", CreateShopStock("Medkit"));
 
         Assert.Single(actionClient.Requests);
         Assert.Equal(490, Assert.IsType<int>(GetField(home, "_money")));
@@ -244,7 +244,7 @@ public sealed class ProfileMutationFlowTests
             new(ItemCatalog.Create("Medkit"), false)
         });
 
-        await InvokePrivateAsync(home, "BuyFromShopAsync", CreateShopStock("6b2_body_armor"));
+        await InvokePrivateAsync(home, "BuyFromShopAsync", CreateShopStock("6B2 body armor"));
 
         Assert.Empty(actionClient.Requests);
         Assert.Equal(500, Assert.IsType<int>(GetField(home, "_money")));
@@ -264,15 +264,15 @@ public sealed class ProfileMutationFlowTests
                 OnPersonItems: [new OnPersonSnapshot(ItemCatalog.Create("AK74"), true)],
                 ShopStock:
                 [
-                    CreateShopOffer("medkit"),
-                    CreateShopOffer("makarov"),
-                    CreateShopOffer("6b2_body_armor"),
-                    CreateShopOffer("bnti_kirasa_n"),
-                    CreateShopOffer("ppsh"),
-                    CreateShopOffer("small_backpack"),
-                    CreateShopOffer("large_backpack"),
-                    CreateShopOffer("ak74"),
-                    CreateShopOffer("6b13_assault_armor")
+                    CreateShopOffer("Medkit"),
+                    CreateShopOffer("Makarov"),
+                    CreateShopOffer("6B2 body armor"),
+                    CreateShopOffer("BNTI Kirasa-N"),
+                    CreateShopOffer("PPSH"),
+                    CreateShopOffer("Small Backpack"),
+                    CreateShopOffer("Large Backpack"),
+                    CreateShopOffer("AK74"),
+                    CreateShopOffer("6B13 assault armor")
                 ],
                 PlayerConstitution: 12,
                 PlayerMaxHealth: 34,
@@ -302,7 +302,7 @@ public sealed class ProfileMutationFlowTests
                 Money: 500,
                 MainStash: [],
                 OnPersonItems: [new OnPersonSnapshot(ItemCatalog.Create("AK74"), true)],
-                ShopStock: [CreateShopOffer("makarov"), CreateShopOffer("ppsh"), CreateShopOffer("6b2_body_armor")],
+                ShopStock: [CreateShopOffer("Makarov"), CreateShopOffer("PPSH"), CreateShopOffer("6B2 body armor")],
                 PlayerConstitution: 12,
                 PlayerMaxHealth: 34,
                 RandomCharacterAvailableAt: DateTimeOffset.MinValue,
@@ -327,14 +327,14 @@ public sealed class ProfileMutationFlowTests
                 OnPersonItems: [new OnPersonSnapshot(ItemCatalog.Create("AK74"), true)],
                 ShopStock:
                 [
-                    CreateShopOffer("makarov"),
-                    CreateShopOffer("6b2_body_armor"),
-                    CreateShopOffer("bnti_kirasa_n"),
-                    CreateShopOffer("ppsh"),
-                    CreateShopOffer("small_backpack"),
-                    CreateShopOffer("large_backpack"),
-                    CreateShopOffer("ak74"),
-                    CreateShopOffer("6b13_assault_armor")
+                    CreateShopOffer("Makarov"),
+                    CreateShopOffer("6B2 body armor"),
+                    CreateShopOffer("BNTI Kirasa-N"),
+                    CreateShopOffer("PPSH"),
+                    CreateShopOffer("Small Backpack"),
+                    CreateShopOffer("Large Backpack"),
+                    CreateShopOffer("AK74"),
+                    CreateShopOffer("6B13 assault armor")
                 ],
                 AcceptedStats: new PlayerStats(8, 8, 8, 8, 8, 12),
                 DraftStats: new PlayerStats(8, 8, 8, 8, 8, 12),
@@ -692,13 +692,13 @@ public sealed class ProfileMutationFlowTests
               },
               "stash": {
                 "mainStash": [
-                  { "Name": "Makarov", "Type": 0, "Value": 60, "Slots": 1, "Rarity": 0, "DisplayRarity": 1 }
+                  { "itemDefId": 2, "Name": "Makarov", "Type": 0, "Value": 60, "Slots": 1, "Rarity": 0, "DisplayRarity": 1, "Weight": 2 }
                 ]
               },
               "loadout": {
                 "onPersonItems": [
                   {
-                    "Item": { "Name": "AK74", "Type": 0, "Value": 320, "Slots": 1, "Rarity": 2, "DisplayRarity": 3 },
+                    "Item": { "itemDefId": 4, "Name": "AK74", "Type": 0, "Value": 320, "Slots": 1, "Rarity": 2, "DisplayRarity": 3, "Weight": 7 },
                     "IsEquipped": true
                   }
                 ]
@@ -708,7 +708,7 @@ public sealed class ProfileMutationFlowTests
                 "randomCharacter": {
                   "Name": "Ghost-101",
                   "Inventory": [
-                    { "Name": "Bandage", "Type": 4, "Value": 15, "Slots": 1, "Rarity": 0, "DisplayRarity": 0 }
+                    { "itemDefId": 20, "Name": "Bandage", "Type": 4, "Value": 15, "Slots": 1, "Rarity": 0, "DisplayRarity": 0, "Weight": 1 }
                   ],
                   "Stats": {
                     "Strength": 12,
@@ -731,7 +731,7 @@ public sealed class ProfileMutationFlowTests
                   "lootSlots": 0,
                   "challenge": 2,
                   "distanceFromExtract": 3,
-                  "encounterType": "Combat",
+                "encounterType": "Combat",
                 "encounterTitle": "Combat Encounter",
                 "encounterDescription": "Enemy contact on your position.",
                 "enemyName": "Scav",
@@ -741,7 +741,7 @@ public sealed class ProfileMutationFlowTests
                 "discoveredLoot": [],
                 "carriedLoot": [],
                 "equippedItems": [
-                  { "Name": "AK74", "Type": 0, "Value": 320, "Slots": 1, "Rarity": 2, "DisplayRarity": 3 }
+                  { "itemDefId": 4, "Name": "AK74", "Type": 0, "Value": 320, "Slots": 1, "Rarity": 2, "DisplayRarity": 3, "Weight": 7 }
                 ],
                 "logEntries": [
                   "You hit Scav for 2."
@@ -835,13 +835,13 @@ public sealed class ProfileMutationFlowTests
                       },
                       "stash": {
                         "mainStash": [
-                          { "Name": "Makarov", "Type": 0, "Value": 60, "Slots": 1, "Rarity": 0, "DisplayRarity": 1 }
+                          { "itemDefId": 2, "Name": "Makarov", "Type": 0, "Value": 60, "Slots": 1, "Rarity": 0, "DisplayRarity": 1, "Weight": 2 }
                         ]
                       },
                       "loadout": {
                         "onPersonItems": [
                           {
-                            "Item": { "Name": "Medkit", "Type": 3, "Value": 10, "Slots": 1, "Rarity": 0, "DisplayRarity": 1 },
+                            "Item": { "itemDefId": 19, "Name": "Medkit", "Type": 3, "Value": 10, "Slots": 1, "Rarity": 0, "DisplayRarity": 1, "Weight": 1 },
                             "IsEquipped": false
                           }
                         ]
@@ -851,7 +851,7 @@ public sealed class ProfileMutationFlowTests
                         "randomCharacter": {
                           "Name": "Ghost-303",
                           "Inventory": [
-                            { "Name": "Bandage", "Type": 4, "Value": 15, "Slots": 1, "Rarity": 0, "DisplayRarity": 0 }
+                            { "itemDefId": 20, "Name": "Bandage", "Type": 4, "Value": 15, "Slots": 1, "Rarity": 0, "DisplayRarity": 0, "Weight": 1 }
                           ],
                           "Stats": {
                             "Strength": 12,
@@ -1113,11 +1113,11 @@ public sealed class ProfileMutationFlowTests
                       "loadout": {
                         "onPersonItems": [
                           {
-                            "Item": { "Name": "AK74", "Type": 0, "Value": 320, "Slots": 1, "Rarity": 2, "DisplayRarity": 3 },
+                            "Item": { "itemDefId": 4, "Name": "AK74", "Type": 0, "Value": 320, "Slots": 1, "Rarity": 2, "DisplayRarity": 3, "Weight": 7 },
                             "IsEquipped": true
                           },
                           {
-                            "Item": { "Name": "Bandage", "Type": 4, "Value": 15, "Slots": 1, "Rarity": 0, "DisplayRarity": 0 },
+                            "Item": { "itemDefId": 20, "Name": "Bandage", "Type": 4, "Value": 15, "Slots": 1, "Rarity": 0, "DisplayRarity": 0, "Weight": 1 },
                             "IsEquipped": false
                           }
                         ]
@@ -1414,7 +1414,7 @@ public sealed class ProfileMutationFlowTests
     }
 
     [Fact]
-    public void TryReadItem_KnownAuthoredItemWithoutWeight_UsesCatalogWeight()
+    public void TryReadItem_DoesNotHydrateAuthoredItemWithoutItemDefId()
     {
         using var document = JsonDocument.Parse("""
         {
@@ -1431,8 +1431,8 @@ public sealed class ProfileMutationFlowTests
         var args = new object?[] { document.RootElement, null };
         var parsed = Assert.IsType<bool>(method!.Invoke(null, args));
 
-        Assert.True(parsed);
-        Assert.Equal(ItemCatalog.Get("Makarov"), Assert.IsType<Item>(args[1]));
+        Assert.False(parsed);
+        Assert.Null(args[1]);
     }
 
     [Fact]
@@ -1462,7 +1462,7 @@ public sealed class ProfileMutationFlowTests
     }
 
     [Fact]
-    public void TryReadItem_UsesLegacyNameWhenItemDefinitionIdIsMissing()
+    public void TryReadItem_PreservesAnonymousItemWhenItemDefinitionIdIsMissing()
     {
         using var document = JsonDocument.Parse("""
         {
@@ -1522,6 +1522,130 @@ public sealed class ProfileMutationFlowTests
         Assert.Equal(9, item.Slots);
         Assert.Equal(13, item.Weight);
         Assert.NotEqual(ItemCatalog.Get("AK74"), item);
+    }
+
+    [Fact]
+    public void CanLootItem_TreatsNameOnlyMedkitAsSlotlessRaidPickup()
+    {
+        var home = CreateHome(new FakeGameActionApiClient());
+        var inventory = RaidInventory.FromItems(
+            [ItemCatalog.Create("AK74"), ItemCatalog.Create("6Sh118")],
+            [ItemCatalog.Get("Ammo Box"), ItemCatalog.Get("Ammo Box"), ItemCatalog.Get("Ammo Box"), ItemCatalog.Get("Ammo Box"), ItemCatalog.Get("Ammo Box"), ItemCatalog.Get("Ammo Box")],
+            backpackCapacity: 6);
+        inventory.MaxEncumbrance = 175;
+
+        SetField(home, "_raid", new RaidState(30, inventory));
+        SetField(home, "_raidEncumbrance", 45);
+        SetField(home, "_raidMaxEncumbrance", 175);
+
+        var canLoot = InvokePrivate<bool>(
+            home,
+            "CanLootItem",
+            new Item("Medkit", ItemType.Consumable, Weight: 1, Value: 30, Slots: 1, Rarity: Rarity.Common, DisplayRarity: DisplayRarity.Common));
+
+        Assert.True(canLoot);
+    }
+
+    [Fact]
+    public void CanLootItem_AllowsOrdinaryLootWhenRaidHasWeightAndSlotCapacity()
+    {
+        var home = CreateHome(new FakeGameActionApiClient());
+        var inventory = RaidInventory.FromItems(
+            [ItemCatalog.Create("AK74"), ItemCatalog.Create("6Sh118")],
+            [],
+            backpackCapacity: 6);
+        inventory.MaxEncumbrance = 175;
+
+        SetField(home, "_raid", new RaidState(30, inventory));
+        SetField(home, "_raidEncumbrance", 45);
+        SetField(home, "_raidMaxEncumbrance", 175);
+
+        var canLoot = InvokePrivate<bool>(home, "CanLootItem", ItemCatalog.Get("Bandage"));
+
+        Assert.True(canLoot);
+    }
+
+    [Fact]
+    public void ApplyActionResult_NormalizesCarriedMedkitsIntoRaidCounter()
+    {
+        var home = CreateHome(new FakeGameActionApiClient());
+        var inventory = RaidInventory.FromItems(
+            [ItemCatalog.Create("AK74"), ItemCatalog.Create("Tactical Backpack")],
+            [],
+            backpackCapacity: 6);
+        inventory.MaxEncumbrance = 175;
+
+        SetField(home, "_raid", new RaidState(30, inventory));
+        SetField(home, "_inRaid", true);
+
+        InvokePrivateVoid(
+            home,
+            "ApplyActionResult",
+            new GameActionResult(
+                "LootResolved",
+                null,
+                JsonDocument.Parse("""
+                    {
+                      "raid": {
+                        "health": 30,
+                        "backpackCapacity": 6,
+                        "encumbrance": 45,
+                        "maxEncumbrance": 175,
+                        "medkits": 0,
+                        "carriedLoot": [
+                          { "name": "Medkit", "type": 3, "value": 30, "slots": 1, "rarity": 0, "displayRarity": 0, "weight": 1 }
+                        ],
+                        "discoveredLoot": []
+                      }
+                    }
+                    """).RootElement.Clone(),
+                null));
+
+        var raid = Assert.IsType<RaidState>(GetField(home, "_raid"));
+        Assert.Equal(1, raid.Inventory.MedkitCount);
+        Assert.Empty(raid.Inventory.CarriedItems);
+    }
+
+    [Fact]
+    public void ApplyActionResult_PrefersAuthoritativeMedkitCountOverRedundantCarriedMedkit()
+    {
+        var home = CreateHome(new FakeGameActionApiClient());
+        var inventory = RaidInventory.FromItems(
+            [ItemCatalog.Create("AK74"), ItemCatalog.Create("Tactical Backpack")],
+            [],
+            backpackCapacity: 6);
+        inventory.MaxEncumbrance = 175;
+        inventory.MedkitCount = 1;
+
+        SetField(home, "_raid", new RaidState(30, inventory));
+        SetField(home, "_inRaid", true);
+
+        InvokePrivateVoid(
+            home,
+            "ApplyActionResult",
+            new GameActionResult(
+                "CombatResolved",
+                null,
+                JsonDocument.Parse("""
+                    {
+                      "raid": {
+                        "health": 30,
+                        "backpackCapacity": 6,
+                        "encumbrance": 45,
+                        "maxEncumbrance": 175,
+                        "medkits": 1,
+                        "carriedLoot": [
+                          { "name": "Medkit", "type": 3, "value": 30, "slots": 1, "rarity": 0, "displayRarity": 0, "weight": 1 }
+                        ],
+                        "discoveredLoot": []
+                      }
+                    }
+                    """).RootElement.Clone(),
+                null));
+
+        var raid = Assert.IsType<RaidState>(GetField(home, "_raid"));
+        Assert.Equal(1, raid.Inventory.MedkitCount);
+        Assert.Empty(raid.Inventory.CarriedItems);
     }
 
     private static Home CreateHome(
@@ -1609,16 +1733,16 @@ public sealed class ProfileMutationFlowTests
             Message: null);
     }
 
-    private static ShopOfferSnapshot CreateShopOffer(string itemKey, int stock = 1)
+    private static ShopOfferSnapshot CreateShopOffer(string itemName, int stock = 1)
     {
-        var item = ItemCatalog.GetByKey(itemKey);
+        var item = ItemCatalog.Get(itemName);
         return new ShopOfferSnapshot(item.ItemDefId, CombatBalance.GetBuyPrice(item), stock);
     }
 
-    private static ShopStock CreateShopStock(string itemKey, int stock = 1)
+    private static ShopStock CreateShopStock(string itemName, int stock = 1)
     {
-        var item = ItemCatalog.GetByKey(itemKey);
-        return new ShopStock(CreateShopOffer(itemKey, stock), item);
+        var item = ItemCatalog.Get(itemName);
+        return new ShopStock(CreateShopOffer(itemName, stock), item);
     }
 
     private static void SetProperty(object instance, string propertyName, object value)

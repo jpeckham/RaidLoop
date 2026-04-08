@@ -168,6 +168,75 @@ test("profile-bootstrap normalizes legacy named items into itemDefId-only runtim
   assert.equal("itemKey" in body.snapshot.shopStock[0], false);
 });
 
+test("profile-bootstrap accepts persisted authored items with itemDefId only", async () => {
+  const accessToken = [
+    "eyJhbGciOiJub25lIn0",
+    "eyJlbWFpbCI6InJhaWRlckBleGFtcGxlLmNvbSJ9",
+    "signature",
+  ].join(".");
+
+  const handler = createProfileBootstrapHandler({
+    bootstrapProfile: async () => ({
+      Money: 500,
+      MainStash: [{ ItemDefId: 2 }],
+      OnPersonItems: [{ Item: { ItemDefId: 4 }, IsEquipped: true }],
+      ShopStock: [{ ItemDefId: 19, Price: 60, Stock: 1 }],
+      RandomCharacterAvailableAt: "0001-01-01T00:00:00+00:00",
+      RandomCharacter: null,
+    }),
+  });
+
+  const response = await handler(new Request("https://example.test/profile-bootstrap", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  }));
+
+  assert.equal(response.status, 200);
+  const body = await response.json();
+  assert.equal(body.snapshot.mainStash[0].itemDefId, 2);
+  assert.equal("name" in body.snapshot.mainStash[0], false);
+  assert.equal("itemKey" in body.snapshot.mainStash[0], false);
+  assert.equal(body.snapshot.onPersonItems[0].item.itemDefId, 4);
+  assert.equal("name" in body.snapshot.onPersonItems[0].item, false);
+  assert.equal("itemKey" in body.snapshot.onPersonItems[0].item, false);
+  assert.equal(body.snapshot.shopStock[0].itemDefId, 19);
+  assert.equal(body.snapshot.shopStock[0].price, 60);
+  assert.equal(body.snapshot.shopStock[0].stock, 1);
+  assert.equal("name" in body.snapshot.shopStock[0], false);
+  assert.equal("itemKey" in body.snapshot.shopStock[0], false);
+});
+
+test("profile-bootstrap does not resolve itemKey-only authored payloads", async () => {
+  const accessToken = [
+    "eyJhbGciOiJub25lIn0",
+    "eyJlbWFpbCI6InJhaWRlckBleGFtcGxlLmNvbSJ9",
+    "signature",
+  ].join(".");
+
+  const handler = createProfileBootstrapHandler({
+    bootstrapProfile: async () => ({
+      Money: 500,
+      MainStash: [{ ItemKey: "makarov", Type: 0, Value: 60, Slots: 1, Rarity: 0, DisplayRarity: 1, Weight: 2 }],
+      OnPersonItems: [],
+      ShopStock: [],
+      RandomCharacterAvailableAt: "0001-01-01T00:00:00+00:00",
+      RandomCharacter: null,
+    }),
+  });
+
+  const response = await handler(new Request("https://example.test/profile-bootstrap", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  }));
+
+  const body = await response.json();
+  assert.equal("itemDefId" in body.snapshot.mainStash[0], false);
+});
+
 test("profile-bootstrap injects the full item rules catalog when backend snapshot omits it", async () => {
   const accessToken = [
     "eyJhbGciOiJub25lIn0",

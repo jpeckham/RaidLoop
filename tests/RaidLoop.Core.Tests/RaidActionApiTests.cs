@@ -56,8 +56,8 @@ public sealed class RaidActionApiTests
         Assert.Equal("Scavenger", Assert.IsType<string>(GetField(home, "_enemyName")));
         Assert.Equal(34, Assert.IsType<int>(GetField(home, "_maxHealth")));
         var raid = Assert.IsType<RaidState>(GetField(home, "_raid"));
-        Assert.Equal("ak74", raid.Inventory.EquippedWeapon?.Key);
-        Assert.Equal("small_backpack", raid.Inventory.EquippedBackpack?.Key);
+        Assert.Equal(4, raid.Inventory.EquippedWeapon?.ItemDefId);
+        Assert.Equal(14, raid.Inventory.EquippedBackpack?.ItemDefId);
         AssertOpeningPhaseFields(home, "PlayerAmbush", "Player", "None", 1, true);
     }
 
@@ -101,8 +101,8 @@ public sealed class RaidActionApiTests
         await InvokePrivateAsync(home, "AttackAsync");
 
         var raid = Assert.IsType<RaidState>(GetField(home, "_raid"));
-        Assert.Equal("ak74", raid.Inventory.EquippedWeapon?.Key);
-        Assert.Equal("small_backpack", raid.Inventory.EquippedBackpack?.Key);
+        Assert.Equal(4, raid.Inventory.EquippedWeapon?.ItemDefId);
+        Assert.Equal(14, raid.Inventory.EquippedBackpack?.ItemDefId);
         Assert.Equal(7, raid.Inventory.EquippedWeapon?.Weight);
         Assert.Equal(1, raid.Inventory.EquippedBackpack?.Weight);
     }
@@ -151,7 +151,6 @@ public sealed class RaidActionApiTests
         Assert.Single(actionClient.Requests);
         var raid = Assert.IsType<RaidState>(GetField(home, "_raid"));
         Assert.Equal(20, Assert.Single(raid.Inventory.CarriedItems).ItemDefId);
-        Assert.Equal("bandage", Assert.Single(raid.Inventory.CarriedItems).Key);
         Assert.Empty(raid.Inventory.DiscoveredLoot);
         AssertOpeningPhaseFields(home, "None", "None", "None", 0, false);
     }
@@ -525,8 +524,8 @@ public sealed class RaidActionApiTests
         Assert.Equal(5, Assert.IsType<int>(GetField(home, "_challenge")));
         Assert.Equal(0, Assert.IsType<int>(GetField(home, "_distanceFromExtract")));
         var raid = Assert.IsType<RaidState>(GetField(home, "_raid"));
-        Assert.Equal("ak74", raid.Inventory.EquippedWeapon?.Key);
-        Assert.Equal("small_backpack", raid.Inventory.EquippedBackpack?.Key);
+        Assert.Equal(4, raid.Inventory.EquippedWeapon?.ItemDefId);
+        Assert.Equal(14, raid.Inventory.EquippedBackpack?.ItemDefId);
         AssertOpeningPhaseFields(home, "None", "None", "None", 0, false);
     }
 

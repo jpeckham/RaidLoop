@@ -403,14 +403,6 @@ public sealed class StashStorage
             return catalogItemById;
         }
 
-        if (item.ItemDefId == 0
-            && !string.IsNullOrWhiteSpace(item.Key)
-            && ItemCatalog.TryGetByKey(item.Key, out var catalogItemByKey)
-            && catalogItemByKey is not null)
-        {
-            return catalogItemByKey;
-        }
-
         if (item.ItemDefId > 0)
         {
             return item;

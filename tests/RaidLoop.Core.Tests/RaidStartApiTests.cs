@@ -89,9 +89,7 @@ public sealed class RaidStartApiTests
         Assert.False(Assert.IsType<bool>(GetField(home, "_surprisePersistenceEligible")));
         var raid = Assert.IsType<RaidState>(GetField(home, "_raid"));
         Assert.Equal(4, raid.Inventory.EquippedWeapon?.ItemDefId);
-        Assert.Equal("ak74", raid.Inventory.EquippedWeapon?.Key);
         Assert.Equal(14, raid.Inventory.EquippedBackpack?.ItemDefId);
-        Assert.Equal("small_backpack", raid.Inventory.EquippedBackpack?.Key);
         Assert.Equal("40/100 lbs", InvokePrivate<string>(home, "GetRaidEncumbranceText"));
     }
 
@@ -253,8 +251,8 @@ public sealed class RaidStartApiTests
         await InvokePrivateAsync(home, "StartMainRaidAsync");
 
         var raid = Assert.IsType<RaidState>(GetField(home, "_raid"));
-        Assert.Equal("ak74", raid.Inventory.EquippedWeapon?.Key);
-        Assert.Equal("small_backpack", raid.Inventory.EquippedBackpack?.Key);
+        Assert.Equal(4, raid.Inventory.EquippedWeapon?.ItemDefId);
+        Assert.Equal(14, raid.Inventory.EquippedBackpack?.ItemDefId);
         Assert.Equal(7, raid.Inventory.EquippedWeapon?.Weight);
         Assert.Equal(1, raid.Inventory.EquippedBackpack?.Weight);
     }
@@ -350,7 +348,7 @@ public sealed class RaidStartApiTests
         AssertRandomCharacterStats(GetField(home, "_randomCharacter"), new PlayerStats(12, 11, 10, 9, 8, 13));
         Assert.Equal("38/90 lbs", InvokePrivate<string>(home, "GetRaidEncumbranceText"));
         var randomRaid = Assert.IsType<RaidState>(GetField(home, "_raid"));
-        Assert.Equal("makarov", randomRaid.Inventory.EquippedWeapon?.Key);
+        Assert.Equal(2, randomRaid.Inventory.EquippedWeapon?.ItemDefId);
     }
 
     [Fact]
@@ -442,7 +440,7 @@ public sealed class RaidStartApiTests
         Assert.False(Assert.IsType<bool>(GetField(home, "_surprisePersistenceEligible")));
         var raid = Assert.IsType<RaidState>(GetField(home, "_raid"));
         Assert.Equal(2, raid.Inventory.EquippedWeapon?.ItemDefId);
-        Assert.Equal("makarov", raid.Inventory.EquippedWeapon?.Key);
+        Assert.Equal(2, raid.Inventory.EquippedWeapon?.ItemDefId);
         AssertRandomCharacterStats(GetField(home, "_randomCharacter"), new PlayerStats(12, 11, 10, 9, 8, 13));
     }
 

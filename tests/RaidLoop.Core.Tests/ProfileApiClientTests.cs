@@ -71,8 +71,8 @@ public sealed class ProfileApiClientTests
         Assert.True(response.IsAuthenticated);
         Assert.Equal(640, response.Snapshot.Money);
         Assert.Equal([2, 3, 14], response.Snapshot.ItemRules.Select(rule => rule.ItemDefId).ToArray());
-        Assert.Equal("makarov", Assert.Single(response.Snapshot.MainStash).Key);
-        Assert.Equal("small_backpack", Assert.Single(response.Snapshot.OnPersonItems).Item.Key);
+        Assert.Equal(2, Assert.Single(response.Snapshot.MainStash).ItemDefId);
+        Assert.Equal(14, Assert.Single(response.Snapshot.OnPersonItems).Item.ItemDefId);
         Assert.Equal([2, 3], response.Snapshot.ShopStock.Select(item => item.ItemDefId).ToArray());
         Assert.Equal([60, 160], response.Snapshot.ShopStock.Select(item => item.Price).ToArray());
         Assert.Equal(12, response.Snapshot.AcceptedStats.Dexterity);

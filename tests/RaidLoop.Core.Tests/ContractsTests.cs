@@ -352,7 +352,7 @@ public sealed class ContractsTests
     }
 
     [Fact]
-    public void AuthBootstrapResponse_DeserializesLegacyItemPayloadsWithoutItemKeys()
+    public void AuthBootstrapResponse_DoesNotHydrateAuthoredItemsFromLegacyNames()
     {
         const string json = """
             {
@@ -377,7 +377,9 @@ public sealed class ContractsTests
         var roundTrip = JsonSerializer.Deserialize<AuthBootstrapResponse>(json, new JsonSerializerOptions(JsonSerializerDefaults.Web));
 
         Assert.NotNull(roundTrip);
-        Assert.Equal(2, Assert.Single(roundTrip!.Snapshot.MainStash).ItemDefId);
+        var item = Assert.Single(roundTrip!.Snapshot.MainStash);
+        Assert.Equal(0, item.ItemDefId);
+        Assert.Equal("Makarov", item.Name);
     }
 
     [Fact]
@@ -386,16 +388,14 @@ public sealed class ContractsTests
         var item = new Item("Makarov", ItemType.Weapon, Weight: 2);
 
         Assert.Equal(0, item.ItemDefId);
-        Assert.Equal(string.Empty, item.Key);
     }
 
     [Fact]
-    public void ItemJsonConverter_PrefersItemDefIdThenItemKeyThenLegacyName()
+    public void ItemJsonConverter_UsesItemDefIdOnlyForAuthoredItems()
     {
         const string json = """
             {
               "itemDefId": 99999,
-              "itemKey": "ak74",
               "name": "Makarov",
               "type": 0,
               "value": 320,
@@ -409,13 +409,12 @@ public sealed class ContractsTests
         var item = JsonSerializer.Deserialize<Item>(json, new JsonSerializerOptions(JsonSerializerDefaults.Web));
 
         Assert.NotNull(item);
-        Assert.Equal(4, item!.ItemDefId);
-        Assert.Equal("ak74", item.Key);
-        Assert.Equal(4, item.ItemDefId);
+        Assert.Equal(99999, item!.ItemDefId);
+        Assert.Equal("Makarov", item.Name);
     }
 
     [Fact]
-    public void LegacyNamePayloads_AreAcceptedOnlyAsCompatibilityInput()
+    public void LegacyNamePayloads_DoNotResolveAuthoredIdentity()
     {
         const string json = """
             {
@@ -432,22 +431,18 @@ public sealed class ContractsTests
         var item = JsonSerializer.Deserialize<Item>(json, new JsonSerializerOptions(JsonSerializerDefaults.Web));
 
         Assert.NotNull(item);
-        Assert.Equal(2, item!.ItemDefId);
-        Assert.NotEqual("ak74", item.Key);
-        Assert.Equal("makarov", item.Key);
+        Assert.Equal(0, item!.ItemDefId);
+        Assert.Equal("Makarov", item.Name);
     }
 
     [Fact]
-    public void ItemCatalog_ResolvesAuthoredItemsByIdentityOrder()
+    public void ItemCatalog_ResolvesAuthoredItemsByItemDefIdOnly()
     {
-        Assert.True(ItemCatalog.TryResolveAuthoredItem(4, "pkp", "Makarov", out var byItemDefId));
+        Assert.True(ItemCatalog.TryResolveAuthoredItem(4, out var byItemDefId));
         Assert.Equal(4, byItemDefId!.ItemDefId);
 
-        Assert.True(ItemCatalog.TryResolveAuthoredItem(99999, "ak74", "Makarov", out var byItemKey));
-        Assert.Equal(4, byItemKey!.ItemDefId);
-
-        Assert.True(ItemCatalog.TryResolveAuthoredItem(0, null, "Makarov", out var byLegacyName));
-        Assert.Equal(2, byLegacyName!.ItemDefId);
+        Assert.False(ItemCatalog.TryResolveAuthoredItem(0, out var missingItem));
+        Assert.Null(missingItem);
     }
 
     [Fact]

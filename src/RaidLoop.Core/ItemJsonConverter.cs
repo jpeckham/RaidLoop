@@ -12,16 +12,15 @@ internal sealed class ItemJsonConverter : JsonConverter<Item>
         var root = document.RootElement;
 
         var itemDefId = TryGetInt(root, "itemDefId");
-        var itemKey = TryGetString(root, "itemKey");
         var itemName = TryGetString(root, "name");
 
-        if (ItemCatalog.TryResolveAuthoredItem(itemDefId, itemKey, itemName, out var authoredItem) && authoredItem is not null)
+        if (ItemCatalog.TryResolveAuthoredItem(itemDefId, out var authoredItem) && authoredItem is not null)
         {
             return authoredItem with { };
         }
 
         return new Item(
-            Name: itemName ?? itemKey ?? (itemDefId > 0 ? itemDefId.ToString(CultureInfo.InvariantCulture) : string.Empty),
+            Name: itemName ?? (itemDefId > 0 ? itemDefId.ToString(CultureInfo.InvariantCulture) : string.Empty),
             Type: TryGetInt(root, "type", TryGetInt(root, "Type")) is var typeValue ? (ItemType)typeValue : ItemType.Weapon,
             Weight: TryGetInt(root, "weight", TryGetInt(root, "Weight")),
             Value: TryGetInt(root, "value", TryGetInt(root, "Value", 1)),
@@ -29,8 +28,7 @@ internal sealed class ItemJsonConverter : JsonConverter<Item>
             Rarity: (Rarity)TryGetInt(root, "rarity", TryGetInt(root, "Rarity")),
             DisplayRarity: (DisplayRarity)TryGetInt(root, "displayRarity", TryGetInt(root, "DisplayRarity")))
         {
-            ItemDefId = itemDefId,
-            Key = itemKey ?? string.Empty
+            ItemDefId = itemDefId
         };
     }
 

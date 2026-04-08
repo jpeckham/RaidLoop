@@ -34,12 +34,12 @@ public static class LootTables
     {
         return new LootTable(WeaponsCrateProfile,
         [
-            ItemCatalog.CreateByKey("makarov"),
-            ItemCatalog.CreateByKey("ppsh"),
-            ItemCatalog.CreateByKey("ak74"),
-            ItemCatalog.CreateByKey("svds"),
-            ItemCatalog.CreateByKey("ak47"),
-            ItemCatalog.CreateByKey("pkp")
+            ItemCatalog.Create("Makarov"),
+            ItemCatalog.Create("PPSH"),
+            ItemCatalog.Create("AK74"),
+            ItemCatalog.Create("SVDS"),
+            ItemCatalog.Create("AK47"),
+            ItemCatalog.Create("PKP")
         ]);
     }
 
@@ -47,17 +47,17 @@ public static class LootTables
     {
         return new LootTable(ArmourCrateProfile,
         [
-            ItemCatalog.CreateByKey("6b2_body_armor"),
-            ItemCatalog.CreateByKey("small_backpack"),
-            ItemCatalog.CreateByKey("bnti_kirasa_n"),
-            ItemCatalog.CreateByKey("large_backpack"),
-            ItemCatalog.CreateByKey("6b13_assault_armor"),
-            ItemCatalog.CreateByKey("tactical_backpack"),
-            ItemCatalog.CreateByKey("fort_defender_2"),
-            ItemCatalog.CreateByKey("tasmanian_tiger_trooper_35"),
-            ItemCatalog.CreateByKey("6b43_zabralo_sh_body_armor"),
-            ItemCatalog.CreateByKey("nfm_thor"),
-            ItemCatalog.CreateByKey("6sh118")
+            ItemCatalog.Create("6B2 body armor"),
+            ItemCatalog.Create("Small Backpack"),
+            ItemCatalog.Create("BNTI Kirasa-N"),
+            ItemCatalog.Create("Large Backpack"),
+            ItemCatalog.Create("6B13 assault armor"),
+            ItemCatalog.Create("Tactical Backpack"),
+            ItemCatalog.Create("FORT Defender-2"),
+            ItemCatalog.Create("Tasmanian Tiger Trooper 35"),
+            ItemCatalog.Create("6B43 Zabralo-Sh body armor"),
+            ItemCatalog.Create("NFM THOR"),
+            ItemCatalog.Create("6Sh118")
         ]);
     }
 
@@ -65,15 +65,15 @@ public static class LootTables
     {
         return new LootTable(MixedCacheProfile,
         [
-            ItemCatalog.CreateByKey("bandage"),
-            ItemCatalog.CreateByKey("ammo_box"),
-            ItemCatalog.CreateByKey("scrap_metal"),
-            ItemCatalog.CreateByKey("medkit"),
-            ItemCatalog.CreateByKey("ppsh"),
-            ItemCatalog.CreateByKey("rare_scope"),
-            ItemCatalog.CreateByKey("ak74"),
-            ItemCatalog.CreateByKey("svds"),
-            ItemCatalog.CreateByKey("legendary_trigger_group")
+            ItemCatalog.Create("Bandage"),
+            ItemCatalog.Create("Ammo Box"),
+            ItemCatalog.Create("Scrap Metal"),
+            ItemCatalog.Create("Medkit"),
+            ItemCatalog.Create("PPSH"),
+            ItemCatalog.Create("Rare Scope"),
+            ItemCatalog.Create("AK74"),
+            ItemCatalog.Create("SVDS"),
+            ItemCatalog.Create("Legendary Trigger Group")
         ]);
     }
 
@@ -81,18 +81,18 @@ public static class LootTables
     {
         return new LootTable(EnemyLoadoutProfile,
         [
-            ItemCatalog.CreateByKey("makarov"),
-            ItemCatalog.CreateByKey("bandage"),
-            ItemCatalog.CreateByKey("ppsh"),
-            ItemCatalog.CreateByKey("6b2_body_armor"),
-            ItemCatalog.CreateByKey("bnti_kirasa_n"),
-            ItemCatalog.CreateByKey("ak74"),
-            ItemCatalog.CreateByKey("6b13_assault_armor"),
-            ItemCatalog.CreateByKey("svds"),
-            ItemCatalog.CreateByKey("fort_defender_2"),
-            ItemCatalog.CreateByKey("ak47"),
-            ItemCatalog.CreateByKey("pkp"),
-            ItemCatalog.CreateByKey("nfm_thor")
+            ItemCatalog.Create("Makarov"),
+            ItemCatalog.Create("Bandage"),
+            ItemCatalog.Create("PPSH"),
+            ItemCatalog.Create("6B2 body armor"),
+            ItemCatalog.Create("BNTI Kirasa-N"),
+            ItemCatalog.Create("AK74"),
+            ItemCatalog.Create("6B13 assault armor"),
+            ItemCatalog.Create("SVDS"),
+            ItemCatalog.Create("FORT Defender-2"),
+            ItemCatalog.Create("AK47"),
+            ItemCatalog.Create("PKP"),
+            ItemCatalog.Create("NFM THOR")
         ]);
     }
 }

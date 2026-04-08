@@ -384,7 +384,30 @@ public static class CombatBalance
     {
         if (ItemCatalog.TryGet(itemName, out var item) && item is not null)
         {
-            return item.Key;
+            var lookupToken = ItemCatalog.GetLookupToken(item.ItemDefId);
+            if (!string.IsNullOrWhiteSpace(lookupToken))
+            {
+                return lookupToken;
+            }
+
+            var canonicalName = NormalizeWeaponName(item.Name);
+            canonicalName = NormalizeArmorName(canonicalName);
+            return canonicalName switch
+            {
+                "Rusty Knife" => "rusty_knife",
+                "Small Backpack" => "small_backpack",
+                "Large Backpack" => "large_backpack",
+                "Tactical Backpack" => "tactical_backpack",
+                "Tasmanian Tiger Trooper 35" => "tasmanian_tiger_trooper_35",
+                "6Sh118" => "6sh118",
+                "Medkit" => "medkit",
+                "Bandage" => "bandage",
+                "Ammo Box" => "ammo_box",
+                "Scrap Metal" => "scrap_metal",
+                "Rare Scope" => "rare_scope",
+                "Legendary Trigger Group" => "legendary_trigger_group",
+                _ => canonicalName
+            };
         }
 
         var normalized = NormalizeWeaponName(itemName);
@@ -484,12 +507,13 @@ public static class CombatBalance
 
         if (item.ItemDefId > 0 && ItemCatalog.TryGetByItemDefId(item.ItemDefId, out var authoredById) && authoredById is not null)
         {
-            return authoredById.Key;
-        }
+            var lookupToken = ItemCatalog.GetLookupToken(authoredById.ItemDefId);
+            if (!string.IsNullOrWhiteSpace(lookupToken))
+            {
+                return lookupToken;
+            }
 
-        if (!string.IsNullOrWhiteSpace(item.Key) && ItemCatalog.TryGetByKey(item.Key, out var authoredByKey) && authoredByKey is not null)
-        {
-            return authoredByKey.Key;
+            return authoredById.Name;
         }
 
         return item.Name;

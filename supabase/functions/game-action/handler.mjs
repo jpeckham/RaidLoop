@@ -61,33 +61,6 @@ const IN_RAID_ACTIONS = new Set([
   ...ENCOUNTER_ACTIONS,
 ]);
 
-const ITEM_DEF_ID_BY_KEY = new Map([
-  ["rusty_knife", 1],
-  ["makarov", 2],
-  ["ppsh", 3],
-  ["ak74", 4],
-  ["ak47", 5],
-  ["svds", 6],
-  ["pkp", 7],
-  ["6b2_body_armor", 8],
-  ["bnti_kirasa_n", 9],
-  ["6b13_assault_armor", 10],
-  ["fort_defender_2", 11],
-  ["6b43_zabralo_sh_body_armor", 12],
-  ["nfm_thor", 13],
-  ["small_backpack", 14],
-  ["large_backpack", 15],
-  ["tactical_backpack", 16],
-  ["tasmanian_tiger_trooper_35", 17],
-  ["6sh118", 18],
-  ["medkit", 19],
-  ["bandage", 20],
-  ["ammo_box", 21],
-  ["scrap_metal", 22],
-  ["rare_scope", 23],
-  ["legendary_trigger_group", 24],
-]);
-
 const ITEM_DEF_ID_BY_LEGACY_NAME = new Map([
   ["Rusty Knife", 1],
   ["Light Pistol", 2],
@@ -499,7 +472,7 @@ function isRuntimeItemLike(value) {
     && typeof value === "object"
     && typeof value.type === "number"
     && typeof value.slots === "number"
-    && (typeof value.value === "number" || typeof value.itemDefId === "number" || typeof value.itemKey === "string" || typeof value.name === "string");
+    && (typeof value.value === "number" || typeof value.itemDefId === "number" || typeof value.name === "string");
 }
 
 function isRuleItemLike(value) {
@@ -508,22 +481,18 @@ function isRuleItemLike(value) {
     && typeof value.type === "number"
     && typeof value.weight === "number"
     && typeof value.slots === "number"
-    && (typeof value.itemDefId === "number" || typeof value.itemKey === "string" || typeof value.name === "string");
+    && (typeof value.itemDefId === "number" || typeof value.name === "string");
 }
 
 function isShopOfferLike(value) {
   return Boolean(value)
     && typeof value === "object"
-    && (typeof value.price === "number" || typeof value.stock === "number" || typeof value.itemDefId === "number" || typeof value.itemKey === "string" || typeof value.name === "string");
+    && (typeof value.price === "number" || typeof value.stock === "number" || typeof value.itemDefId === "number" || typeof value.name === "string");
 }
 
 function resolveItemDefId(value) {
   if (Number.isInteger(value?.itemDefId) && value.itemDefId > 0) {
     return value.itemDefId;
-  }
-
-  if (typeof value?.itemKey === "string" && ITEM_DEF_ID_BY_KEY.has(value.itemKey)) {
-    return ITEM_DEF_ID_BY_KEY.get(value.itemKey);
   }
 
   if (typeof value?.name === "string" && ITEM_DEF_ID_BY_LEGACY_NAME.has(value.name)) {

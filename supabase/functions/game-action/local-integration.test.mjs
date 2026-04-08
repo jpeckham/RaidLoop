@@ -165,6 +165,44 @@ test("local start-main-raid uses accepted stats for raid max health and encumbra
   });
 });
 
+test("authored enemy and loot generation still works after itemDefId FK migration", async () => {
+  const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? DEFAULT_SUPABASE_URL;
+  const publishableKey = Deno.env.get("SUPABASE_PUBLISHABLE_KEY") ?? DEFAULT_PUBLISHABLE_KEY;
+  const repository = createProfileRpcRepository({ supabaseUrl, publishableKey, fetchImpl: fetch });
+
+  let sawCombatLoadout = false;
+  let sawLootItems = false;
+
+  for (let attempt = 0; attempt < 20 && (!sawCombatLoadout || !sawLootItems); attempt += 1) {
+    const { accessToken, userId } = await signUpLocalUser(supabaseUrl, publishableKey);
+    await seedMainCharacterProfile(repository, supabaseUrl, publishableKey, accessToken, userId);
+
+    let snapshot = await repository.dispatchAction(accessToken, "start-main-raid", {});
+    assert.ok(snapshot.activeRaid);
+
+    for (let step = 0; step < 6 && snapshot.activeRaid && (!sawCombatLoadout || !sawLootItems); step += 1) {
+      if (snapshot.activeRaid.encounterType === "Combat" && Array.isArray(snapshot.activeRaid.enemyLoadout) && snapshot.activeRaid.enemyLoadout.length > 0) {
+        sawCombatLoadout = true;
+        assert.ok(snapshot.activeRaid.enemyLoadout.every((item) => Number.isInteger(item.itemDefId) && item.itemDefId > 0));
+      }
+
+      if (snapshot.activeRaid.encounterType === "Loot" && Array.isArray(snapshot.activeRaid.discoveredLoot) && snapshot.activeRaid.discoveredLoot.length > 0) {
+        sawLootItems = true;
+        assert.ok(snapshot.activeRaid.discoveredLoot.every((item) => Number.isInteger(item.itemDefId) && item.itemDefId > 0));
+      }
+
+      if (!sawCombatLoadout || !sawLootItems) {
+        snapshot = await repository.dispatchAction(accessToken, "go-deeper", {
+          knownLogCount: Array.isArray(snapshot.activeRaid.logEntries) ? snapshot.activeRaid.logEntries.length : 0,
+        });
+      }
+    }
+  }
+
+  assert.equal(sawCombatLoadout, true);
+  assert.equal(sawLootItems, true);
+});
+
 test("local game_action accepts itemDefId for buy-from-shop", async () => {
   const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? DEFAULT_SUPABASE_URL;
   const publishableKey = Deno.env.get("SUPABASE_PUBLISHABLE_KEY") ?? DEFAULT_PUBLISHABLE_KEY;
@@ -179,6 +217,80 @@ test("local game_action accepts itemDefId for buy-from-shop", async () => {
 
   assert.ok(Array.isArray(updated.onPersonItems));
   assert.equal(updated.onPersonItems.at(-1).item.itemDefId, 19);
+});
+
+test("persisted save payload strips itemKey and item name for authored items after profile writes", async () => {
+  const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? DEFAULT_SUPABASE_URL;
+  const publishableKey = Deno.env.get("SUPABASE_PUBLISHABLE_KEY") ?? DEFAULT_PUBLISHABLE_KEY;
+  const repository = createProfileRpcRepository({ supabaseUrl, publishableKey, fetchImpl: fetch });
+  const { accessToken, userId } = await signUpLocalUser(supabaseUrl, publishableKey);
+
+  await seedMainCharacterProfile(repository, supabaseUrl, publishableKey, accessToken, userId);
+
+  const saveRow = await getSingleRow(supabaseUrl, publishableKey, accessToken, "game_saves", userId);
+  const payload = structuredClone(saveRow.payload);
+  payload.mainStash = [
+    {
+      itemDefId: 2,
+      itemKey: "makarov",
+      name: "Makarov",
+      type: 0,
+      value: 60,
+      slots: 1,
+      rarity: 0,
+      displayRarity: 1,
+      weight: 2,
+    },
+  ];
+  payload.draftStats = payload.acceptedStats;
+
+  await updateRow(supabaseUrl, publishableKey, accessToken, "game_saves", userId, { payload });
+  await repository.dispatchAction(accessToken, "accept-stats", {
+    draftStats: payload.acceptedStats,
+  });
+
+  const updatedRow = await getSingleRow(supabaseUrl, publishableKey, accessToken, "game_saves", userId);
+  const persistedItem = updatedRow.payload.mainStash[0];
+
+  assert.equal(persistedItem.itemDefId, 2);
+  assert.equal("itemKey" in persistedItem, false);
+  assert.equal("name" in persistedItem, false);
+});
+
+test("persisted raid payload strips itemKey and item name for authored items after raid writes", async () => {
+  const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? DEFAULT_SUPABASE_URL;
+  const publishableKey = Deno.env.get("SUPABASE_PUBLISHABLE_KEY") ?? DEFAULT_PUBLISHABLE_KEY;
+  const repository = createProfileRpcRepository({ supabaseUrl, publishableKey, fetchImpl: fetch });
+  const { accessToken, userId } = await signUpLocalUser(supabaseUrl, publishableKey);
+
+  await seedMainCharacterProfile(
+    repository,
+    supabaseUrl,
+    publishableKey,
+    accessToken,
+    userId,
+    {
+      itemDefId: 2,
+      itemKey: "makarov",
+      name: "Makarov",
+      type: 0,
+      value: 60,
+      slots: 1,
+      rarity: 0,
+      displayRarity: 1,
+      weight: 2,
+    },
+  );
+
+  const startedRaid = await repository.dispatchAction(accessToken, "start-main-raid", {});
+  assert.ok(startedRaid.activeRaid);
+
+  const raidRow = await getSingleRow(supabaseUrl, publishableKey, accessToken, "raid_sessions", userId);
+  const equippedWeapon = raidRow.payload.equippedItems.find((item) => item.itemDefId === 2);
+
+  assert.ok(equippedWeapon);
+  assert.equal("itemKey" in equippedWeapon, false);
+  assert.equal("name" in equippedWeapon, false);
 });
 
 test("local game_action accepts itemDefId for take-loot", async () => {
@@ -211,6 +323,124 @@ test("local game_action accepts itemDefId for take-loot", async () => {
 
   assert.equal(updated.activeRaid.discoveredLoot.length, 0);
   assert.equal(updated.activeRaid.carriedLoot[0].itemDefId, 20);
+});
+
+test("raid item actions work when persisted raid items only store itemDefId", async () => {
+  const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? DEFAULT_SUPABASE_URL;
+  const publishableKey = Deno.env.get("SUPABASE_PUBLISHABLE_KEY") ?? DEFAULT_PUBLISHABLE_KEY;
+  const repository = createProfileRpcRepository({ supabaseUrl, publishableKey, fetchImpl: fetch });
+  const { accessToken, userId } = await signUpLocalUser(supabaseUrl, publishableKey);
+
+  await seedMainCharacterProfile(repository, supabaseUrl, publishableKey, accessToken, userId, {
+    itemDefId: 2,
+    type: 0,
+    value: 60,
+    slots: 1,
+    rarity: 0,
+    displayRarity: 1,
+    weight: 2,
+  });
+
+  const startedRaid = await repository.dispatchAction(accessToken, "start-main-raid", {});
+  assert.ok(startedRaid.activeRaid);
+
+  const raidRow = await getSingleRow(supabaseUrl, publishableKey, accessToken, "raid_sessions", userId);
+  const lootRaidPayload = structuredClone(raidRow.payload);
+  lootRaidPayload.encounterType = "Loot";
+  lootRaidPayload.encounterTitle = "Loot Encounter";
+  lootRaidPayload.encounterDescription = "A searchable container appears.";
+  lootRaidPayload.lootContainer = "Dead Body";
+  lootRaidPayload.awaitingDecision = false;
+  lootRaidPayload.discoveredLoot = [{ itemDefId: 20, type: 4, value: 15, slots: 1, rarity: 0, displayRarity: 0, weight: 1 }];
+  lootRaidPayload.carriedLoot = [];
+  lootRaidPayload.equippedItems = lootRaidPayload.equippedItems.map((item) => ({ itemDefId: item.itemDefId }));
+  lootRaidPayload.logEntries = ["Raid started on server."];
+
+  await updateRow(supabaseUrl, publishableKey, accessToken, "raid_sessions", userId, { payload: lootRaidPayload });
+
+  const updated = await repository.dispatchAction(accessToken, "take-loot", {
+    itemDefId: 20,
+    knownLogCount: 1,
+  });
+
+  assert.equal(updated.activeRaid.discoveredLoot.length, 0);
+  assert.equal(updated.activeRaid.carriedLoot[0].itemDefId, 20);
+
+  const updatedRaidRow = await getSingleRow(supabaseUrl, publishableKey, accessToken, "raid_sessions", userId);
+  assert.equal(updatedRaidRow.payload.carriedLoot[0].itemDefId, 20);
+  assert.equal("itemKey" in updatedRaidRow.payload.carriedLoot[0], false);
+  assert.equal("name" in updatedRaidRow.payload.carriedLoot[0], false);
+});
+
+test("stale carried medkits do not block looting slot-based items", async () => {
+  const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? DEFAULT_SUPABASE_URL;
+  const publishableKey = Deno.env.get("SUPABASE_PUBLISHABLE_KEY") ?? DEFAULT_PUBLISHABLE_KEY;
+  const repository = createProfileRpcRepository({ supabaseUrl, publishableKey, fetchImpl: fetch });
+  const { accessToken, userId } = await signUpLocalUser(supabaseUrl, publishableKey);
+
+  await seedMainCharacterProfile(repository, supabaseUrl, publishableKey, accessToken, userId);
+  const startedRaid = await repository.dispatchAction(accessToken, "start-main-raid", {});
+  assert.ok(startedRaid.activeRaid);
+
+  const raidRow = await getSingleRow(supabaseUrl, publishableKey, accessToken, "raid_sessions", userId);
+  const staleRaidPayload = structuredClone(raidRow.payload);
+  staleRaidPayload.encounterType = "Loot";
+  staleRaidPayload.encounterTitle = "Loot Encounter";
+  staleRaidPayload.encounterDescription = "A searchable container appears.";
+  staleRaidPayload.lootContainer = "Dead Body";
+  staleRaidPayload.awaitingDecision = false;
+  staleRaidPayload.equippedItems = [
+    { itemDefId: 4, type: 0, value: 320, slots: 1, rarity: 2, displayRarity: 2, weight: 7 },
+    { itemDefId: 16, type: 2, value: 75, slots: 2, rarity: 2, displayRarity: 2, weight: 2 },
+  ];
+  staleRaidPayload.backpackCapacity = 6;
+  staleRaidPayload.discoveredLoot = [{ itemDefId: 4, type: 0, value: 320, slots: 1, rarity: 2, displayRarity: 2, weight: 7 }];
+  staleRaidPayload.carriedLoot = Array.from({ length: 6 }, () => ({ itemDefId: 19, type: 3, value: 30, slots: 1, rarity: 0, displayRarity: 0, weight: 1 }));
+  staleRaidPayload.medkits = 0;
+  staleRaidPayload.logEntries = ["Raid started on server."];
+
+  await updateRow(supabaseUrl, publishableKey, accessToken, "raid_sessions", userId, { payload: staleRaidPayload });
+
+  const updated = await repository.dispatchAction(accessToken, "take-loot", {
+    itemDefId: 4,
+    knownLogCount: 1,
+  });
+
+  assert.equal(updated.activeRaid.discoveredLoot.length, 0);
+  assert.ok(updated.activeRaid.carriedLoot.some((item) => item.itemDefId === 4));
+  assert.equal(updated.activeRaid.medkits, 6);
+
+  const updatedRaidRow = await getSingleRow(supabaseUrl, publishableKey, accessToken, "raid_sessions", userId);
+  assert.ok(updatedRaidRow.payload.carriedLoot.some((item) => item.itemDefId === 4));
+  assert.equal(updatedRaidRow.payload.carriedLoot.some((item) => item.itemDefId === 19), false);
+  assert.equal(updatedRaidRow.payload.medkits, 6);
+});
+
+test("selling the last luck-run item returns an offset-qualified cooldown timestamp", async () => {
+  const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? DEFAULT_SUPABASE_URL;
+  const publishableKey = Deno.env.get("SUPABASE_PUBLISHABLE_KEY") ?? DEFAULT_PUBLISHABLE_KEY;
+  const repository = createProfileRpcRepository({ supabaseUrl, publishableKey, fetchImpl: fetch });
+  const { accessToken, userId } = await signUpLocalUser(supabaseUrl, publishableKey);
+
+  await seedMainCharacterProfile(repository, supabaseUrl, publishableKey, accessToken, userId);
+  const saveRow = await getSingleRow(supabaseUrl, publishableKey, accessToken, "game_saves", userId);
+  const savePayload = structuredClone(saveRow.payload);
+  savePayload.randomCharacter = {
+    name: "Ghost-101",
+    inventory: [{ itemDefId: 19, type: 3, value: 30, slots: 1, rarity: 0, displayRarity: 0, weight: 1 }],
+  };
+  savePayload.randomCharacterAvailableAt = "0001-01-01T00:00:00+00:00";
+
+  await updateRow(supabaseUrl, publishableKey, accessToken, "game_saves", userId, { payload: savePayload });
+
+  const updated = await repository.dispatchAction(accessToken, "sell-luck-run-item", { luckIndex: 0 });
+
+  assert.equal(updated.randomCharacter, null);
+  assert.match(updated.randomCharacterAvailableAt, /\+00:00$/);
+
+  const updatedSaveRow = await getSingleRow(supabaseUrl, publishableKey, accessToken, "game_saves", userId);
+  assert.equal(updatedSaveRow.payload.randomCharacter, null);
+  assert.match(updatedSaveRow.payload.randomCharacterAvailableAt, /\+00:00$/);
 });
 
 test("local game_action re-derives stale raid session encumbrance from accepted stats", async () => {
@@ -283,7 +513,9 @@ async function signUpLocalUser(supabaseUrl, publishableKey) {
 }
 
 async function seedMainCharacterProfile(repository, supabaseUrl, publishableKey, accessToken, userId, weapon = createItem("Rusty Knife", 0, 5, 1, 0, 0, 1)) {
-  await repository.bootstrapProfile(accessToken);
+  await retryAsync(async () => {
+    await repository.bootstrapProfile(accessToken);
+  });
 
   await updateRow(supabaseUrl, publishableKey, accessToken, "game_saves", userId, {
     payload: {
@@ -306,6 +538,24 @@ async function seedMainCharacterProfile(repository, supabaseUrl, publishableKey,
       statsAccepted: true,
     },
   });
+}
+
+async function retryAsync(action, attempts = 3) {
+  let lastError;
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    try {
+      return await action();
+    } catch (error) {
+      lastError = error;
+      if (!(error instanceof Error) || !error.message.includes("JWT issued at future") || attempt === attempts) {
+        throw error;
+      }
+
+      await new Promise(resolve => setTimeout(resolve, 250 * attempt));
+    }
+  }
+
+  throw lastError;
 }
 
 function createItem(name, type, value, slots, rarity, displayRarity, weight) {

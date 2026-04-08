@@ -46,47 +46,7 @@ public sealed record Item(
     DisplayRarity DisplayRarity = DisplayRarity.Common)
 {
     [JsonPropertyName("itemDefId")]
-    public int ItemDefId
-    {
-        get
-        {
-            if (_itemDefId > 0)
-            {
-                return _itemDefId;
-            }
-
-            if (!string.IsNullOrWhiteSpace(_key) && ItemCatalog.TryGetItemDefIdByKey(_key!, out var resolvedFromKey))
-            {
-                return resolvedFromKey;
-            }
-
-            return 0;
-        }
-        init => _itemDefId = value;
-    }
-
-    [JsonPropertyName("itemKey")]
-    public string Key
-    {
-        get
-        {
-            if (!string.IsNullOrWhiteSpace(_key))
-            {
-                return _key!;
-            }
-
-            if (_itemDefId > 0 && ItemCatalog.TryGetByItemDefId(_itemDefId, out var resolvedById) && resolvedById is not null)
-            {
-                return resolvedById.Key;
-            }
-
-            return string.Empty;
-        }
-        init => _key = value ?? string.Empty;
-    }
-
-    private string? _key;
-    private int _itemDefId;
+    public int ItemDefId { get; init; }
 }
 
 public sealed class GameState

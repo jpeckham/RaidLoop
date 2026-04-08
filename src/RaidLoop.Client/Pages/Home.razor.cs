@@ -710,6 +710,10 @@ public partial class Home : IDisposable
         DateTimeOffset? parsedHoldAtExtractUntil = null;
         var extractHoldActiveSeen = false;
         var holdAtExtractUntilSeen = false;
+        var carriedLootProjected = false;
+        var parsedCarriedMedkits = 0;
+        var medkitsProjected = false;
+        var parsedMedkits = inventory.MedkitCount;
 
         if (TryGetInt32(raid, "health", out var parsedHealth))
         {
@@ -777,7 +781,18 @@ public partial class Home : IDisposable
             if (TryReadItemList(carriedLoot, out var items))
             {
                 inventory.CarriedItems.Clear();
-                inventory.CarriedItems.AddRange(items);
+                parsedCarriedMedkits = 0;
+                foreach (var item in items)
+                {
+                    if (CombatBalance.IsMedkit(item))
+                    {
+                        parsedCarriedMedkits++;
+                        continue;
+                    }
+
+                    inventory.CarriedItems.Add(item);
+                }
+                carriedLootProjected = true;
                 inventoryChanged = true;
                 hasRaidPatch = true;
             }
@@ -796,9 +811,19 @@ public partial class Home : IDisposable
 
         if (TryGetInt32(raid, "medkits", out var medkits))
         {
-            inventory.MedkitCount = medkits;
+            parsedMedkits = medkits;
+            medkitsProjected = true;
             inventoryChanged = true;
             hasRaidPatch = true;
+        }
+
+        if (medkitsProjected)
+        {
+            inventory.MedkitCount = Math.Max(parsedMedkits, parsedCarriedMedkits);
+        }
+        else if (carriedLootProjected)
+        {
+            inventory.MedkitCount = parsedCarriedMedkits;
         }
 
         if (TryGetInt32(raid, "ammo", out var ammo))
@@ -1109,11 +1134,6 @@ public partial class Home : IDisposable
     private static bool TryReadItem(JsonElement item, out Item parsedItem)
     {
         var hasItemDefId = TryGetInt32(item, "itemDefId", out var itemDefId) && itemDefId > 0;
-        var itemKey = TryGetString(item, "itemKey", out var itemKeyValue)
-            ? itemKeyValue
-            : TryGetString(item, "ItemKey", out var itemKeyUpperCase)
-                ? itemKeyUpperCase
-                : string.Empty;
         var name = TryGetString(item, "name", out var itemName)
             ? itemName
             : TryGetString(item, "Name", out var itemNameUpperCase)
@@ -1128,24 +1148,7 @@ public partial class Home : IDisposable
             return true;
         }
 
-        if (!hasItemDefId
-            && !string.IsNullOrWhiteSpace(itemKey)
-            && ItemCatalog.TryGetByKey(itemKey, out var catalogItemByKey)
-            && catalogItemByKey is not null)
-        {
-            parsedItem = catalogItemByKey;
-            return true;
-        }
-
-        if (!hasItemDefId
-            && !string.IsNullOrWhiteSpace(name)
-            && ItemCatalog.TryGet(name, out var catalogItem))
-        {
-            parsedItem = catalogItem!;
-            return true;
-        }
-
-        if (!hasItemDefId && string.IsNullOrWhiteSpace(name) && string.IsNullOrWhiteSpace(itemKey))
+        if (!hasItemDefId && string.IsNullOrWhiteSpace(name))
         {
             parsedItem = default!;
             return false;
@@ -1183,10 +1186,9 @@ public partial class Home : IDisposable
                 ? (DisplayRarity)parsedDisplayRarityUpperCase
             : DisplayRarity.Common;
 
-        parsedItem = new Item(string.IsNullOrWhiteSpace(name) ? itemKey : name, type, parsedWeight, value, slots, rarity, displayRarity)
+        parsedItem = new Item(string.IsNullOrWhiteSpace(name) ? itemDefId.ToString() : name, type, parsedWeight, value, slots, rarity, displayRarity)
         {
-            ItemDefId = hasItemDefId ? itemDefId : 0,
-            Key = itemKey
+            ItemDefId = hasItemDefId ? itemDefId : 0
         };
         return true;
     }
@@ -1771,7 +1773,7 @@ public partial class Home : IDisposable
             return false;
         }
 
-        if (item.ItemDefId == MedkitItemDefId)
+        if (CombatBalance.IsMedkit(item))
         {
             return true;
         }
